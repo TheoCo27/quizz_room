@@ -1,0 +1,86 @@
+@import "tailwindcss";
+@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap");
+
+@theme {
+  --color-primary: #ef476f;
+  --color-secondary: #f78c6b;
+  --color-accent: #ffd166;
+
+  --color-success: #7bd389;
+  --color-danger: #d62839;
+  --color-warning: #ffb703;
+
+  --color-bg: #2b2d42;
+  --color-surface: #3a3d5a;
+  --color-text: #fff8e7;
+  --color-text-muted: #ffd6bf;
+  --color-border: #f78c6b;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-family: "Outfit", "Segoe UI", sans-serif;
+  color: var(--color-text);
+  background: var(--color-bg);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+button {
+  cursor: pointer;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button:disabled,
+input:disabled,
+textarea:disabled,
+select:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.my-progress::-webkit-progress-value {
+  background-color: #ffffff;
+}
+.my-progress::-moz-progress-bar {
+  background-color: #ffffff;
+}
+
+.my-progress {
+  border: 0;
+  height: 40px;
+  border-radius: 20px;
+}
+.my-progress::-webkit-progress-bar {
+  border-radius: 20px;
+  background-color: lightskyblue;
+}
+
+.my-progress::-webkit-progress-value {
+  border-radius: 20px;
+  background-color: white;
+}
+
+.my-progress::-moz-progress-bar {
+  border: 0;
+  height: 26px;
+  border-radius: 20px;
+}

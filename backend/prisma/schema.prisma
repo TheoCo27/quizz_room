@@ -1,0 +1,117 @@
+generator client {
+  provider            = "prisma-client"
+  output              = "../generated/prisma"
+  moduleFormat        = "cjs"
+  importFileExtension = ""
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserStatus {
+  online
+  offline
+}
+
+enum FriendshipStatus {
+  pending
+  accepted
+  declined
+}
+
+model User {
+  id       Int     @id @default(autoincrement())
+  email    String  @unique
+  username String
+  password String
+  isGuest  Boolean @default(false)
+  googleId String? @unique
+
+  avatar_url String?
+  status     UserStatus @default(offline)
+  createdAt  DateTime   @default(now())
+
+  sentPrivateMessages     PrivateMessage[] @relation("PrivateMessageSender")
+  receivedPrivateMessages PrivateMessage[] @relation("PrivateMessageReceiver")
+
+  quizLeaderboardEntries QuizLeaderboard[] @relation("UserQuizLeaderboardEntries")
+
+  sentFriendRequests     FriendRequests[] @relation("FriendRequestSender")
+  receivedFriendRequests FriendRequests[] @relation("FriendRequestReceiver")
+}
+
+model FriendRequests {
+  id Int @id @default(autoincrement())
+
+  sender   User @relation("FriendRequestSender", fields: [senderId], references: [id])
+  senderId Int
+
+  receiver   User @relation("FriendRequestReceiver", fields: [receiverId], references: [id])
+  receiverId Int
+
+  status    FriendshipStatus @default(pending)
+  createdAt DateTime         @default(now())
+}
+
+model Quiz {
+  id                  Int      @id @default(autoincrement())
+  title               String
+  questionDurationSec Int?
+  createdAt           DateTime @default(now())
+
+  questions          QuizQuestion[]    @relation("QuizQuestions")
+  leaderboardEntries QuizLeaderboard[] @relation("QuizLeaderboardEntries")
+}
+
+model QuizQuestion {
+  id     Int  @id @default(autoincrement())
+  quiz   Quiz @relation("QuizQuestions", fields: [quizId], references: [id])
+  quizId Int
+
+  questionText  String
+  answers       Json
+  correctAnswer String
+
+  position  Int
+  points    Int      @default(100)
+  createdAt DateTime @default(now())
+
+  @@unique([quizId, position])
+}
+
+model QuizLeaderboard {
+  id     Int  @id @default(autoincrement())
+  quiz   Quiz @relation("QuizLeaderboardEntries", fields: [quizId], references: [id])
+  quizId Int
+
+  user   User @relation("UserQuizLeaderboardEntries", fields: [userId], references: [id])
+  userId Int
+
+  totalScore  Int      @default(0)
+  wins        Int      @default(0)
+  gamesPlayed Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([quizId, userId])
+  @@index([quizId, totalScore, wins])
+}
+
+model PrivateMessage {
+  id Int @id @default(autoincrement())
+
+  sender   User @relation("PrivateMessageSender", fields: [senderId], references: [id])
+  senderId Int
+
+  receiver   User @relation("PrivateMessageReceiver", fields: [receiverId], references: [id])
+  receiverId Int
+
+  content   String
+  createdAt DateTime  @default(now())
+  readAt    DateTime?
+
+  @@index([senderId, receiverId, createdAt])
+  @@index([receiverId, senderId, createdAt])
+  @@index([receiverId, readAt, createdAt])
+}
