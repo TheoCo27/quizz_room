@@ -39,6 +39,11 @@ model User {
 
   sentFriendRequests     FriendRequests[] @relation("FriendRequestSender")
   receivedFriendRequests FriendRequests[] @relation("FriendRequestReceiver")
+
+  hostedRooms     Room[]       @relation(name: "RoomHost")
+  roomMemberships RoomPlayer[]
+
+  matchHistoryEntries MatchHistoryPlayer[]
 }
 
 model FriendRequests {
@@ -114,4 +119,74 @@ model PrivateMessage {
   @@index([senderId, receiverId, createdAt])
   @@index([receiverId, senderId, createdAt])
   @@index([receiverId, readAt, createdAt])
+}
+
+enum RoomStatus {
+  WAITING
+  PLAYING
+  FINISHED
+}
+
+enum GameType {
+  QUIZ
+}
+
+model Room {
+  id         String     @id @default(uuid())
+  name       String?
+  status     RoomStatus @default(WAITING)
+  gameType   GameType
+  maxPlayers Int        @default(8) // J'ai rajouter ça mais pas sur
+
+  // relations
+  hostId Int
+  host   User @relation(name: "RoomHost", fields: [hostId], references: [id])
+
+  players RoomPlayer[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model RoomPlayer {
+  id Int @id @default(autoincrement())
+
+  // Room   link
+  roomId String
+  room   Room   @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  // link to the User
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // User state in the room
+  isReady Boolean @default(false)
+  isConnected Boolean @default(true)
+  score   Int     @default(0) // score dans Room player. Ca peut-être plus pratique (C'est surtout une protection contre les micro coupure internet ou micro deconnexion)
+
+  createdAt DateTime @default(now())
+
+  @@unique([roomId, userId])
+}
+
+model MatchHistory {
+  id          Int      @id @default(autoincrement())
+  gameType    GameType // Pour savoir à quel jeu ils ont joué (ex: QUIZ)
+  durationSec Int? // Durée de la partie en secondes (optionnel)
+  createdAt   DateTime @default(now()) // Date et heure du match
+
+  players MatchHistoryPlayer[]
+}
+
+model MatchHistoryPlayer {
+  id Int @id @default(autoincrement())
+
+  matchId Int
+  match   MatchHistory @relation(fields: [matchId], references: [id], onDelete: Cascade)
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  score    Int     @default(0) // Score final du joueur
+  isWinner Boolean @default(false) // Pratique pour calculer les win/loss plus tard
 }

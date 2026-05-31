@@ -9,6 +9,7 @@ import { QuizzesModule } from "./modules/quizzes/quizzes.module";
 import { ScoresModule } from "./modules/scores/scores.module";
 import { UsersModule } from "./modules/users/users.module";
 import { PrismaModule } from "./prisma/prisma.module";
+import { RoomsModule } from './modules/rooms/rooms.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { PrismaModule } from "./prisma/prisma.module";
     PrismaModule,
     QuizzesModule,
     ScoresModule,
+    RoomsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
