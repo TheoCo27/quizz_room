@@ -57,8 +57,33 @@ export class RoomsGateway
     }
   }
 
-  handleDisconnect(client: Socket) {
+  async handleDisconnect(client: Socket) {
     this.logger.log("Client disconnected: " + client.id);
+    
+    if (client.data.user?.id) {
+      try {
+        const userId = client.data.user.id;
+        const affectedRooms = await this.roomsService.handleDisconnect(userId);
+
+        for (const { roomId, room, action } of affectedRooms) {
+          if (action === 'leave') {
+            if (room) {
+              this.server.to(roomId).emit("room_state_updated", room);
+            } else {
+              this.server.to(roomId).emit("room_closed");
+            }
+          } else if (action === 'disconnect') {
+            this.server.to(roomId).emit("player_disconnected", { userId });
+            this.server.to(roomId).emit("room_state_updated", room);
+          } else if (action === 'end') {
+            this.server.to(roomId).emit("game_ended", room);
+            this.server.to(roomId).emit("room_state_updated", room);
+          }
+        }
+      } catch (error: any) {
+        this.logger.error(`Error handling disconnect for client ${client.id}: ${error.message}`);
+      }
+    }
   }
 
   @SubscribeMessage("ping")
@@ -121,7 +146,7 @@ export class RoomsGateway
     }
   }
 
-  @SubscriaeMessage("start_game")
+  @SubscribeMessage("start_game")
   async handleStartGame(
     @ConnectedSocket() client: Socket,
     @MessageBody() data: { roomId: string }

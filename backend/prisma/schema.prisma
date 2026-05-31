@@ -161,6 +161,7 @@ model RoomPlayer {
 
   // User state in the room
   isReady Boolean @default(false)
+  isConnected Boolean @default(true)
   score   Int     @default(0) // score dans Room player. Ca peut-être plus pratique (C'est surtout une protection contre les micro coupure internet ou micro deconnexion)
 
   createdAt DateTime @default(now())

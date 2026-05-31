@@ -144,4 +144,80 @@ export class RoomsService {
 
     return this.getRoomById(roomId);
   }
+
+  async endGame(roomId: string) {
+    const room = await this.getRoomById(roomId);
+
+    // Create match history
+    const match = await this.prisma.client.matchHistory.create({
+      data: {
+        gameType: room.gameType,
+        players: {
+          create: room.players.map(p => ({
+            userId: p.userId,
+            score: p.score,
+            isWinner: false
+          }))
+        }
+      },
+      include: {
+        players: true
+      }
+    });
+
+    // Determine winner
+    const maxScore = Math.max(...room.players.map(p => p.score));
+    if (room.players.length > 0) {
+      await this.prisma.client.matchHistoryPlayer.updateMany({
+        where: {
+          matchId: match.id,
+          score: maxScore,
+        },
+        data: {
+          isWinner: true
+        }
+      });
+    }
+
+    // Update room status
+    await this.prisma.client.room.update({
+      where: { id: roomId },
+      data: { status: RoomStatus.FINISHED },
+    });
+
+    return this.getRoomById(roomId);
+  }
+
+  async handleDisconnect(userId: number) {
+    const roomPlayers = await this.prisma.client.roomPlayer.findMany({
+      where: { userId },
+      include: { room: true },
+    });
+
+    const affectedRooms = [];
+
+    for (const rp of roomPlayers) {
+      if (rp.room.status === RoomStatus.WAITING) {
+        const updatedRoom = await this.leaveRoom(rp.roomId, userId);
+        affectedRooms.push({ roomId: rp.roomId, room: updatedRoom, action: 'leave' });
+      } else if (rp.room.status === RoomStatus.PLAYING) {
+        await this.prisma.client.roomPlayer.update({
+          where: { id: rp.id },
+          data: { isConnected: false },
+        });
+
+        const room = await this.getRoomById(rp.roomId);
+        const connectedPlayers = room.players.filter(p => p.isConnected);
+
+        if (connectedPlayers.length <= 1) {
+          const finishedRoom = await this.endGame(rp.roomId);
+          affectedRooms.push({ roomId: rp.roomId, room: finishedRoom, action: 'end' });
+        } else {
+          affectedRooms.push({ roomId: rp.roomId, room, action: 'disconnect' });
+        }
+      }
+    }
+
+    return affectedRooms;
+  }
 }
