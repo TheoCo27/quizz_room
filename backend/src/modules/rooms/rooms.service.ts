@@ -1,5 +1,5 @@
 // backend/src/modules/rooms/rooms.service.ts
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { GameType, RoomStatus } from '../../../generated/prisma/client';
 
@@ -43,30 +43,105 @@ export class RoomsService {
   }
 
   async joinRoom(roomId: string, userId: number) {
-    // Vérifier si le joueur est déjà dans la room
+    const room = await this.getRoomById(roomId);
+
+    if (room.status !== RoomStatus.WAITING) {
+      throw new BadRequestException("La room n'est pas en attente");
+    }
+
+    if (room.players.length >= room.maxPlayers) {
+      throw new BadRequestException("La limite de joueurs est atteinte");
+    }
+
     const existingPlayer = await this.prisma.client.roomPlayer.findUnique({
       where: { roomId_userId: { roomId, userId } },
     });
 
-    if (existingPlayer) {
-      return existingPlayer; 
+    if (!existingPlayer) {
+      await this.prisma.client.roomPlayer.create({
+        data: {
+          roomId,
+          userId,
+          isReady: false,
+        },
+      });
     }
 
-    return this.prisma.client.roomPlayer.create({
-      data: {
-        roomId,
-        userId,
-        isReady: false, 
-      },
-      include: {
-        user: { select: { id: true, username: true, avatar_url: true } },
-      },
-    });
+    return this.getRoomById(roomId);
   }
 
   async leaveRoom(roomId: string, userId: number) {
-    return this.prisma.client.roomPlayer.delete({
+    try {
+      await this.prisma.client.roomPlayer.delete({
+        where: { roomId_userId: { roomId, userId } },
+      });
+    } catch (e) {
+      // Ignorer si le joueur n'est pas dans la room
+    }
+
+    const room = await this.prisma.client.room.findUnique({
+      where: { id: roomId },
+      include: { players: true }
+    });
+
+    if (!room) return null;
+
+    if (room.players.length === 0) {
+      await this.prisma.client.room.delete({
+        where: { id: roomId },
+      });
+      return null;
+    }
+
+    if (room.hostId === userId) {
+      const oldestPlayer = room.players.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())[0];
+      await this.prisma.client.room.update({
+        where: { id: roomId },
+        data: { hostId: oldestPlayer.userId },
+      });
+    }
+
+    return this.getRoomById(roomId);
+  }
+
+  async toggleReady(roomId: string, userId: number) {
+    const player = await this.prisma.client.roomPlayer.findUnique({
       where: { roomId_userId: { roomId, userId } },
     });
+
+    if (!player) {
+      throw new NotFoundException("Joueur introuvable dans la room");
+    }
+
+    await this.prisma.client.roomPlayer.update({
+      where: { roomId_userId: { roomId, userId } },
+      data: { isReady: !player.isReady },
+    });
+
+    return this.getRoomById(roomId);
+  }
+
+  async startGame(roomId: string, userId: number) {
+    const room = await this.getRoomById(roomId);
+
+    if (room.hostId !== userId) {
+      throw new BadRequestException("Seul le créateur peut démarrer la partie");
+    }
+
+    if (room.players.length < 2) {
+      throw new BadRequestException("Il faut au moins 2 joueurs pour démarrer");
+    }
+
+    const allReady = room.players.every((p) => p.isReady);
+    if (!allReady) {
+      throw new BadRequestException("Tous les joueurs doivent être prêts");
+    }
+
+    await this.prisma.client.room.update({
+      where: { id: roomId },
+      data: { status: RoomStatus.PLAYING },
+    });
+
+    return this.getRoomById(roomId);
   }
 }

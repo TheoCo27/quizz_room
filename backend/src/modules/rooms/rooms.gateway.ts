@@ -6,6 +6,8 @@ import {
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
+  ConnectedSocket,
+  MessageBody,
 } from "@nestjs/websockets";
 import { Server, Socket } from "socket.io";
 import { AuthService } from "../auth/auth.service";
@@ -62,5 +64,76 @@ export class RoomsGateway
   @SubscribeMessage("ping")
   handlePing(client: Socket, data: any) {
     return { event: "pong", data };
+  }
+
+  @SubscribeMessage("join_room")
+  async handleJoinRoom(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { roomId: string }
+  ) {
+    try {
+      const userId = client.data.user.id;
+      const updatedRoom = await this.roomsService.joinRoom(data.roomId, userId);
+      
+      client.join(data.roomId);
+      this.server.to(data.roomId).emit("room_state_updated", updatedRoom);
+    } catch (error: any) {
+      this.logger.error(`Error in join_room: ${error.message}`);
+      client.emit("error", { message: error.message });
+    }
+  }
+
+  @SubscribeMessage("leave_room")
+  async handleLeaveRoom(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { roomId: string }
+  ) {
+    try {
+      const userId = client.data.user.id;
+      const updatedRoom = await this.roomsService.leaveRoom(data.roomId, userId);
+
+      if (updatedRoom != null) {
+        this.server.to(data.roomId).emit("room_state_updated", updatedRoom);
+      } else {
+        this.server.to(data.roomId).emit("room_closed");
+      }
+      
+      client.leave(data.roomId);
+    } catch (error: any) {
+      this.logger.error(`Error in leave_room: ${error.message}`);
+      client.emit("error", { message: error.message });
+    }
+  }
+
+  @SubscribeMessage("toggle_ready")
+  async handleToggleReady(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { roomId: string }
+  ) {
+    try {
+      const userId = client.data.user.id;
+      const updatedRoom = await this.roomsService.toggleReady(data.roomId, userId);
+      
+      this.server.to(data.roomId).emit("room_state_updated", updatedRoom);
+    } catch (error: any) {
+      this.logger.error(`Error in toggle_ready: ${error.message}`);
+      client.emit("error", { message: error.message });
+    }
+  }
+
+  @SubscriaeMessage("start_game")
+  async handleStartGame(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { roomId: string }
+  ) {
+    try {
+      const userId = client.data.user.id;
+      await this.roomsService.startGame(data.roomId, userId);
+      
+      this.server.to(data.roomId).emit("game_starting", { countdown: 5 });
+    } catch (error: any) {
+      this.logger.error(`Error in start_game: ${error.message}`);
+      client.emit("error", { message: error.message });
+    }
   }
 }
