@@ -1,7 +1,7 @@
 // backend/src/modules/rooms/rooms.service.ts
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { GameType, RoomStatus } from '@prisma/client';
+import { GameType, RoomStatus } from '../../../generated/prisma';
 
 @Injectable()
 export class RoomsService {
@@ -12,7 +12,6 @@ export class RoomsService {
       data: {
         hostId,
         gameType,
-        maxPlayers,
         status: RoomStatus.WAITING,
         players: {
           create: {
