@@ -115,3 +115,29 @@ model PrivateMessage {
   @@index([receiverId, senderId, createdAt])
   @@index([receiverId, readAt, createdAt])
 }
+
+enum RoomStatus {
+  WAITING
+  PLAYING
+  FINISHED
+}
+
+enum GameType {
+  QUIZ
+}
+
+model Room {
+  id          String      @id @default(uuid())
+  name        String?
+  status      RoomStatus  @default(WAITING)
+  gameType    GameType
+  maxPlayers  Int         @default(2)
+
+  hostID      Int
+  host        User @relation(name: "RoomHost", fields: [hostId], references: [id])
+
+  players     RoomPlayer[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
