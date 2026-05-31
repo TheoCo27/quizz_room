@@ -1,14 +1,14 @@
 // backend/src/modules/rooms/rooms.service.ts
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { GameType, RoomStatus } from '../../../generated/prisma';
+import { GameType, RoomStatus } from '../../../generated/prisma/client';
 
 @Injectable()
 export class RoomsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async createRoom(hostId: number, gameType: GameType, maxPlayers: number = 5) {
-    return this.prisma.room.create({
+    return this.prisma.client.room.create({
       data: {
         hostId,
         gameType,
@@ -28,7 +28,7 @@ export class RoomsService {
   }
 
   async getRoomById(roomId: string) {
-    const room = await this.prisma.room.findUnique({
+    const room = await this.prisma.client.room.findUnique({
       where: { id: roomId },
       include: {
         host: { select: { id: true, username: true, avatar_url: true } },
@@ -44,7 +44,7 @@ export class RoomsService {
 
   async joinRoom(roomId: string, userId: number) {
     // Vérifier si le joueur est déjà dans la room
-    const existingPlayer = await this.prisma.roomPlayer.findUnique({
+    const existingPlayer = await this.prisma.client.roomPlayer.findUnique({
       where: { roomId_userId: { roomId, userId } },
     });
 
@@ -52,7 +52,7 @@ export class RoomsService {
       return existingPlayer; 
     }
 
-    return this.prisma.roomPlayer.create({
+    return this.prisma.client.roomPlayer.create({
       data: {
         roomId,
         userId,
@@ -65,7 +65,7 @@ export class RoomsService {
   }
 
   async leaveRoom(roomId: string, userId: number) {
-    return this.prisma.roomPlayer.delete({
+    return this.prisma.client.roomPlayer.delete({
       where: { roomId_userId: { roomId, userId } },
     });
   }
