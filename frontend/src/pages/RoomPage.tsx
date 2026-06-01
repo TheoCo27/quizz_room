@@ -6,6 +6,15 @@ import { useAuthSession } from "../hooks/useAuthSession";
 import { Room } from "../services/rooms";
 import { getQuizzes, Quiz } from "../services/quizzes";
 
+type RoomChatMessage = {
+  id: string;
+  userId: number;
+  username: string;
+  avatar_url: string | null;
+  content: string;
+  createdAt: string;
+};
+
 export default function RoomPage() {
   const { id: roomId } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -16,6 +25,10 @@ export default function RoomPage() {
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [countdown, setCountdown] = useState<number | null>(null);
+  const [chatMessages, setChatMessages] = useState<RoomChatMessage[]>([]);
+  const [chatInput, setChatInput] = useState("");
+  const chatListRef = React.useRef<HTMLDivElement | null>(null);
+  const shouldAutoScrollRef = React.useRef(true);
 
   useEffect(() => {
     getQuizzes().then(setQuizzes).catch(console.error);
@@ -28,6 +41,14 @@ export default function RoomPage() {
   }, [room]);
 
   useEffect(() => {
+    const chatList = chatListRef.current;
+    if (!chatList) return;
+    if (shouldAutoScrollRef.current) {
+      chatList.scrollTop = chatList.scrollHeight;
+    }
+  }, [chatMessages]);
+
+  useEffect(() => {
     // Annuler tout "leave_room" en attente si on remonte (Strict Mode)
     if ((window as any).leaveRoomTimeout) {
       clearTimeout((window as any).leaveRoomTimeout);
@@ -35,6 +56,8 @@ export default function RoomPage() {
     }
 
     if (isLoading || !user || !roomId) return;
+
+    setChatMessages([]);
 
     const socket = getSocket();
     connectSocket();
@@ -78,6 +101,10 @@ export default function RoomPage() {
       setError(data.message);
     };
 
+    const onRoomMessage = (message: RoomChatMessage) => {
+      setChatMessages((prev) => [...prev, message].slice(-100));
+    };
+
     if (socket.connected) {
       socket.emit("join_room", { roomId });
     }
@@ -88,6 +115,7 @@ export default function RoomPage() {
     socket.on("kicked_from_room", onKicked);
     socket.on("game_starting", onGameStarting);
     socket.on("error", onError);
+    socket.on("room_message", onRoomMessage);
 
     return () => {
       socket.off("connect", onConnect);
@@ -96,6 +124,7 @@ export default function RoomPage() {
       socket.off("kicked_from_room", onKicked);
       socket.off("game_starting", onGameStarting);
       socket.off("error", onError);
+      socket.off("room_message", onRoomMessage);
       
       // Ne quitte pas la salle si la partie est en cours
       if (roomStatusRef.current !== "PLAYING" && !skipLeaveRef.current) {
@@ -161,6 +190,22 @@ export default function RoomPage() {
   const canStart = isHost && hasMinPlayers && allReady && room?.quizId;
 
   const selectedQuiz = quizzes.find((q) => q.id === room?.quizId);
+
+  const handleSendMessage = (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!roomId) return;
+    const content = chatInput.trim();
+    if (!content) return;
+    const socket = getSocket();
+    socket.emit("room_message", { roomId, content });
+    setChatInput("");
+  };
+
+  const formatChatTime = (isoDate: string) => {
+    const date = new Date(isoDate);
+    if (Number.isNaN(date.getTime())) return "";
+    return date.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+  };
 
   return (
     <main className="flex flex-1 px-6 py-10">
@@ -232,6 +277,56 @@ export default function RoomPage() {
                     </div>
                   </div>
                 ))}
+              </div>
+
+              <div className="mt-6 p-6 bg-background/50 rounded-xl border border-border/30 flex flex-col h-80">
+                <h3 className="font-bold text-lg text-text">Chat de la salle</h3>
+                <div
+                  ref={chatListRef}
+                  className="mt-4 flex-1 overflow-y-auto space-y-4 pr-2"
+                  onScroll={() => {
+                    const chatList = chatListRef.current;
+                    if (!chatList) return;
+                    const distanceToBottom = chatList.scrollHeight - chatList.scrollTop - chatList.clientHeight;
+                    shouldAutoScrollRef.current = distanceToBottom < 40;
+                  }}
+                >
+                  {chatMessages.length === 0 ? (
+                    <p className="text-sm text-text-muted italic">Aucun message pour le moment.</p>
+                  ) : (
+                    chatMessages.map((message) => (
+                      <div key={message.id} className="flex items-start gap-3">
+                        <div className="w-8 h-8 rounded-full bg-secondary/20 flex items-center justify-center text-secondary font-bold">
+                          {message.username?.charAt(0).toUpperCase() || "?"}
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 text-xs text-text-muted">
+                            <span className="font-bold text-text">{message.username}</span>
+                            <span>{formatChatTime(message.createdAt)}</span>
+                          </div>
+                          <p className="text-sm text-text break-words">{message.content}</p>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+                <form onSubmit={handleSendMessage} className="mt-4 flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={chatInput}
+                    onChange={(e) => setChatInput(e.target.value)}
+                    placeholder="Ecrire un message..."
+                    maxLength={500}
+                    className="flex-1 bg-background border border-border/50 text-text px-3 py-2 rounded"
+                  />
+                  <button
+                    type="submit"
+                    disabled={!chatInput.trim()}
+                    className="px-4 py-2 font-bold bg-primary hover:bg-primary/90 text-background disabled:opacity-50 disabled:cursor-not-allowed rounded"
+                  >
+                    Envoyer
+                  </button>
+                </form>
               </div>
             </div>
 

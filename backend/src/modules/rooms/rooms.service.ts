@@ -54,6 +54,20 @@ export class RoomsService {
     return room;
   }
 
+  async ensurePlayerInRoom(roomId: string, userId: number) {
+    await this.getRoomById(roomId);
+
+    const player = await this.prisma.client.roomPlayer.findUnique({
+      where: { roomId_userId: { roomId, userId } },
+    });
+
+    if (!player) {
+      throw new BadRequestException("Vous n'etes pas dans la salle");
+    }
+
+    return player;
+  }
+
   async joinRoom(roomId: string, userId: number) {
     const room = await this.getRoomById(roomId);
 

@@ -230,6 +230,47 @@ export class RoomsGateway
     }
   }
 
+  @SubscribeMessage("room_message")
+  async handleRoomMessage(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { roomId: string; content: string }
+  ) {
+    try {
+      const user = client.data.user;
+      const roomId = data?.roomId;
+      const content = (data?.content || "").trim();
+
+      if (!roomId) {
+        client.emit("error", { message: "Room invalide" });
+        return;
+      }
+
+      if (!content) {
+        client.emit("error", { message: "Le message ne peut pas etre vide" });
+        return;
+      }
+
+      if (content.length > 500) {
+        client.emit("error", { message: "Le message est trop long" });
+        return;
+      }
+
+      await this.roomsService.ensurePlayerInRoom(roomId, user.id);
+
+      this.server.to(roomId).emit("room_message", {
+        id: `${Date.now()}-${user.id}-${Math.floor(Math.random() * 10000)}`,
+        userId: user.id,
+        username: user.username,
+        avatar_url: user.avatar_url ?? null,
+        content,
+        createdAt: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      this.logger.error(`Error in room_message: ${error.message}`);
+      client.emit("error", { message: error.message });
+    }
+  }
+
   @SubscribeMessage("kick_player")
   async handleKickPlayer(
     @ConnectedSocket() client: Socket,
