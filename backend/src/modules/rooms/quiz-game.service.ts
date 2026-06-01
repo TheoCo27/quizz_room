@@ -52,7 +52,7 @@ export class QuizGameService {
     }
 
     const questionDurationSec =
-      room.quiz.questionDurationSec === null
+      room.quiz.questionDurationSec === null || room.quiz.questionDurationSec === 0
         ? null
         : room.quiz.questionDurationSec && room.quiz.questionDurationSec > 0
           ? room.quiz.questionDurationSec

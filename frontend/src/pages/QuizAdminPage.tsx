@@ -110,7 +110,7 @@ export default function QuizAdminPage() {
     try {
       await createQuiz({
         title: title.trim(),
-        questionDurationSec: rule === "unlimited" ? null : rule,
+        questionDurationSec: rule === "unlimited" ? 0 : rule,
         questions: questions.map((question) => ({
           questionText: question.questionText,
           answers: question.options,

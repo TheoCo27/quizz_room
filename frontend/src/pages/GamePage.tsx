@@ -214,11 +214,11 @@ export default function GamePage() {
                     })}
                   </div>
 
-                  {!result && (
+                  {!result && selectedAnswer && (
                     <div className="mt-6 flex justify-center">
                       <button
                         onClick={handleSubmitAnswer}
-                        disabled={!selectedAnswer || hasSubmitted || timeLeft === 0}
+                        disabled={hasSubmitted || timeLeft === 0}
                         className="px-6 py-3 font-bold bg-primary hover:bg-primary/90 text-background disabled:opacity-50 disabled:cursor-not-allowed rounded"
                       >
                         {hasSubmitted ? "Reponse envoyee" : "Valider ma reponse"}
