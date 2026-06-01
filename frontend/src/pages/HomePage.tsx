@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   CyberBadge,
@@ -9,9 +10,44 @@ import {
 import PrimaryButton from "../components/ui/PrimaryButton";
 import SecondaryButton from "../components/ui/SecondaryButton";
 import { useAuthSession } from "../hooks/useAuthSession";
+import { getRooms } from "../services/rooms";
 
 export default function HomePage() {
   const { user, isLoading: isSessionLoading } = useAuthSession();
+  const [waitingPlayersCount, setWaitingPlayersCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (isSessionLoading || !user) {
+      setWaitingPlayersCount(null);
+      return;
+    }
+
+    let isMounted = true;
+
+    const fetchRooms = async () => {
+      try {
+        const rooms = await getRooms();
+        if (!isMounted) return;
+        const totalPlayers = rooms.reduce(
+          (sum, room) => sum + (room._count?.players ?? 0),
+          0,
+        );
+        setWaitingPlayersCount(totalPlayers);
+      } catch {
+        if (isMounted) {
+          setWaitingPlayersCount(null);
+        }
+      }
+    };
+
+    fetchRooms();
+    const interval = setInterval(fetchRooms, 5000);
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [isSessionLoading, user]);
   return (
     <main className="flex flex-1 px-6 py-10">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-8">
@@ -68,7 +104,13 @@ export default function HomePage() {
               configure tes regles avant le lancement.
             </p>
             <div className="mt-4 flex flex-wrap gap-2">
-              <CyberBadge variant="info">2 joueurs</CyberBadge>
+              <CyberBadge variant="info">
+                {typeof waitingPlayersCount === "number"
+                  ? waitingPlayersCount === 1
+                    ? "1 joueur"
+                    : `${waitingPlayersCount} joueurs`
+                  : "Joueurs en attente"}
+              </CyberBadge>
               <CyberBadge variant="warning">Classements</CyberBadge>
             </div>
             <div className="mt-6 flex flex-wrap gap-3">
