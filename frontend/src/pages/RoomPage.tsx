@@ -12,6 +12,7 @@ export default function RoomPage() {
   const { user, isLoading } = useAuthSession();
   const [room, setRoom] = useState<Room | null>(null);
   const roomStatusRef = React.useRef<string | null>(null);
+  const skipLeaveRef = React.useRef(false);
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [countdown, setCountdown] = useState<number | null>(null);
@@ -51,13 +52,13 @@ export default function RoomPage() {
     };
 
     const onRoomClosed = () => {
-      setError("La salle a été fermée.");
-      setTimeout(() => navigate("/lobby"), 3000);
+      skipLeaveRef.current = true;
+      navigate("/lobby");
     };
 
     const onKicked = () => {
-      setError("Vous avez été expulsé de la salle.");
-      setTimeout(() => navigate("/lobby"), 3000);
+      skipLeaveRef.current = true;
+      navigate("/lobby");
     };
 
     const onGameStarting = (data: { countdown: number }) => {
@@ -97,7 +98,7 @@ export default function RoomPage() {
       socket.off("error", onError);
       
       // Ne quitte pas la salle si la partie est en cours
-      if (roomStatusRef.current !== "PLAYING") {
+      if (roomStatusRef.current !== "PLAYING" && !skipLeaveRef.current) {
         (window as any).leaveRoomTimeout = setTimeout(() => {
           socket.emit("leave_room", { roomId });
         }, 500);
@@ -113,6 +114,18 @@ export default function RoomPage() {
     return <div className="p-10 text-center text-text">Non autorisé</div>;
   }
 
+  const handleLeaveRoom = () => {
+    if (!roomId) return;
+    skipLeaveRef.current = true;
+    if ((window as any).leaveRoomTimeout) {
+      clearTimeout((window as any).leaveRoomTimeout);
+      (window as any).leaveRoomTimeout = null;
+    }
+    const socket = getSocket();
+    socket.emit("leave_room", { roomId });
+    navigate("/lobby");
+  };
+
   const handleToggleReady = () => {
     const socket = getSocket();
     socket.emit("toggle_ready", { roomId });
@@ -121,6 +134,13 @@ export default function RoomPage() {
   const handleStartGame = () => {
     const socket = getSocket();
     socket.emit("start_game", { roomId });
+  };
+
+  const handleDeleteRoom = () => {
+    if (!roomId) return;
+    if (!window.confirm("Etes-vous sur de vouloir supprimer la salle ?")) return;
+    const socket = getSocket();
+    socket.emit("close_room", { roomId });
   };
 
   const handleQuizChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -157,12 +177,22 @@ export default function RoomPage() {
             <h1 className="cyber-title text-3xl text-text">
               {room?.name ? room.name : `Salle de ${room?.host?.username || "..."}`}
             </h1>
-            <button
-              onClick={() => navigate("/lobby")}
-              className="px-4 py-2 border border-border/50 text-text-muted hover:text-text hover:bg-background rounded"
-            >
-              Quitter la salle
-            </button>
+            <div className="flex items-center gap-3">
+              {isHost && (
+                <button
+                  onClick={handleDeleteRoom}
+                  className="px-4 py-2 border border-red-500/50 text-red-300 hover:text-red-200 hover:bg-red-900/30 rounded"
+                >
+                  Supprimer la salle
+                </button>
+              )}
+              <button
+                onClick={handleLeaveRoom}
+                className="px-4 py-2 border border-border/50 text-text-muted hover:text-text hover:bg-background rounded"
+              >
+                Quitter la salle
+              </button>
+            </div>
           </div>
 
           {error && (

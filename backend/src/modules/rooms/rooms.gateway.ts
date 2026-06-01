@@ -141,6 +141,27 @@ export class RoomsGateway
     }
   }
 
+  @SubscribeMessage("close_room")
+  async handleCloseRoom(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { roomId: string }
+  ) {
+    try {
+      const userId = client.data.user.id;
+      await this.roomsService.closeRoom(data.roomId, userId);
+
+      this.server.to(data.roomId).emit("room_closed");
+
+      const sockets = await this.server.in(data.roomId).fetchSockets();
+      for (const socket of sockets) {
+        socket.leave(data.roomId);
+      }
+    } catch (error: any) {
+      this.logger.error(`Error in close_room: ${error.message}`);
+      client.emit("error", { message: error.message });
+    }
+  }
+
   @SubscribeMessage("toggle_ready")
   async handleToggleReady(
     @ConnectedSocket() client: Socket,

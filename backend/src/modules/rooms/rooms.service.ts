@@ -135,6 +135,20 @@ export class RoomsService {
     return this.getRoomById(roomId);
   }
 
+  async closeRoom(roomId: string, userId: number) {
+    const room = await this.getRoomById(roomId);
+
+    if (room.hostId !== userId) {
+      throw new BadRequestException("Seul le createur peut supprimer la salle");
+    }
+
+    await this.prisma.client.room.delete({
+      where: { id: roomId },
+    });
+
+    return room;
+  }
+
   async toggleReady(roomId: string, userId: number) {
     const player = await this.prisma.client.roomPlayer.findUnique({
       where: { roomId_userId: { roomId, userId } },

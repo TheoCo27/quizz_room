@@ -64,10 +64,15 @@ export default function GamePage() {
       setTimeout(() => navigate(`/room/${roomId}`), 3000);
     };
 
+    const onRoomClosed = () => {
+      navigate("/lobby");
+    };
+
     socket.on("room_state_updated", onRoomStateUpdated);
     socket.on("question", onQuestion);
     socket.on("question_result", onQuestionResult);
     socket.on("game_ended", onGameEnded);
+    socket.on("room_closed", onRoomClosed);
     
     // Join room just in case they reloaded page
     if (socket.connected) {
@@ -81,6 +86,7 @@ export default function GamePage() {
       socket.off("question", onQuestion);
       socket.off("question_result", onQuestionResult);
       socket.off("game_ended", onGameEnded);
+      socket.off("room_closed", onRoomClosed);
     };
   }, [roomId, navigate]);
 
