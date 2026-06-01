@@ -3,8 +3,12 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { PrismaService } from '../../prisma/prisma.service';
 import { GameType, RoomStatus } from '../../../generated/prisma/client';
 
+const EMPTY_ROOM_CLEANUP_DELAY_MS = 15000;
+
 @Injectable()
 export class RoomsService {
+  private readonly cleanupTimers = new Map<string, NodeJS.Timeout>();
+
   constructor(private readonly prisma: PrismaService) {}
 
   async createRoom(hostId: number, gameType: GameType, maxPlayers: number = 5, name?: string) {
@@ -70,6 +74,7 @@ export class RoomsService {
 
   async joinRoom(roomId: string, userId: number) {
     const room = await this.getRoomById(roomId);
+    this.cancelEmptyRoomCleanup(roomId);
 
     const existingPlayer = await this.prisma.client.roomPlayer.findUnique({
       where: { roomId_userId: { roomId, userId } },
@@ -128,6 +133,7 @@ export class RoomsService {
 
     if (room.players.length === 0) {
       try {
+        this.cancelEmptyRoomCleanup(roomId);
         console.log(`[RoomsService] Deleting empty room ${roomId} after user ${userId} left.`);
         await this.prisma.client.room.delete({
           where: { id: roomId },
@@ -156,6 +162,7 @@ export class RoomsService {
       throw new BadRequestException("Seul le createur peut supprimer la salle");
     }
 
+    this.cancelEmptyRoomCleanup(roomId);
     await this.prisma.client.room.delete({
       where: { id: roomId },
     });
@@ -301,8 +308,19 @@ export class RoomsService {
 
     for (const rp of roomPlayers) {
       if (rp.room.status === RoomStatus.WAITING) {
-        const updatedRoom = await this.leaveRoom(rp.roomId, userId);
-        affectedRooms.push({ roomId: rp.roomId, room: updatedRoom, action: 'leave' });
+        await this.prisma.client.roomPlayer.update({
+          where: { id: rp.id },
+          data: { isConnected: false },
+        });
+
+        const room = await this.getRoomById(rp.roomId);
+        const hasConnectedPlayer = room.players.some((player) => player.isConnected);
+
+        if (!hasConnectedPlayer) {
+          this.scheduleEmptyRoomCleanup(rp.roomId);
+        }
+
+        affectedRooms.push({ roomId: rp.roomId, room, action: 'disconnect' });
       } else if (rp.room.status === RoomStatus.PLAYING) {
         await this.prisma.client.roomPlayer.update({
           where: { id: rp.id },
@@ -315,5 +333,45 @@ export class RoomsService {
     }
 
     return affectedRooms;
+  }
+
+  private scheduleEmptyRoomCleanup(roomId: string) {
+    if (this.cleanupTimers.has(roomId)) return;
+
+    const timeout = setTimeout(() => {
+      void this.cleanupEmptyRoom(roomId);
+    }, EMPTY_ROOM_CLEANUP_DELAY_MS);
+
+    this.cleanupTimers.set(roomId, timeout);
+  }
+
+  private cancelEmptyRoomCleanup(roomId: string) {
+    const timeout = this.cleanupTimers.get(roomId);
+    if (!timeout) return;
+
+    clearTimeout(timeout);
+    this.cleanupTimers.delete(roomId);
+  }
+
+  private async cleanupEmptyRoom(roomId: string) {
+    this.cleanupTimers.delete(roomId);
+
+    try {
+      const room = await this.prisma.client.room.findUnique({
+        where: { id: roomId },
+        include: { players: true },
+      });
+
+      if (!room) return;
+
+      const hasConnectedPlayer = room.players.some((player) => player.isConnected);
+      if (hasConnectedPlayer) return;
+
+      await this.prisma.client.room.delete({
+        where: { id: roomId },
+      });
+    } catch {
+      // Ignore cleanup errors or race conditions.
+    }
   }
 }
