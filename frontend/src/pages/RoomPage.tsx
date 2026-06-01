@@ -360,11 +360,13 @@ export default function RoomPage() {
                       <select
                         value={room?.quizId || ""}
                         onChange={handleQuizChange}
-                        className="w-full bg-background border border-border/50 text-text p-2 rounded"
+                        className="room-quiz-select w-full bg-background/90 border border-secondary/60 text-text p-2 rounded focus:outline-none focus:ring-2 focus:ring-secondary/40 focus:border-secondary shadow-[0_0_18px_rgba(56,189,248,0.15)]"
                       >
-                        <option value="" disabled>-- Choisir un quiz --</option>
+                        <option value="" disabled className="text-text-muted bg-background">-- Choisir un quiz --</option>
                         {quizzes.map(q => (
-                          <option key={q.id} value={q.id}>{q.title}</option>
+                          <option key={q.id} value={q.id} className="bg-background text-text">
+                            {q.title}
+                          </option>
                         ))}
                       </select>
                     ) : (

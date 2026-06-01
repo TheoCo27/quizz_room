@@ -190,6 +190,26 @@ select:disabled {
   color: rgba(0, 245, 255, 0.7);
 }
 
+.room-quiz-select {
+  color-scheme: dark;
+  background-color: rgba(7, 9, 16, 0.95);
+  border-color: rgba(0, 245, 255, 0.55);
+  box-shadow:
+    0 0 18px rgba(0, 245, 255, 0.2),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+.room-quiz-select option {
+  background-color: #0b0e18;
+  color: #e6f7ff;
+}
+
+.room-quiz-select option:checked,
+.room-quiz-select option:focus {
+  background-color: #141a2a;
+  color: #00f5ff;
+}
+
 @keyframes cyber-glitch {
   0% {
     transform: translate(-50%, -50%);
