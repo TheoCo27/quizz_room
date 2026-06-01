@@ -27,6 +27,17 @@ export class RoomsService {
     });
   }
 
+  async getWaitingRooms() {
+    return this.prisma.client.room.findMany({
+      where: { status: RoomStatus.WAITING },
+      include: {
+        host: { select: { id: true, username: true, avatar_url: true } },
+        _count: { select: { players: true } }
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
   async getRoomById(roomId: string) {
     const room = await this.prisma.client.room.findUnique({
       where: { id: roomId },

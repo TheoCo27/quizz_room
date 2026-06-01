@@ -35,9 +35,17 @@ export class RoomsGateway
 
   async handleConnection(client: Socket) {
     try {
-      const token =
+      let token =
         client.handshake.auth?.token ||
         (client.handshake.headers?.authorization || "").split(" ")[1];
+
+      if (!token && client.handshake.headers?.cookie) {
+        const cookies = client.handshake.headers.cookie.split(";").map(c => c.trim());
+        const accessCookie = cookies.find(c => c.startsWith("access_token="));
+        if (accessCookie) {
+          token = accessCookie.split("=")[1];
+        }
+      }
 
       if (!token) {
         this.logger.warn("No token provided for client " + client.id);
