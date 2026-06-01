@@ -57,7 +57,19 @@ export class RoomsService {
   async joinRoom(roomId: string, userId: number) {
     const room = await this.getRoomById(roomId);
 
+    const existingPlayer = await this.prisma.client.roomPlayer.findUnique({
+      where: { roomId_userId: { roomId, userId } },
+    });
+
     if (room.status !== RoomStatus.WAITING) {
+      if (room.status === RoomStatus.PLAYING && existingPlayer) {
+        // Player is reconnecting
+        await this.prisma.client.roomPlayer.update({
+          where: { id: existingPlayer.id },
+          data: { isConnected: true },
+        });
+        return this.getRoomById(roomId);
+      }
       throw new BadRequestException("La room n'est pas en attente");
     }
 
@@ -65,17 +77,19 @@ export class RoomsService {
       throw new BadRequestException("La limite de joueurs est atteinte");
     }
 
-    const existingPlayer = await this.prisma.client.roomPlayer.findUnique({
-      where: { roomId_userId: { roomId, userId } },
-    });
-
     if (!existingPlayer) {
       await this.prisma.client.roomPlayer.create({
         data: {
           roomId,
           userId,
           isReady: false,
+          isConnected: true,
         },
+      });
+    } else {
+      await this.prisma.client.roomPlayer.update({
+        where: { id: existingPlayer.id },
+        data: { isConnected: true },
       });
     }
 
@@ -268,10 +282,14 @@ export class RoomsService {
         });
 
         const room = await this.getRoomById(rp.roomId);
-        const connectedPlayers = room.players.filter(p => p.isConnected);
+        affectedRooms.push({ roomId: rp.roomId, room, action: 'disconnect' });
+      }
+    }
 
-        if (connectedPlayers.length <= 1) {
-          const finishedRoom = await this.endGame(rp.roomId);
+    return affectedRooms;
+  }
+}
+  const finishedRoom = await this.endGame(rp.roomId);
           affectedRooms.push({ roomId: rp.roomId, room: finishedRoom, action: 'end' });
         } else {
           affectedRooms.push({ roomId: rp.roomId, room, action: 'disconnect' });

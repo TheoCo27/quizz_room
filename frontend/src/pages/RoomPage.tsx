@@ -235,16 +235,22 @@ export default function RoomPage() {
                   </button>
 
                   {isHost && (
-                    <button
-                      onClick={handleStartGame}
-                      disabled={!canStart}
-                      className="px-4 py-3 font-bold w-full bg-primary hover:bg-primary/90 text-background disabled:opacity-50 disabled:cursor-not-allowed rounded"
-                    >
-                      Démarrer la partie
-                    </button>
-                  )}
-                  {isHost && !room?.quizId && (
-                    <p className="text-xs text-yellow-400 text-center">Veuillez sélectionner un quiz</p>
+                    <>
+                      <button
+                        onClick={handleStartGame}
+                        disabled={!canStart}
+                        className="px-4 py-3 font-bold w-full bg-primary hover:bg-primary/90 text-background disabled:opacity-50 disabled:cursor-not-allowed rounded"
+                      >
+                        Démarrer la partie
+                      </button>
+                      {!canStart && (
+                        <div className="text-xs text-yellow-400 text-center space-y-1">
+                          {(room?.players?.length || 0) < 2 && <p>Il faut au moins 2 joueurs.</p>}
+                          {!allReady && (room?.players?.length || 0) >= 2 && <p>Tous les joueurs doivent être prêts.</p>}
+                          {!room?.quizId && <p>Veuillez sélectionner un quiz.</p>}
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               </div>

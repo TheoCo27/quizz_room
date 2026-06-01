@@ -13,6 +13,7 @@ import { Server, Socket } from "socket.io";
 import { AuthService } from "../auth/auth.service";
 import { RoomsService } from "./rooms.service";
 import { JwtService } from "@nestjs/jwt";
+import { QuizGameService } from "./quiz-game.service";
 
 @WebSocketGateway({ cors: true, namespace: "/rooms" })
 export class RoomsGateway
@@ -27,6 +28,7 @@ export class RoomsGateway
     private readonly roomsService: RoomsService,
     private readonly authService: AuthService,
     private readonly jwtService: JwtService,
+    private readonly quizGameService: QuizGameService,
   ) {}
 
   afterInit(server: Server) {
@@ -162,12 +164,33 @@ export class RoomsGateway
   ) {
     try {
       const userId = client.data.user.id;
-      await this.roomsService.startGame(data.roomId, userId);
+      // Validates and updates status to PLAYING
+      const updatedRoom = await this.roomsService.startGame(data.roomId, userId);
       
       this.server.to(data.roomId).emit("game_starting", { countdown: 5 });
+      
+      // Delay to let frontend show countdown before navigating and getting the question
+      setTimeout(() => {
+        this.server.to(data.roomId).emit("room_state_updated", updatedRoom);
+        this.quizGameService.startGameLoop(data.roomId, this.server);
+      }, 5000);
+      
     } catch (error: any) {
       this.logger.error(`Error in start_game: ${error.message}`);
       client.emit("error", { message: error.message });
+    }
+  }
+
+  @SubscribeMessage("submit_answer")
+  async handleSubmitAnswer(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { roomId: string; answer: string }
+  ) {
+    try {
+      const userId = client.data.user.id;
+      this.quizGameService.submitAnswer(data.roomId, userId, data.answer);
+    } catch (error: any) {
+      this.logger.error(`Error in submit_answer: ${error.message}`);
     }
   }
 
