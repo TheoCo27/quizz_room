@@ -21,6 +21,7 @@ export type Room = {
   gameType: "QUIZ"; // update this as needed based on Prisma GameType
   status: "WAITING" | "PLAYING" | "FINISHED";
   maxPlayers: number;
+  quizId?: number | null;
   createdAt: string;
   host?: SafeUserRoom;
   players?: RoomPlayer[];

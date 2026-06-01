@@ -19,6 +19,7 @@ const proxyPaths = [
   "/users",
   "/scores",
   "/quizzes",
+  "/rooms",
 ];
 
 module.exports = {

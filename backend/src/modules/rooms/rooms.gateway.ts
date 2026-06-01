@@ -169,4 +169,46 @@ export class RoomsGateway
       client.emit("error", { message: error.message });
     }
   }
+
+  @SubscribeMessage("update_config")
+  async handleUpdateConfig(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { roomId: string; config: { quizId?: number; maxPlayers?: number } }
+  ) {
+    try {
+      const userId = client.data.user.id;
+      const updatedRoom = await this.roomsService.updateRoomConfig(data.roomId, userId, data.config);
+      this.server.to(data.roomId).emit("room_state_updated", updatedRoom);
+    } catch (error: any) {
+      this.logger.error(`Error in update_config: ${error.message}`);
+      client.emit("error", { message: error.message });
+    }
+  }
+
+  @SubscribeMessage("kick_player")
+  async handleKickPlayer(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { roomId: string; targetUserId: number }
+  ) {
+    try {
+      const userId = client.data.user.id;
+      const updatedRoom = await this.roomsService.kickPlayer(data.roomId, userId, data.targetUserId);
+      
+      // Notify the kicked user directly
+      const sockets = await this.server.in(data.roomId).fetchSockets();
+      for (const socket of sockets) {
+        if (socket.data?.user?.id === data.targetUserId) {
+          socket.emit("kicked_from_room");
+          socket.leave(data.roomId);
+        }
+      }
+
+      if (updatedRoom) {
+        this.server.to(data.roomId).emit("room_state_updated", updatedRoom);
+      }
+    } catch (error: any) {
+      this.logger.error(`Error in kick_player: ${error.message}`);
+      client.emit("error", { message: error.message });
+    }
+  }
 }
