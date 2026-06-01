@@ -12,7 +12,7 @@ export default function SectionHeader({
 }: SectionHeaderProps) {
   return (
     <h2
-      className={`mt-3 text-2xl font-semibold text-text-muted ${className}`}
+      className={`cyber-title mt-3 text-2xl text-text ${className}`}
       {...props}
     >
       {children}

@@ -30,18 +30,20 @@ export default function QuestionComposer({
 }: QuestionComposerProps) {
   return (
     <Section>
-      <SectionLabel className="text-slate-400">Créer une question</SectionLabel>
+      <SectionLabel className="text-text-muted">
+        Creer une question
+      </SectionLabel>
       <SectionHeader>Composer la manche</SectionHeader>
-      <p className="mt-2 text-sm ">
-        Écris la question, remplis les 4 options puis choisis la bonne réponse.
+      <p className="mt-2 text-sm text-text-muted">
+        Ecris la question, remplis les 4 options puis choisis la bonne reponse.
       </p>
 
       <label className="flex flex-col gap-1 mt-8" htmlFor="question-text">
         <span className="text-sm font-medium">Question</span>
         <textarea
           id="question-text"
-          className="mt-2 min-h-24 max-h-96 w-full rounded-xl border border-white/10 bg-bg px-4 py-3 placeholder:text-text/40 transition-colors duration-200 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
-          placeholder="Quel studio a crée Journey ?"
+          className="cyber-input mt-2 min-h-24 max-h-96 w-full"
+          placeholder="Quel studio a cree Journey ?"
           value={questionText}
           onChange={(event) => onQuestionTextChange(event.target.value)}
         />
@@ -57,8 +59,8 @@ export default function QuestionComposer({
               className={[
                 "rounded-3xl border px-4 py-4 transition",
                 isCorrect
-                  ? "border-success/40 bg-success/10 text-success"
-                  : "border-white/10 bg-bg/50 text-text-muted",
+                  ? "border-success/50 bg-success/10 text-success"
+                  : "border-white/10 bg-white/6 text-text-muted",
               ].join(" ")}
             >
               <div className="flex items-center justify-between">
@@ -73,10 +75,10 @@ export default function QuestionComposer({
                 </label>
                 <button
                   className={[
-                    "rounded-full px-3 py-1 text-xs font-bold uppercase transition-colors",
+                    "rounded-full border px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] transition-colors",
                     isCorrect
-                      ? "bg-success text-white border border-success"
-                      : "bg-white/10 text-text-muted border border-white/10 hover:bg-border/10 hover:text-text",
+                      ? "border-success/60 bg-success/15 text-success"
+                      : "border-white/10 bg-white/5 text-text-muted hover:border-primary/40 hover:text-text",
                   ].join(" ")}
                   type="button"
                   onClick={() => onCorrectAnswerChange(index)}
@@ -86,7 +88,8 @@ export default function QuestionComposer({
               </div>
               <Input
                 id={`option-${index + 1}`}
-                className={`mt-3 w-full ${isCorrect ? "focus:ring-success focus:border-success" : ""}`}
+                className={`mt-3 w-full ${isCorrect ? "border-success/40 focus:border-success" : ""
+                  }`}
                 placeholder={`Reponse ${index + 1}`}
                 value={option}
                 onChange={(event) => onOptionChange(index, event.target.value)}
@@ -97,7 +100,7 @@ export default function QuestionComposer({
       </div>
 
       {error ? (
-        <p className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+        <p className="mt-4 rounded-2xl border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger">
           {error}
         </p>
       ) : null}

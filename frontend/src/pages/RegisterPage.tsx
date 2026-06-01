@@ -1,6 +1,12 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import Card from "../components/Card";
+import {
+  CyberBadge,
+  CyberCard,
+  CyberPanel,
+  CyberProgress,
+  CyberStat,
+} from "../components/cyber";
 import Input from "../components/ui/input";
 import PrimaryButton from "../components/ui/PrimaryButton";
 import { getUserFacingErrorMessage } from "../services/api";
@@ -52,115 +58,152 @@ export default function RegisterPage() {
   };
 
   return (
-    <main className="flex flex-1 items-center justify-center px-[10%] py-6">
-      <Card className="w-full px-8 py-8">
-        <h1 className="mb-6 text-3xl font-semibold text-text">S'inscrire</h1>
-        <form
-          aria-busy={isSubmitting}
-          onSubmit={(event) => void handleSubmit(event)}
-          autoComplete="on"
-        >
-          <label
-            className="mb-2 block text-sm font-medium text-text/70"
-            htmlFor="register-email"
-          >
-            Email
-          </label>
-          <Input
-            name="email"
-            className="mb-4 w-full"
-            id="register-email"
-            type="email"
-            placeholder="email@exemple.com"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            disabled={isSubmitting}
-            autoComplete="email"
-            required
-          />
+    <main className="flex flex-1 px-6 py-10">
+      <div className="mx-auto grid w-full max-w-6xl gap-6 lg:grid-cols-[1.05fr_0.95fr]">
+        <CyberPanel className="rounded-4xl p-8">
+          <p className="cyber-eyebrow">ft_transcendence</p>
+          <h1 className="mt-3 cyber-title text-3xl text-text">
+            Cree ton identite
+          </h1>
+          <p className="mt-4 text-sm leading-7 text-text-muted">
+            Crée un profil pour acceder aux parties en direct, gerer ton
+            reseau d'amis et suivre tes statistiques.
+          </p>
+          <div className="mt-6 flex flex-wrap gap-2">
+            <CyberBadge variant="info">Profil public</CyberBadge>
+            <CyberBadge variant="success">Acces amis</CyberBadge>
+            <CyberBadge variant="warning">Stats avancees</CyberBadge>
+          </div>
+          <div className="mt-6 grid gap-4 sm:grid-cols-2">
+            <CyberStat label="Niveau" value="01" hint="Evolution" />
+            <CyberStat label="Region" value="EU-West" hint="Auto" />
+            <CyberStat label="Securite" value="Base" hint="2FA dispo" />
+            <CyberStat label="Matchs" value="0" hint="Demarrage" />
+          </div>
+          <CyberProgress className="mt-6" label="Initialisation" value={12} />
+        </CyberPanel>
 
-          <label
-            className="mb-2 block text-sm font-medium text-text/70"
-            htmlFor="register-username"
-          >
-            Pseudo
-          </label>
-          <Input
-            name="username"
-            className="mb-4 w-full"
-            id="register-username"
-            type="text"
-            placeholder="Ton pseudo"
-            value={username}
-            onChange={(event) => setUsername(event.target.value)}
-            disabled={isSubmitting}
-            minLength={AUTH_USERNAME_MIN_LENGTH}
-            maxLength={20}
-            autoComplete="username"
-            required
-          />
+        <CyberCard className="rounded-4xl p-8" accent="magenta">
+          <p className="cyber-eyebrow">Inscription</p>
+          <h2 className="mt-3 cyber-title text-2xl text-text">
+            S'inscrire
+          </h2>
+          <p className="mt-3 text-sm text-text-muted">
+            Ton pseudo doit contenir au moins {AUTH_USERNAME_MIN_LENGTH} caracteres.
+          </p>
 
-          <label
-            className="mb-2 block text-sm font-medium text-text/70"
-            htmlFor="register-password"
+          <form
+            aria-busy={isSubmitting}
+            onSubmit={(event) => void handleSubmit(event)}
+            autoComplete="on"
+            className="mt-6"
           >
-            Mot de passe
-          </label>
-          <Input
-            name="password"
-            className="mb-6 w-full"
-            id="register-password"
-            type="password"
-            placeholder={`Minimum ${AUTH_PASSWORD_MIN_LENGTH} caractères`}
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            aria-invalid={error ? "true" : "false"}
-            disabled={isSubmitting}
-            minLength={AUTH_PASSWORD_MIN_LENGTH}
-            autoComplete="new-password"
-            required
-          />
+            <label
+              className="mb-2 block text-sm font-medium text-text-muted"
+              htmlFor="register-email"
+            >
+              Email
+            </label>
+            <Input
+              name="email"
+              className="mb-4 w-full"
+              id="register-email"
+              type="email"
+              placeholder="email@exemple.com"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              disabled={isSubmitting}
+              autoComplete="email"
+              required
+            />
 
-          {error ? (
-            <p className="mb-4 text-sm text-red-300" role="alert">
-              {error}
+            <label
+              className="mb-2 block text-sm font-medium text-text-muted"
+              htmlFor="register-username"
+            >
+              Pseudo
+            </label>
+            <Input
+              name="username"
+              className="mb-4 w-full"
+              id="register-username"
+              type="text"
+              placeholder="Ton pseudo"
+              value={username}
+              onChange={(event) => setUsername(event.target.value)}
+              disabled={isSubmitting}
+              minLength={AUTH_USERNAME_MIN_LENGTH}
+              maxLength={20}
+              autoComplete="username"
+              required
+            />
+
+            <label
+              className="mb-2 block text-sm font-medium text-text-muted"
+              htmlFor="register-password"
+            >
+              Mot de passe
+            </label>
+            <Input
+              name="password"
+              className="mb-2 w-full"
+              id="register-password"
+              type="password"
+              placeholder={`Minimum ${AUTH_PASSWORD_MIN_LENGTH} caracteres`}
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              aria-invalid={error ? "true" : "false"}
+              disabled={isSubmitting}
+              minLength={AUTH_PASSWORD_MIN_LENGTH}
+              autoComplete="new-password"
+              required
+            />
+            <p className="mb-6 text-xs text-text-muted">
+              Au moins {AUTH_PASSWORD_MIN_LENGTH} caracteres avec une structure
+              solide.
             </p>
-          ) : null}
 
-          <PrimaryButton
-            className="w-full py-3 text-base"
-            disabled={isSubmitting}
-            type="submit"
-          >
-            {isSubmitting ? "Inscription..." : "Créer mon compte"}
-          </PrimaryButton>
-        </form>
+            {error ? (
+              <p className="mb-4 text-sm text-danger" role="alert">
+                {error}
+              </p>
+            ) : null}
 
-        <p className="mt-5 text-center text-sm text-text/70">
-          Déjà inscrit ?{" "}
-          <Link className="font-semibold underline" to="/login">
-            Se connecter
-          </Link>
-        </p>
+            <PrimaryButton
+              className="w-full py-3 text-base"
+              disabled={isSubmitting}
+              type="submit"
+            >
+              {isSubmitting ? "Inscription..." : "Creer mon compte"}
+            </PrimaryButton>
+          </form>
 
-        <p className="mt-4 text-center text-xs leading-6 text-text/60">
-          En creant un compte, vous acceptez nos{" "}
-          <Link
-            className="font-semibold underline underline-offset-4"
-            to="/conditions-utilisation"
-          >
-            conditions d'utilisation
-          </Link>{" "}
-          et notre{" "}
-          <Link
-            className="font-semibold underline underline-offset-4"
-            to="/politique-confidentialite"
-          >
-            politique de confidentialite
-          </Link>
-          .
-        </p>
-      </Card>
+          <p className="mt-5 text-center text-sm text-text-muted">
+            Deja inscrit ?{" "}
+            <Link className="font-semibold underline" to="/login">
+              Se connecter
+            </Link>
+          </p>
+
+          <p className="mt-4 text-center text-xs leading-6 text-text-muted">
+            En creant un compte, vous acceptez nos{" "}
+            <Link
+              className="font-semibold underline underline-offset-4"
+              to="/conditions-utilisation"
+            >
+              conditions d'utilisation
+            </Link>{" "}
+            et notre{" "}
+            <Link
+              className="font-semibold underline underline-offset-4"
+              to="/politique-confidentialite"
+            >
+              politique de confidentialite
+            </Link>
+            .
+          </p>
+        </CyberCard>
+      </div>
     </main>
   );
 }

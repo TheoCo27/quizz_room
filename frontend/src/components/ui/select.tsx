@@ -16,9 +16,9 @@ const Select = ({ className, min, max, ...props }: SelectProps) => {
     );
   }
   return (
-    <div className="relative w-full">
+    <div className="cyber-select">
       <select
-        className={`w-full appearance-none rounded-xl border border-white/10 bg-bg px-4 py-3 pr-11 placeholder:text-text/40 transition-colors duration-200 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary ${className ?? ""}`}
+        className={`cyber-input cyber-select__input ${className ?? ""}`.trim()}
         {...props}
       >
         {options}
@@ -27,7 +27,7 @@ const Select = ({ className, min, max, ...props }: SelectProps) => {
       <ChevronDown
         aria-hidden="true"
         strokeWidth={2}
-        className="pointer-events-none absolute right-4 top-1/2 size-4 -translate-y-1/2 text-white"
+        className="cyber-select__icon"
       />
     </div>
   );

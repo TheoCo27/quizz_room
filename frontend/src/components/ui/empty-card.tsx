@@ -10,7 +10,7 @@ export default function EmptyCard({
 }: EmptyCardProps) {
   return (
     <div
-      className={`mt-5 rounded-3xl border border-dashed border-white/18 bg-white/10 px-5 py-5 text-sm leading-7 text-white/75 ${className}`}
+      className={`cyber-card mt-5 rounded-3xl border-dashed border-white/20 bg-white/5 px-5 py-5 text-sm leading-7 text-text-muted ${className ?? ""}`}
       {...props}
     >
       {children}

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
+import { CyberCard, CyberPanel } from "../components/cyber";
 import FriendNetworkPanel, {
   type FriendNotice,
 } from "../components/Friends/FriendNetworkPanel";
@@ -261,9 +262,12 @@ export default function FriendsPage() {
   if (isLoading) {
     return (
       <main className="mx-auto flex w-full max-w-7xl flex-1 px-6 py-10 md:px-10">
-        <div className="w-full rounded-4xl border border-slate-900/10 bg-white/70 p-8 text-slate-600 shadow-[0_24px_70px_rgba(15,23,42,0.07)]">
-          Chargement de la page amis...
-        </div>
+        <CyberCard className="w-full p-8">
+          <p className="cyber-eyebrow">Amis</p>
+          <h1 className="mt-4 cyber-title text-xl text-text">
+            Chargement de la page amis...
+          </h1>
+        </CyberCard>
       </main>
     );
   }
@@ -271,14 +275,14 @@ export default function FriendsPage() {
   if (!user) {
     return (
       <main className="mx-auto flex w-full max-w-5xl flex-1 px-6 py-10 md:px-10">
-        <section className="w-full rounded-[2.5rem] border border-amber-200 bg-amber-50 p-8 text-amber-950 shadow-[0_24px_70px_rgba(15,23,42,0.07)]">
-          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-amber-800">
-            Amis
-          </p>
-          <h1 className="mt-4 text-4xl font-semibold">Connexion requise</h1>
-          <p className="mt-4 max-w-2xl text-base leading-8 text-amber-900/80">
-            Connecte-toi pour gérer ta liste d'amis et ouvrir des messages
-            privés.
+        <CyberPanel className="w-full rounded-[2.5rem] p-8">
+          <p className="cyber-eyebrow">Amis</p>
+          <h1 className="mt-4 cyber-title text-3xl text-text">
+            Connexion requise
+          </h1>
+          <p className="mt-4 max-w-2xl text-base leading-7 text-text-muted">
+            Connecte-toi pour gerer ta liste d'amis et ouvrir des messages
+            prives.
           </p>
           <div className="mt-6 flex flex-col gap-3 sm:flex-row">
             <Link to="/login">
@@ -288,7 +292,7 @@ export default function FriendsPage() {
               <SecondaryButton>S'inscrire</SecondaryButton>
             </Link>
           </div>
-        </section>
+        </CyberPanel>
       </main>
     );
   }

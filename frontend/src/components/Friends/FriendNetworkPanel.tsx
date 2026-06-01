@@ -5,7 +5,7 @@ import type {
   FriendOverview,
   PrivateConversationSummary,
 } from "../../services/users";
-import Avatar from "../Avatar";
+import { CyberAvatar, CyberBadge, CyberButton, CyberCard } from "../cyber";
 import Section from "../section";
 import SectionHeader from "../section-header";
 import SectionLabel from "../section-label";
@@ -80,49 +80,53 @@ export default function FriendNetworkPanel({
   return (
     <Section>
       {currentUser.isGuest ? (
-        <div className="mt-8 rounded-[1.75rem] border border-amber-200 bg-amber-50 px-6 py-5 text-amber-950">
-          <p className="text-sm font-semibold">Compte invité détecté</p>
-          <p className="mt-2 max-w-2xl text-sm leading-7 text-amber-900/85">
-            Les amis et les messages privés sont réservés aux comptes classiques
-            pour conserver ton reseau d'une session à l'autre.
+        <CyberCard className="mt-8 rounded-[1.75rem] p-6" accent="magenta">
+          <p className="cyber-eyebrow">Acces limite</p>
+          <h3 className="mt-2 cyber-title text-lg text-text">
+            Compte invite detecte
+          </h3>
+          <p className="mt-3 max-w-2xl text-sm leading-7 text-text-muted">
+            Les amis et les messages prives sont reserves aux comptes classiques
+            pour conserver ton reseau d'une session a l'autre.
           </p>
-          <div className="mt-4">
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <CyberBadge variant="warning">Invite</CyberBadge>
             <Link to="/register">
-              <PrimaryButton>Créer un compte classique</PrimaryButton>
+              <PrimaryButton>Creer un compte classique</PrimaryButton>
             </Link>
           </div>
-        </div>
+        </CyberCard>
       ) : (
         <>
-          <div className="rounded-3xl bg-slate-950 px-5 py-5 text-white">
+          <CyberCard className="rounded-3xl p-5" accent="cyan">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <h3 className="text-xl font-semibold">Liste d'amis</h3>
-                <p className="mt-2 text-sm leading-7 text-white/70">
-                  Ouvre une conversation privée ou consulte l'activité récente.
+                <h3 className="cyber-title text-lg text-text">Liste d'amis</h3>
+                <p className="mt-2 text-sm leading-7 text-text-muted">
+                  Ouvre une conversation privee ou consulte l'activite recente.
                 </p>
               </div>
-              <span className="rounded-full bg-white/10 px-4 py-2 text-sm text-white/80">
+              <CyberBadge variant="info">
                 {friendOverview?.friends.length ?? 0} contact
                 {(friendOverview?.friends.length ?? 0) > 1 ? "s" : ""}
-              </span>
+              </CyberBadge>
             </div>
 
             {friendsError ? (
-              <div className="mt-5 rounded-3xl bg-rose-500/15 px-5 py-4 text-sm text-rose-100">
+              <div className="mt-5 rounded-3xl border border-danger/30 bg-danger/10 px-5 py-4 text-sm text-danger">
                 {friendsError}
               </div>
             ) : null}
 
             {isFriendsLoading && !friendOverview ? (
-              <div className="mt-5 rounded-3xl bg-white/10 px-5 py-5 text-sm text-white/75">
+              <div className="mt-5 rounded-3xl border border-white/10 bg-white/5 px-5 py-5 text-sm text-text-muted">
                 Chargement de ta liste d'amis...
               </div>
             ) : null}
 
             {!friendsError &&
-            !isFriendsLoading &&
-            (friendOverview?.friends.length ?? 0) === 0 ? (
+              !isFriendsLoading &&
+              (friendOverview?.friends.length ?? 0) === 0 ? (
               <EmptyCard className="py-3!">
                 Aucun ami pour l'instant. Commence par rechercher un joueur avec
                 son pseudo.
@@ -138,11 +142,10 @@ export default function FriendNetworkPanel({
                 return (
                   <div
                     key={friend.id}
-                    className={`w-full rounded-3xl border px-5 py-4 text-left transition ${
-                      isSelected
-                        ? "border-white/35 bg-white/16"
-                        : "border-white/10 bg-white/8 hover:bg-white/12"
-                    }`}
+                    className={`w-full rounded-3xl border px-5 py-4 text-left transition ${isSelected
+                        ? "border-primary/50 bg-white/12"
+                        : "border-white/10 bg-white/6 hover:bg-white/10"
+                      }`}
                   >
                     <button
                       className="w-full text-left"
@@ -151,46 +154,44 @@ export default function FriendNetworkPanel({
                     >
                       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                         <div className="flex items-center gap-4">
-                          <Avatar
+                          <CyberAvatar
                             alt={`Photo de profil de ${friend.username}`}
                             avatarUrl={friend.avatar_url}
-                            className="h-12 w-12"
-                            fallbackClassName="text-lg"
+                            size="md"
+                            status={friend.status}
                             username={friend.username}
                           />
                           <div>
                             <div className="flex flex-wrap items-center gap-2">
-                              <p className="text-lg font-semibold text-white">
+                              <p className="text-lg font-semibold text-text">
                                 {friend.username}
                               </p>
                               {summary?.unreadCount ? (
-                                <span className="rounded-full bg-amber-300 px-2.5 py-1 text-xs font-semibold text-slate-950">
+                                <CyberBadge variant="warning">
                                   {summary.unreadCount} nouveau
                                   {summary.unreadCount > 1 ? "x" : ""}
-                                </span>
+                                </CyberBadge>
                               ) : null}
                             </div>
-                            <p className="mt-1 text-sm text-white/65">
+                            <p className="mt-1 text-sm text-text-muted">
                               {formatStatus(friend.status)} • inscrit le{" "}
                               {formatDate(friend.createdAt)}
                             </p>
-                            <p className="mt-2 text-sm text-white/70">
+                            <p className="mt-2 text-sm text-text-muted">
                               {summary?.lastMessagePreview ??
                                 "Aucun message privé échangé pour le moment."}
                             </p>
                           </div>
                         </div>
                         <div className="flex flex-col items-start gap-2 md:items-end">
-                          <span
-                            className={`inline-flex w-fit rounded-full px-4 py-2 text-sm font-medium ${
-                              friend.status === "online"
-                                ? "bg-emerald-400/15 text-emerald-200"
-                                : "bg-white/10 text-white/75"
-                            }`}
+                          <CyberBadge
+                            variant={
+                              friend.status === "online" ? "success" : "info"
+                            }
                           >
                             {formatStatus(friend.status)}
-                          </span>
-                          <span className="text-sm text-white/65">
+                          </CyberBadge>
+                          <span className="text-sm text-text-muted">
                             {summary?.lastMessageAt
                               ? `Dernier message le ${formatDate(summary.lastMessageAt)}`
                               : "Conversation vide"}
@@ -199,32 +200,35 @@ export default function FriendNetworkPanel({
                       </div>
                     </button>
                     <div className="mt-4 flex justify-end">
-                      <SecondaryButton
-                        className="border-rose-200 bg-rose-50 text-rose-700 hover:border-rose-300 hover:bg-rose-100"
+                      <CyberButton
+                        className="px-4 py-2 text-xs"
+                        glow={false}
+                        size="sm"
+                        variant="danger"
                         disabled={isRemoving}
                         onClick={() => void onFriendRemoval(friend.id)}
                       >
                         {isRemoving ? "Retrait..." : "Retirer"}
-                      </SecondaryButton>
+                      </CyberButton>
                     </div>
                   </div>
                 );
               })}
             </div>
-          </div>
+          </CyberCard>
 
-          <Section className="mt-5 bg-white/5">
+          <Section className="mt-5">
             <form
               aria-busy={isSendingRequest}
               onSubmit={(event) => void onFriendSubmit(event)}
             >
               <SectionHeader className="mt-0!">Ajouter un ami</SectionHeader>
-              <p className="mt-2 text-sm leading-7">
+              <p className="mt-2 text-sm leading-7 text-text-muted">
                 Saisis un pseudo exact. Si ce joueur t'a déjà envoyé une
                 demande, elle sera acceptée automatiquement.
               </p>
               <label
-                className="mb-2 mt-5 block text-sm font-medium"
+                className="mb-2 mt-5 block text-sm font-medium text-text-muted"
                 htmlFor="friend-username"
               >
                 Pseudo du joueur
@@ -250,11 +254,10 @@ export default function FriendNetworkPanel({
               </PrimaryButton>
               {friendNotice ? (
                 <p
-                  className={`mt-4 rounded-[1.25rem] px-4 py-3 text-sm ${
-                    friendNotice.kind === "success"
-                      ? "bg-emerald-50 text-emerald-800"
-                      : "bg-rose-50 text-rose-700"
-                  }`}
+                  className={`mt-4 rounded-[1.25rem] border px-4 py-3 text-sm ${friendNotice.kind === "success"
+                      ? "border-success/30 bg-success/10 text-success"
+                      : "border-danger/30 bg-danger/10 text-danger"
+                    }`}
                   role="alert"
                 >
                   {friendNotice.message}
@@ -263,23 +266,23 @@ export default function FriendNetworkPanel({
             </form>
           </Section>
 
-          <Section className="mt-5 bg-white/5">
+          <Section className="mt-5">
             <div className="flex items-center justify-between gap-3">
-              <SectionLabel className="text-slate-400">
+              <SectionLabel className="text-text-muted">
                 Demandes recues
               </SectionLabel>
               {isFriendsLoading ? (
-                <span className="text-xs text-slate-500">Chargement...</span>
+                <span className="text-xs text-text-muted">Chargement...</span>
               ) : null}
             </div>
 
             {friendsError ? (
-              <p className="mt-4 text-sm text-rose-700">{friendsError}</p>
+              <p className="mt-4 text-sm text-danger">{friendsError}</p>
             ) : null}
 
             {!friendsError &&
-            !isFriendsLoading &&
-            (friendOverview?.receivedRequests.length ?? 0) === 0 ? (
+              !isFriendsLoading &&
+              (friendOverview?.receivedRequests.length ?? 0) === 0 ? (
               <EmptyCard>Aucune demande en attente pour le moment.</EmptyCard>
             ) : null}
 
@@ -287,14 +290,14 @@ export default function FriendNetworkPanel({
               {friendOverview?.receivedRequests.map((request) => (
                 <div
                   key={request.id}
-                  className="rounded-[1.25rem] border border-white/10 bg-white/8 px-4 py-4 text-white shadow-[0_16px_40px_rgba(15,23,42,0.18)]"
+                  className="rounded-[1.25rem] border border-white/10 bg-white/6 px-4 py-4 text-text shadow-[0_16px_40px_rgba(15,23,42,0.18)]"
                 >
                   <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div>
-                      <p className="text-base font-semibold text-white">
+                      <p className="text-base font-semibold text-text">
                         {request.user.username}
                       </p>
-                      <p className="mt-1 text-sm text-white/65">
+                      <p className="mt-1 text-sm text-text-muted">
                         Recue le {formatDate(request.createdAt)}
                       </p>
                     </div>
@@ -326,13 +329,13 @@ export default function FriendNetworkPanel({
             </div>
           </Section>
 
-          <Section className="mt-5 bg-white/5">
-            <SectionLabel className="text-slate-400">
+          <Section className="mt-5">
+            <SectionLabel className="text-text-muted">
               Demandes envoyées
             </SectionLabel>
 
             {!isFriendsLoading &&
-            (friendOverview?.sentRequests.length ?? 0) === 0 ? (
+              (friendOverview?.sentRequests.length ?? 0) === 0 ? (
               <EmptyCard>Aucune demande envoyée en attente.</EmptyCard>
             ) : null}
 
@@ -340,12 +343,12 @@ export default function FriendNetworkPanel({
               {friendOverview?.sentRequests.map((request) => (
                 <div
                   key={request.id}
-                  className="rounded-[1.25rem] border border-white/10 bg-white/8 px-4 py-4 text-white shadow-[0_16px_40px_rgba(15,23,42,0.18)]"
+                  className="rounded-[1.25rem] border border-white/10 bg-white/6 px-4 py-4 text-text shadow-[0_16px_40px_rgba(15,23,42,0.18)]"
                 >
-                  <p className="text-base font-semibold text-white">
+                  <p className="text-base font-semibold text-text">
                     {request.user.username}
                   </p>
-                  <p className="mt-1 text-sm text-white/65">
+                  <p className="mt-1 text-sm text-text-muted">
                     En attente depuis le {formatDate(request.createdAt)}
                   </p>
                 </div>
