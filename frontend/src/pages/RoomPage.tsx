@@ -253,9 +253,19 @@ export default function RoomPage() {
                 {room?.players?.map((player) => (
                   <div key={player.id} className="flex items-center justify-between p-4 bg-background/50 rounded-xl border border-border/30">
                     <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-full bg-secondary/20 flex items-center justify-center text-secondary font-bold">
-                        {player.user?.username?.charAt(0).toUpperCase() || "?"}
-                      </div>
+                      {player.user?.avatar_url ? (
+                        <img
+                          src={player.user.avatar_url}
+                          alt={player.user.username || "Avatar"}
+                          className="w-10 h-10 rounded-full object-cover border border-secondary/20"
+                          loading="lazy"
+                          referrerPolicy="no-referrer"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-secondary/20 flex items-center justify-center text-secondary font-bold">
+                          {player.user?.username?.charAt(0).toUpperCase() || "?"}
+                        </div>
+                      )}
                       <span className="font-bold text-text">
                         {player.user?.username || `Joueur ${player.userId}`}
                         {player.userId === room.hostId && " 👑"}
@@ -296,9 +306,19 @@ export default function RoomPage() {
                   ) : (
                     chatMessages.map((message) => (
                       <div key={message.id} className="flex items-start gap-3">
-                        <div className="w-8 h-8 rounded-full bg-secondary/20 flex items-center justify-center text-secondary font-bold">
-                          {message.username?.charAt(0).toUpperCase() || "?"}
-                        </div>
+                        {message.avatar_url ? (
+                          <img
+                            src={message.avatar_url}
+                            alt={message.username || "Avatar"}
+                            className="w-8 h-8 rounded-full object-cover border border-secondary/20"
+                            loading="lazy"
+                            referrerPolicy="no-referrer"
+                          />
+                        ) : (
+                          <div className="w-8 h-8 rounded-full bg-secondary/20 flex items-center justify-center text-secondary font-bold">
+                            {message.username?.charAt(0).toUpperCase() || "?"}
+                          </div>
+                        )}
                         <div className="flex-1">
                           <div className="flex items-center gap-2 text-xs text-text-muted">
                             <span className="font-bold text-text">{message.username}</span>
