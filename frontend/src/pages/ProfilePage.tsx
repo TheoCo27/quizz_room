@@ -1,10 +1,15 @@
-import { ChevronDown } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import Avatar from "../components/Avatar";
-import Section from "../components/section";
-import SectionHeader from "../components/section-header";
-import SectionLabel from "../components/section-label";
+import {
+  CyberAvatar,
+  CyberBadge,
+  CyberCard,
+  CyberPanel,
+  CyberProgress,
+  CyberSelect,
+  CyberStat,
+  CyberTabs,
+} from "../components/cyber";
 import Input from "../components/ui/input";
 import PrimaryButton from "../components/ui/PrimaryButton";
 import SecondaryButton from "../components/ui/SecondaryButton";
@@ -19,6 +24,14 @@ const SUPPORTED_AVATAR_TYPES = new Set([
   "image/png",
   "image/webp",
 ]);
+
+type ProfileTabId =
+  | "overview"
+  | "history"
+  | "achievements"
+  | "social"
+  | "security"
+  | "preferences";
 
 function formatJoinedDate(createdAt: string) {
   try {
@@ -78,6 +91,7 @@ export default function ProfilePage() {
     kind: "success" | "error";
     message: string;
   } | null>(null);
+  const [activeTab, setActiveTab] = useState<ProfileTabId>("overview");
 
   useEffect(() => {
     if (!user) {
@@ -90,23 +104,26 @@ export default function ProfilePage() {
 
   if (isLoading) {
     return (
-      <main className="mx-auto flex w-full max-w-5xl flex-1 px-6 py-10 md:px-10">
-        <div className="w-full rounded-4xl border border-slate-900/10 bg-white/70 p-8 text-slate-600 shadow-[0_24px_70px_rgba(15,23,42,0.07)]">
-          Chargement du profil...
-        </div>
+      <main className="mx-auto flex w-full max-w-6xl flex-1 px-6 py-10 md:px-10">
+        <CyberCard className="w-full p-8">
+          <p className="cyber-eyebrow">Profil</p>
+          <h1 className="mt-4 cyber-title text-xl text-text">
+            Chargement du profil...
+          </h1>
+        </CyberCard>
       </main>
     );
   }
 
   if (!user) {
     return (
-      <main className="mx-auto flex w-full max-w-5xl flex-1 px-6 py-10 md:px-10">
-        <section className="w-full rounded-[2.5rem] border border-amber-200 bg-amber-50 p-8 text-amber-950 shadow-[0_24px_70px_rgba(15,23,42,0.07)]">
-          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-amber-800">
-            Profil
-          </p>
-          <h1 className="mt-4 text-4xl font-semibold">Connexion requise</h1>
-          <p className="mt-4 max-w-2xl text-base leading-8 text-amber-900/80">
+      <main className="mx-auto flex w-full max-w-6xl flex-1 px-6 py-10 md:px-10">
+        <CyberPanel className="w-full rounded-[2.5rem] p-8">
+          <p className="cyber-eyebrow">Profil</p>
+          <h1 className="mt-4 cyber-title text-3xl text-text">
+            Connexion requise
+          </h1>
+          <p className="mt-4 max-w-2xl text-base leading-7 text-text-muted">
             Connecte-toi pour accéder à ta page profil et retrouver tes
             informations de session.
           </p>
@@ -118,7 +135,7 @@ export default function ProfilePage() {
               <SecondaryButton>S'inscrire</SecondaryButton>
             </Link>
           </div>
-        </section>
+        </CyberPanel>
       </main>
     );
   }
@@ -263,210 +280,421 @@ export default function ProfilePage() {
   const hasProfileChanges =
     profileUsername.trim() !== user.username || profileStatus !== user.status;
 
-  return (
-    <main className="mx-auto flex w-full max-w-5xl flex-1 px-6 py-10 md:px-10">
-      <section className="grid w-full gap-6 md:grid-cols-[0.8fr_1.2fr]">
-        <Section className="bg-slate-950 text-white flex flex-col items-start">
-          <SectionLabel className="text-white/55">Profil joueur</SectionLabel>
-          <Avatar
-            alt={`Photo de profil de ${user.username}`}
-            avatarUrl={user.avatar_url}
-            className="mt-6 h-24 w-24 ring-4 ring-white/10"
-            fallbackClassName="text-3xl"
-            username={user.username}
-          />
-          <h1 className="mt-6 text-3xl font-semibold">{user.username}</h1>
-          <p className="mt-2 text-sm text-white/70">
-            {formatIdentityLabel(user)}
-          </p>
-          <div className="mt-8 flex flex-wrap gap-3 text-sm">
-            <span className="rounded-full bg-white/10 px-4 py-2">
-              Statut: {user.status}
-            </span>
-            <span className="rounded-full bg-white/10 px-4 py-2">
-              {user.isGuest ? "Mode invite" : "Compte classique"}
-            </span>
-            <span className="rounded-full bg-white/10 px-4 py-2">
-              Membre depuis {formatJoinedDate(user.createdAt)}
-            </span>
-          </div>
-        </Section>
+  const profileTabs: Array<{ id: ProfileTabId; label: string }> = [
+    { id: "overview", label: "Vue d'ensemble" },
+    { id: "history", label: "Historique" },
+    { id: "achievements", label: "Succes" },
+    { id: "social", label: "Social" },
+    { id: "security", label: "Securite" },
+    { id: "preferences", label: "Preferences" },
+  ];
 
-        <Section>
-          <SectionLabel className="text-slate-400">Informations</SectionLabel>
-          <SectionHeader>Ton espace personnel</SectionHeader>
-          <p className="mt-4 max-w-2xl text-sm text-white/70">
-            Cette page rassemble les informations de la session courante. Elle
-            sert de point d'entree simple depuis la navbar, avec ton pseudo
-            toujours accessible.
-          </p>
-
-          <dl className="mt-8 grid gap-4">
-            <div className="rounded-3xl bg-white/5 px-5 py-4 border border-white/10">
-              <dt className="text-xs font-semibold uppercase tracking-[0.2em] text-white/60">
-                Photo de profil
-              </dt>
-              <dd className="mt-4">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-                  <Avatar
-                    alt={`Photo de profil de ${user.username}`}
-                    avatarUrl={user.avatar_url}
-                    className="h-20 w-20 ring-2 ring-white/10"
-                    fallbackClassName="text-2xl"
-                    username={user.username}
-                  />
-                  <div className="flex-1">
-                    <p className="text-sm leading-7 text-white/70">
-                      Ajoute une image JPG, PNG ou WEBP jusqu'a 2 Mo.
-                    </p>
-                    <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-                      <input
-                        ref={fileInputRef}
-                        accept="image/jpeg,image/png,image/webp"
-                        className="hidden"
-                        id="profile-avatar-upload"
-                        onChange={(event) => void handleAvatarFileChange(event)}
-                        type="file"
-                      />
-                      <PrimaryButton
-                        disabled={isAvatarSubmitting}
-                        onClick={() => fileInputRef.current?.click()}
-                        type="button"
-                      >
-                        {isAvatarSubmitting
-                          ? "Mise a jour..."
-                          : "Changer la photo"}
-                      </PrimaryButton>
-                      <SecondaryButton
-                        disabled={isAvatarSubmitting || !user.avatar_url}
-                        onClick={() => void handleAvatarRemove()}
-                        type="button"
-                      >
-                        Supprimer
-                      </SecondaryButton>
-                    </div>
-                    {avatarNotice ? (
-                      <p
-                        className={`mt-4 text-sm ${
-                          avatarNotice.kind === "success"
-                            ? "text-emerald-400"
-                            : "text-rose-400"
-                        }`}
-                        role="alert"
-                      >
-                        {avatarNotice.message}
-                      </p>
-                    ) : null}
-                  </div>
+  const tabContent = {
+    overview: (
+      <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+        <div className="flex flex-col gap-6">
+          <CyberCard className="rounded-4xl p-6">
+            <p className="cyber-eyebrow">Identite</p>
+            <h3 className="mt-2 cyber-title text-sm text-text">
+              Avatar et presence
+            </h3>
+            <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-center">
+              <CyberAvatar
+                alt={`Photo de profil de ${user.username}`}
+                avatarUrl={user.avatar_url}
+                size="md"
+                status={user.status}
+                username={user.username}
+              />
+              <div className="flex-1">
+                <p className="text-sm leading-7 text-text-muted">
+                  Ajoute une image JPG, PNG ou WEBP jusqu'a 2 Mo.
+                </p>
+                <div className="mt-4 flex flex-wrap gap-3">
+                  <PrimaryButton
+                    disabled={isAvatarSubmitting}
+                    onClick={() => fileInputRef.current?.click()}
+                    type="button"
+                  >
+                    {isAvatarSubmitting
+                      ? "Mise a jour..."
+                      : "Changer la photo"}
+                  </PrimaryButton>
+                  <SecondaryButton
+                    disabled={isAvatarSubmitting || !user.avatar_url}
+                    onClick={() => void handleAvatarRemove()}
+                    type="button"
+                  >
+                    Supprimer
+                  </SecondaryButton>
                 </div>
-              </dd>
-            </div>
-            <div className="rounded-3xl bg-white/5 px-5 py-4 border border-white/10">
-              <dt className="text-xs font-semibold uppercase tracking-[0.2em] text-white/60">
-                {user.isGuest ? "Type de compte" : "Email"}
-              </dt>
-              <dd className="mt-2 text-lg font-semibold text-white">
-                {user.isGuest ? "Invite" : user.email}
-              </dd>
-            </div>
-            <Section className="bg-white/5">
-              <SectionLabel className="text-slate-400">
-                Pseudo et statut
-              </SectionLabel>
-              <dd className="mt-4">
-                <form
-                  className="space-y-4"
-                  onSubmit={(event) => void handleProfileSubmit(event)}
-                >
-                  <label className="block">
-                    <span className="text-sm font-medium">Pseudo</span>
-                    <Input
-                      className="mt-2 w-full"
-                      type="text"
-                      maxLength={20}
-                      minLength={AUTH_USERNAME_MIN_LENGTH}
-                      onChange={(event) =>
-                        setProfileUsername(event.target.value)
-                      }
-                      placeholder="Nouveau pseudo"
-                      value={profileUsername}
-                    />
-                  </label>
-
-                  <label className="block">
-                    <span className="text-sm font-medium">Statut</span>
-                    <div className="relative w-full mt-2">
-                      <select
-                        className="w-full appearance-none rounded-xl border border-white/10 bg-bg px-4 py-3 pr-11 placeholder:text-text/40 transition-colors duration-200 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                        onChange={(event) =>
-                          setProfileStatus(
-                            event.target.value as "online" | "offline",
-                          )
-                        }
-                        value={profileStatus}
-                      >
-                        <option value="online">online</option>
-                        <option value="offline">offline</option>
-                      </select>
-                      <ChevronDown
-                        aria-hidden="true"
-                        strokeWidth={2}
-                        className="pointer-events-none absolute right-4 top-1/2 size-4  -translate-y-1/2 text-white"
-                      />
-                    </div>
-                  </label>
-
-                  <div className="flex flex-col gap-3 sm:flex-row">
-                    <PrimaryButton
-                      disabled={isProfileSubmitting || !hasProfileChanges}
-                      type="submit"
-                    >
-                      {isProfileSubmitting
-                        ? "Enregistrement..."
-                        : "Enregistrer"}
-                    </PrimaryButton>
-                    <SecondaryButton
-                      disabled={isProfileSubmitting || !hasProfileChanges}
-                      onClick={handleProfileReset}
-                      type="button"
-                    >
-                      Annuler
-                    </SecondaryButton>
-                  </div>
-
-                  {profileNotice ? (
-                    <p
-                      className={`text-sm ${
-                        profileNotice.kind === "success"
-                          ? "text-emerald-600"
-                          : "text-rose-700"
+                {avatarNotice ? (
+                  <p
+                    className={`mt-4 text-sm ${avatarNotice.kind === "success"
+                        ? "text-success"
+                        : "text-danger"
                       }`}
-                      role="alert"
-                    >
-                      {profileNotice.message}
-                    </p>
-                  ) : null}
-                </form>
+                    role="alert"
+                  >
+                    {avatarNotice.message}
+                  </p>
+                ) : null}
+              </div>
+            </div>
+          </CyberCard>
+
+          <CyberCard className="rounded-4xl p-6" accent="lime">
+            <p className="cyber-eyebrow">Profil</p>
+            <h3 className="mt-2 cyber-title text-sm text-text">
+              Pseudo et statut
+            </h3>
+            <form
+              className="mt-4 space-y-4"
+              onSubmit={(event) => void handleProfileSubmit(event)}
+            >
+              <label className="block">
+                <span className="text-sm font-medium">Pseudo</span>
+                <Input
+                  className="mt-2 w-full"
+                  type="text"
+                  maxLength={20}
+                  minLength={AUTH_USERNAME_MIN_LENGTH}
+                  onChange={(event) => setProfileUsername(event.target.value)}
+                  placeholder="Nouveau pseudo"
+                  value={profileUsername}
+                />
+              </label>
+
+              <label className="block">
+                <span className="text-sm font-medium">Statut</span>
+                <div className="mt-2">
+                  <CyberSelect
+                    onChange={(event) =>
+                      setProfileStatus(
+                        event.target.value as "online" | "offline",
+                      )
+                    }
+                    value={profileStatus}
+                  >
+                    <option value="online">online</option>
+                    <option value="offline">offline</option>
+                  </CyberSelect>
+                </div>
+              </label>
+
+              <div className="flex flex-wrap gap-3">
+                <PrimaryButton
+                  disabled={isProfileSubmitting || !hasProfileChanges}
+                  type="submit"
+                >
+                  {isProfileSubmitting
+                    ? "Enregistrement..."
+                    : "Enregistrer"}
+                </PrimaryButton>
+                <SecondaryButton
+                  disabled={isProfileSubmitting || !hasProfileChanges}
+                  onClick={handleProfileReset}
+                  type="button"
+                >
+                  Annuler
+                </SecondaryButton>
+              </div>
+
+              {profileNotice ? (
+                <p
+                  className={`text-sm ${profileNotice.kind === "success"
+                      ? "text-success"
+                      : "text-danger"
+                    }`}
+                  role="alert"
+                >
+                  {profileNotice.message}
+                </p>
+              ) : null}
+            </form>
+          </CyberCard>
+        </div>
+
+        <CyberCard className="rounded-4xl p-6">
+          <p className="cyber-eyebrow">Compte</p>
+          <h3 className="mt-2 cyber-title text-sm text-text">Identifiants</h3>
+          <dl className="mt-4 space-y-4 text-sm text-text-muted">
+            <div>
+              <dt className="text-xs uppercase tracking-[0.2em] text-text-muted">
+                Type de compte
+              </dt>
+              <dd className="mt-1 text-base text-text">
+                {user.isGuest ? "Invite" : "Classique"}
               </dd>
-            </Section>
+            </div>
+            <div>
+              <dt className="text-xs uppercase tracking-[0.2em] text-text-muted">
+                Email
+              </dt>
+              <dd className="mt-1 text-base text-text">
+                {user.isGuest ? "Non renseigne" : user.email}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs uppercase tracking-[0.2em] text-text-muted">
+                Membre depuis
+              </dt>
+              <dd className="mt-1 text-base text-text">
+                {formatJoinedDate(user.createdAt)}
+              </dd>
+            </div>
           </dl>
-        </Section>
-        <Section className="md:col-span-2">
-          <SectionLabel className="text-slate-400">Social</SectionLabel>
-          <SectionHeader>Amis et messages prives</SectionHeader>
-          <p className="mt-4 max-w-3xl text-base">
-            Tu peux ajouter des amis pour discuter en privé ou voir quand ils
-            sont en ligne.
-          </p>
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+
+          <div className="mt-6">
+            <p className="text-xs uppercase tracking-[0.2em] text-text-muted">
+              Acces rapide
+            </p>
+            <div className="mt-3 flex flex-col gap-2">
+              <Link to="/conditions-utilisation">
+                <SecondaryButton className="w-full">
+                  Conditions d'utilisation
+                </SecondaryButton>
+              </Link>
+              <Link to="/politique-confidentialite">
+                <SecondaryButton className="w-full">
+                  Politique de confidentialite
+                </SecondaryButton>
+              </Link>
+            </div>
+          </div>
+        </CyberCard>
+      </div>
+    ),
+    history: (
+      <CyberCard className="rounded-4xl p-6">
+        <p className="cyber-eyebrow">Historique</p>
+        <h3 className="mt-2 cyber-title text-sm text-text">
+          Dernieres parties
+        </h3>
+        <p className="mt-2 text-sm text-text-muted">
+          Les derniers matchs apparaitront ici, avec filtres par mode et par
+          resultat.
+        </p>
+        <ul className="mt-5 space-y-3 text-sm text-text">
+          {["Match 01", "Match 02", "Match 03"].map((label) => (
+            <li
+              key={label}
+              className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3"
+            >
+              <span>{label}</span>
+              <CyberBadge variant="info">En attente</CyberBadge>
+            </li>
+          ))}
+        </ul>
+      </CyberCard>
+    ),
+    achievements: (
+      <CyberCard className="rounded-4xl p-6">
+        <p className="cyber-eyebrow">Gamification</p>
+        <h3 className="mt-2 cyber-title text-sm text-text">
+          Succes et badges
+        </h3>
+        <p className="mt-2 text-sm text-text-muted">
+          Ce module accueillera les badges, rangs et classements globaux.
+        </p>
+        <div className="mt-6 flex flex-wrap gap-2">
+          <CyberBadge variant="info">Badge alpha</CyberBadge>
+          <CyberBadge variant="warning">Victoire rapide</CyberBadge>
+          <CyberBadge variant="success">Serie x3</CyberBadge>
+          <CyberBadge variant="danger">Elite saison</CyberBadge>
+        </div>
+      </CyberCard>
+    ),
+    social: (
+      <CyberCard className="rounded-4xl p-6">
+        <p className="cyber-eyebrow">Social</p>
+        <h3 className="mt-2 cyber-title text-sm text-text">
+          Amis et messages
+        </h3>
+        <p className="mt-2 text-sm text-text-muted">
+          Retrouve la liste d'amis en ligne et tes conversations privees.
+        </p>
+        <div className="mt-6 flex flex-wrap gap-3">
+          <Link to="/friends">
+            <PrimaryButton>Ouvrir la page amis</PrimaryButton>
+          </Link>
+          <Link to="/">
+            <SecondaryButton>Retourner a l'accueil</SecondaryButton>
+          </Link>
+        </div>
+      </CyberCard>
+    ),
+    security: (
+      <CyberCard className="rounded-4xl p-6">
+        <p className="cyber-eyebrow">Securite</p>
+        <h3 className="mt-2 cyber-title text-sm text-text">
+          Sessions et protection
+        </h3>
+        <p className="mt-2 text-sm text-text-muted">
+          Controle tes sessions actives et ajoute une couche 2FA.
+        </p>
+        <div className="mt-5 flex flex-wrap gap-3">
+          <CyberBadge variant="warning">2FA inactif</CyberBadge>
+          <CyberBadge variant="info">Sessions: 1</CyberBadge>
+        </div>
+        <div className="mt-6 flex flex-wrap gap-3">
+          <SecondaryButton disabled>Configurer 2FA</SecondaryButton>
+          <SecondaryButton disabled>Voir les sessions</SecondaryButton>
+        </div>
+      </CyberCard>
+    ),
+    preferences: (
+      <CyberCard className="rounded-4xl p-6">
+        <p className="cyber-eyebrow">Preferences</p>
+        <h3 className="mt-2 cyber-title text-sm text-text">
+          Accessibilite et langue
+        </h3>
+        <p className="mt-2 text-sm text-text-muted">
+          Les options i18n et acces clavier seront configurees ici.
+        </p>
+        <div className="mt-5 grid gap-4 md:grid-cols-2">
+          <label className="block text-sm">
+            <span className="text-text-muted">Langue</span>
+            <div className="mt-2">
+              <CyberSelect disabled>
+                <option>Francais</option>
+                <option>English</option>
+                <option>Espanol</option>
+              </CyberSelect>
+            </div>
+          </label>
+          <div>
+            <span className="text-sm text-text-muted">
+              Accessibilite
+            </span>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <CyberBadge variant="success">Focus visible</CyberBadge>
+              <CyberBadge variant="info">ARIA actifs</CyberBadge>
+              <CyberBadge variant="warning">Contraste A verifier</CyberBadge>
+            </div>
+          </div>
+        </div>
+      </CyberCard>
+    ),
+  };
+
+  return (
+    <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-8 px-6 py-10 md:px-10">
+      <input
+        ref={fileInputRef}
+        accept="image/jpeg,image/png,image/webp"
+        className="hidden"
+        id="profile-avatar-upload"
+        onChange={(event) => void handleAvatarFileChange(event)}
+        type="file"
+      />
+
+      <section className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
+        <CyberPanel className="rounded-4xl p-6">
+          <p className="cyber-eyebrow">Profil joueur</p>
+          <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-center">
+            <CyberAvatar
+              alt={`Photo de profil de ${user.username}`}
+              avatarUrl={user.avatar_url}
+              size="lg"
+              status={user.status}
+              username={user.username}
+            />
+            <div>
+              <h1 className="cyber-title text-2xl text-text">
+                {user.username}
+              </h1>
+              <p className="mt-2 text-sm text-text-muted">
+                {formatIdentityLabel(user)}
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <CyberBadge
+                  variant={user.status === "online" ? "success" : "neutral"}
+                >
+                  Statut: {user.status}
+                </CyberBadge>
+                <CyberBadge variant="info">
+                  {user.isGuest ? "Mode invite" : "Compte classique"}
+                </CyberBadge>
+                <CyberBadge variant="warning">
+                  Membre depuis {formatJoinedDate(user.createdAt)}
+                </CyberBadge>
+              </div>
+            </div>
+          </div>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <PrimaryButton
+              disabled={isAvatarSubmitting}
+              onClick={() => fileInputRef.current?.click()}
+              type="button"
+            >
+              {isAvatarSubmitting ? "Mise a jour..." : "Changer avatar"}
+            </PrimaryButton>
             <Link to="/friends">
-              <PrimaryButton>Ouvrir la page amis</PrimaryButton>
-            </Link>
-            <Link to="/">
-              <SecondaryButton>Retourner a l'accueil</SecondaryButton>
+              <SecondaryButton>Reseau d'amis</SecondaryButton>
             </Link>
           </div>
-        </Section>
+        </CyberPanel>
+
+        <CyberCard className="rounded-4xl p-6" accent="magenta">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="cyber-eyebrow">Synchronisation</p>
+              <h2 className="mt-2 cyber-title text-lg text-text">
+                Noyau joueur
+              </h2>
+              <p className="mt-2 text-sm text-text-muted">
+                Statistiques et evenements en temps reel pour les sessions
+                actives.
+              </p>
+            </div>
+            <CyberBadge variant="info">Temps reel</CyberBadge>
+          </div>
+          <div className="mt-6 grid gap-4 sm:grid-cols-2">
+            <CyberStat
+              label="Parties jouees"
+              value="--"
+              hint="Stats a venir"
+            />
+            <CyberStat
+              label="Taux de victoire"
+              value="--%"
+              hint="Module historique"
+            />
+            <CyberStat
+              label="Classement"
+              value="#--"
+              hint="Leaderboard"
+            />
+            <CyberStat
+              label="XP"
+              value="64/100"
+              hint="Progression"
+            />
+          </div>
+          <CyberProgress className="mt-6" label="Experience" value={64} />
+        </CyberCard>
+      </section>
+
+      <section className="flex flex-col gap-4">
+        <CyberTabs
+          tabs={profileTabs}
+          activeTab={activeTab}
+          onChange={setActiveTab}
+        />
+        <div className="space-y-6">
+          {profileTabs.map((tab) => (
+            <div
+              key={tab.id}
+              id={`tab-panel-${tab.id}`}
+              role="tabpanel"
+              aria-labelledby={`tab-${tab.id}`}
+              hidden={activeTab !== tab.id}
+            >
+              {tabContent[tab.id as keyof typeof tabContent]}
+            </div>
+          ))}
+        </div>
       </section>
     </main>
   );

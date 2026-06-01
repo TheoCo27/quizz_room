@@ -26,7 +26,7 @@ services:
           "CMD",
           "node",
           "-e",
-          "const url = process.env.FRONTEND_ORIGIN || 'https://localhost:3000'; fetch(url).then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))",
+          "const url = 'https://localhost:3000'; fetch(url).then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))",
         ]
       interval: 10s
       timeout: 5s

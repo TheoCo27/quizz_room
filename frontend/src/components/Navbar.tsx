@@ -49,7 +49,7 @@ export default function Navbar() {
   }, [isUserMenuOpen]);
 
   return (
-    <nav className="sticky top-0 z-20 border-b border-slate-900/8 bg-surface text-text backdrop-blur">
+    <nav className="sticky top-0 z-20 border-b border-white/10 bg-surface text-text backdrop-blur">
       <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-6 py-4 md:px-10">
         <Link className="flex items-center gap-3" to="/">
           <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-bg text-sm font-extrabold tracking-[0.2em] text-text-muted">
@@ -122,7 +122,7 @@ export default function Navbar() {
             </div>
           ) : (
             <div className="flex items-center gap-2 md:gap-4 w-full">
-              <Link className="text-sm font-medium text-slate-700" to="/login">
+              <Link className="text-sm font-medium text-text-muted" to="/login">
                 Se connecter
               </Link>
               <PrimaryButton

@@ -14,11 +14,11 @@ export default function QuizSetupCard({
 }: QuizSetupCardProps) {
   return (
     <Section>
-      <SectionLabel className="text-slate-400">Setup Quiz</SectionLabel>
+      <SectionLabel className="text-text-muted">Setup quiz</SectionLabel>
       <SectionHeader>Nom du quiz</SectionHeader>
-      <p className="mt-2 max-w-2xl text-sm ">
-        Donne une identité claire à ton quiz. Ce titre servira de repère dans
-        l’administration et les futurs parcours de jeu.
+      <p className="mt-2 max-w-2xl text-sm text-text-muted">
+        Donne une identite claire a ton quiz. Ce titre servira de repere dans
+        l'administration et les futurs parcours de jeu.
       </p>
 
       <label className="flex flex-col gap-2 mt-11" htmlFor="quiz-title">

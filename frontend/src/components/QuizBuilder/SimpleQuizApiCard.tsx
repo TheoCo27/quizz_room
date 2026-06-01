@@ -4,11 +4,13 @@ import {
   type SimpleQuizApiCategory,
   type SimpleQuizApiDifficulty,
 } from "../../services/simpleQuizApi";
+import { CyberBadge, CyberSelect } from "../cyber";
 import Section from "../section";
 import SectionHeader from "../section-header";
 import SectionLabel from "../section-label";
 import PrimaryButton from "../ui/PrimaryButton";
 import SecondaryButton from "../ui/SecondaryButton";
+import Input from "../ui/input";
 
 type SimpleQuizQuestionDraft = {
   questionText: string;
@@ -29,27 +31,27 @@ const CATEGORIES: Array<{
   value: SimpleQuizApiCategory;
   label: string;
 }> = [
-  { value: "tv_cinema", label: "TV et cinéma" },
-  { value: "culture_generale", label: "Culture générale" },
-  { value: "musique", label: "Musique" },
-  { value: "art_litterature", label: "Arts et littérature" },
-  { value: "actu_politique", label: "Actualités et politique" },
-  { value: "sport", label: "Sport" },
-  { value: "jeux_videos", label: "Jeux vidéo" },
-  { value: "histoire", label: "Histoire" },
-  { value: "geographie", label: "Géographie" },
-  { value: "science", label: "Science" },
-  { value: "gastronomie", label: "Gastronomie" },
-];
+    { value: "tv_cinema", label: "TV et cinéma" },
+    { value: "culture_generale", label: "Culture générale" },
+    { value: "musique", label: "Musique" },
+    { value: "art_litterature", label: "Arts et littérature" },
+    { value: "actu_politique", label: "Actualités et politique" },
+    { value: "sport", label: "Sport" },
+    { value: "jeux_videos", label: "Jeux vidéo" },
+    { value: "histoire", label: "Histoire" },
+    { value: "geographie", label: "Géographie" },
+    { value: "science", label: "Science" },
+    { value: "gastronomie", label: "Gastronomie" },
+  ];
 
 const DIFFICULTIES: Array<{
   value: SimpleQuizApiDifficulty;
   label: string;
 }> = [
-  { value: "facile", label: "Facile" },
-  { value: "normal", label: "Normal" },
-  { value: "difficile", label: "Difficile" },
-];
+    { value: "facile", label: "Facile" },
+    { value: "normal", label: "Normal" },
+    { value: "difficile", label: "Difficile" },
+  ];
 
 function getCategoryLabel(category: SimpleQuizApiCategory) {
   return CATEGORIES.find((item) => item.value === category)?.label ?? category;
@@ -145,27 +147,24 @@ export default function SimpleQuizApiCard({
   };
 
   return (
-    <Section className="relative overflow-hidden border border-amber-200/20 bg-[linear-gradient(135deg,rgba(30,41,59,0.98),rgba(59,130,246,0.20),rgba(239,68,111,0.18))]">
-      <div className="pointer-events-none absolute -right-20 -top-16 h-44 w-44 rounded-full bg-amber-300/20 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-20 -left-16 h-40 w-40 rounded-full bg-rose-300/20 blur-3xl" />
+    <Section className="relative overflow-hidden">
+      <div className="pointer-events-none absolute -right-20 -top-16 h-44 w-44 rounded-full bg-primary/20 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-20 -left-16 h-40 w-40 rounded-full bg-secondary/20 blur-3xl" />
 
       <div className="relative z-10">
-        <SectionLabel className="text-amber-100/80">
-          Simple Quiz API
-        </SectionLabel>
+        <SectionLabel className="text-text-muted">Simple Quiz API</SectionLabel>
         <SectionHeader>Importer un quiz prêt à jouer</SectionHeader>
-        <p className="mt-2 max-w-2xl text-sm text-white/75">
+        <p className="mt-2 max-w-2xl text-sm text-text-muted">
           Choisis un thème et une difficulté, puis récupère des questions de
           l'API communautaire pour remplir ton quiz en une fois.
         </p>
 
         <div className="mt-6 grid gap-4 md:grid-cols-2">
           <label className="space-y-2">
-            <span className="text-xs font-semibold uppercase tracking-[0.22em] text-amber-100/75">
+            <span className="text-xs font-semibold uppercase tracking-[0.22em] text-text-muted">
               Thème
             </span>
-            <select
-              className="w-full rounded-2xl border border-white/10 bg-slate-950/65 px-4 py-3 text-sm text-white outline-none transition focus:border-amber-200 focus:ring-1 focus:ring-amber-200"
+            <CyberSelect
               value={category}
               onChange={(event) =>
                 setCategory(event.target.value as SimpleQuizApiCategory)
@@ -177,15 +176,14 @@ export default function SimpleQuizApiCard({
                   {item.label}
                 </option>
               ))}
-            </select>
+            </CyberSelect>
           </label>
 
           <label className="space-y-2">
-            <span className="text-xs font-semibold uppercase tracking-[0.22em] text-amber-100/75">
+            <span className="text-xs font-semibold uppercase tracking-[0.22em] text-text-muted">
               Difficulté
             </span>
-            <select
-              className="w-full rounded-2xl border border-white/10 bg-slate-950/65 px-4 py-3 text-sm text-white outline-none transition focus:border-amber-200 focus:ring-1 focus:ring-amber-200"
+            <CyberSelect
               value={difficulty}
               onChange={(event) =>
                 setDifficulty(event.target.value as SimpleQuizApiDifficulty)
@@ -197,15 +195,14 @@ export default function SimpleQuizApiCard({
                   {item.label}
                 </option>
               ))}
-            </select>
+            </CyberSelect>
           </label>
 
           <label className="space-y-2 md:col-span-2">
-            <span className="text-xs font-semibold uppercase tracking-[0.22em] text-amber-100/75">
+            <span className="text-xs font-semibold uppercase tracking-[0.22em] text-text-muted">
               Nombre de questions
             </span>
-            <input
-              className="w-full rounded-2xl border border-white/10 bg-slate-950/65 px-4 py-3 text-sm text-white outline-none transition focus:border-amber-200 focus:ring-1 focus:ring-amber-200"
+            <Input
               type="number"
               min={1}
               max={20}
@@ -216,25 +213,21 @@ export default function SimpleQuizApiCard({
           </label>
         </div>
 
-        <div className="mt-5 flex flex-wrap items-center gap-2 text-xs text-white/70">
-          <span className="rounded-full border border-white/10 bg-white/8 px-3 py-1">
+        <div className="mt-5 flex flex-wrap items-center gap-2 text-xs text-text-muted">
+          <CyberBadge variant="info">
             {currentQuestionCount} question{currentQuestionCount > 1 ? "s" : ""}{" "}
             dans le quiz
-          </span>
-          <span className="rounded-full border border-amber-200/20 bg-amber-200/10 px-3 py-1 text-amber-100">
-            {selectedCategoryLabel}
-          </span>
-          <span className="rounded-full border border-amber-200/20 bg-amber-200/10 px-3 py-1 text-amber-100">
-            {selectedDifficultyLabel}
-          </span>
+          </CyberBadge>
+          <CyberBadge variant="warning">{selectedCategoryLabel}</CyberBadge>
+          <CyberBadge variant="warning">{selectedDifficultyLabel}</CyberBadge>
         </div>
 
         {error ? (
-          <p className="mt-4 rounded-2xl border border-rose-300/25 bg-rose-300/10 px-4 py-3 text-sm text-rose-100">
+          <p className="mt-4 rounded-2xl border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger">
             {error}
           </p>
         ) : lastImportedCount ? (
-          <p className="mt-4 rounded-2xl border border-emerald-300/20 bg-emerald-300/10 px-4 py-3 text-sm text-emerald-50">
+          <p className="mt-4 rounded-2xl border border-success/30 bg-success/10 px-4 py-3 text-sm text-success">
             {lastImportedCount} question{lastImportedCount > 1 ? "s" : ""}{" "}
             importée
             {lastImportedCount > 1 ? "s" : ""} depuis l'API.

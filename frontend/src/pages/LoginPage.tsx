@@ -1,6 +1,13 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import Card from "../components/Card";
+import {
+  CyberBadge,
+  CyberButton,
+  CyberCard,
+  CyberPanel,
+  CyberProgress,
+  CyberStat,
+} from "../components/cyber";
 import Input from "../components/ui/input";
 import PrimaryButton from "../components/ui/PrimaryButton";
 import SecondaryButton from "../components/ui/SecondaryButton";
@@ -89,156 +96,189 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="flex flex-1 items-center justify-center px-[10%] py-6">
-      <Card className="w-full px-8 py-8">
-        <h1 className="mb-3 text-3xl font-semibold text-text">Se connecter</h1>
-        <p className="mb-6 text-sm leading-7 text-text/70">
-          Connecte-toi avec ton compte ou entre rapidement en invite avec un
-          pseudo unique.
-        </p>
-        {oauthError ? (
-          <p className="mb-4 rounded-2xl border border-amber-400/30 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-            {oauthError}
+    <main className="flex flex-1 px-6 py-10">
+      <div className="mx-auto grid w-full max-w-6xl gap-6 lg:grid-cols-[1.05fr_0.95fr]">
+        <CyberPanel className="rounded-4xl p-8">
+          <p className="cyber-eyebrow">ft_transcendence</p>
+          <h1 className="mt-3 cyber-title text-3xl text-text">
+            Acces au reseau
+          </h1>
+          <p className="mt-4 text-sm leading-7 text-text-muted">
+            Connecte-toi pour acceder aux parties en temps reel, a la messagerie
+            privee et aux outils de creation de quiz.
           </p>
-        ) : null}
-        <form
-          aria-busy={isSubmitting}
-          onSubmit={(event) => void handleSubmit(event)}
-          autoComplete="on"
-        >
-          <label
-            className="mb-2 block text-sm font-medium text-text/70"
-            htmlFor="login-email"
-          >
-            Email
-          </label>
-          <Input
-            className="mb-4 w-full"
-            name="email"
-            id="login-email"
-            type="email"
-            placeholder="email@exemple.com"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            disabled={isSubmitting}
-            autoComplete="email"
-            required
-          />
+          <div className="mt-6 flex flex-wrap gap-2">
+            <CyberBadge variant="info">Temps reel</CyberBadge>
+            <CyberBadge variant="success">Sessions securisees</CyberBadge>
+            <CyberBadge variant="warning">Chat actif</CyberBadge>
+          </div>
+          <div className="mt-6 grid gap-4 sm:grid-cols-2">
+            <CyberStat label="Latence cible" value="50ms" hint="Optimisee" />
+            <CyberStat label="Stabilite" value="99.8%" hint="Surveillance" />
+            <CyberStat label="Region" value="EU-West" hint="Auto" />
+            <CyberStat label="Signal" value="Vert" hint="Flux ok" />
+          </div>
+          <CyberProgress className="mt-6" label="Integrite du flux" value={88} />
+        </CyberPanel>
 
-          <label
-            className="mb-2 block text-sm font-medium text-text/70"
-            htmlFor="login-password"
-          >
-            Mot de passe
-          </label>
-          <Input
-            className="mb-6 w-full"
-            name="password"
-            id="login-password"
-            type="password"
-            placeholder="Mot de passe"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            aria-invalid={error ? "true" : "false"}
-            disabled={isSubmitting}
-            autoComplete="current-password"
-            required
-          />
+        <CyberCard className="rounded-4xl p-8" accent="magenta">
+          <p className="cyber-eyebrow">Acces</p>
+          <h2 className="mt-3 cyber-title text-2xl text-text">
+            Se connecter
+          </h2>
+          <p className="mt-3 text-sm text-text-muted">
+            Utilise ton compte principal ou entre en mode invite avec un pseudo
+            unique.
+          </p>
 
-          {error ? (
-            <p className="mb-4 text-sm text-red-300" role="alert">
-              {error}
+          {oauthError ? (
+            <p className="mt-5 rounded-2xl border border-warning/40 bg-warning/10 px-4 py-3 text-sm text-warning">
+              {oauthError}
             </p>
           ) : null}
 
-          <PrimaryButton
-            className="w-full py-3 text-base"
-            disabled={isSubmitting}
-            type="submit"
+          <form
+            aria-busy={isSubmitting}
+            onSubmit={(event) => void handleSubmit(event)}
+            autoComplete="on"
+            className="mt-6"
           >
-            {isSubmitting ? "Connexion..." : "Se connecter"}
-          </PrimaryButton>
-        </form>
+            <label
+              className="mb-2 block text-sm font-medium text-text-muted"
+              htmlFor="login-email"
+            >
+              Email
+            </label>
+            <Input
+              className="mb-4 w-full"
+              name="email"
+              id="login-email"
+              type="email"
+              placeholder="email@exemple.com"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              disabled={isSubmitting}
+              autoComplete="email"
+              required
+            />
 
-        <button
-          className="mt-4 inline-flex w-full items-center justify-center rounded-md border border-slate-900/15 bg-black/90 px-6 py-3 text-sm font-semibold text-foreground transition hover:border-slate-900/30 hover:text-foreground/90 hover:bg-black/50"
-          // href={googleAuthUrl}
-          onClick={() => (window.location.href = googleAuthUrl)}
-        >
-          Continuer avec Google
-        </button>
+            <label
+              className="mb-2 block text-sm font-medium text-text-muted"
+              htmlFor="login-password"
+            >
+              Mot de passe
+            </label>
+            <Input
+              className="mb-6 w-full"
+              name="password"
+              id="login-password"
+              type="password"
+              placeholder="Mot de passe"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              aria-invalid={error ? "true" : "false"}
+              disabled={isSubmitting}
+              autoComplete="current-password"
+              required
+            />
 
-        <div className="my-6 flex items-center gap-4">
-          <div className="h-px flex-1 bg-slate-500" />
-          <span className="text-xs font-semibold uppercase text-slate-400">
-            ou
-          </span>
-          <div className="h-px flex-1 bg-slate-500" />
-        </div>
+            {error ? (
+              <p className="mb-4 text-sm text-danger" role="alert">
+                {error}
+              </p>
+            ) : null}
 
-        <form
-          aria-busy={isGuestSubmitting}
-          onSubmit={(event) => void handleGuestSubmit(event)}
-          autoComplete="off"
-        >
-          <label
-            className="mb-2 block text-sm font-medium text-text/70"
-            htmlFor="guest-username"
+            <PrimaryButton
+              className="w-full py-3 text-base"
+              disabled={isSubmitting}
+              type="submit"
+            >
+              {isSubmitting ? "Connexion..." : "Se connecter"}
+            </PrimaryButton>
+          </form>
+
+          <CyberButton
+            className="mt-4 w-full py-3 text-base"
+            glow={false}
+            type="button"
+            variant="ghost"
+            onClick={() => (window.location.href = googleAuthUrl)}
           >
-            Entrer comme invite
-          </label>
-          <Input
-            className="mb-4 w-full"
-            id="guest-username"
-            name="guest_username"
-            type="text"
-            placeholder="Pseudo unique"
-            value={guestUsername}
-            onChange={(event) => setGuestUsername(event.target.value)}
-            disabled={isGuestSubmitting}
-            minLength={AUTH_USERNAME_MIN_LENGTH}
-            maxLength={20}
+            Continuer avec Google
+          </CyberButton>
+
+          <div className="my-6 flex items-center gap-4">
+            <div className="h-px flex-1 bg-white/10" />
+            <span className="text-xs font-semibold uppercase text-text-muted">
+              ou
+            </span>
+            <div className="h-px flex-1 bg-white/10" />
+          </div>
+
+          <form
+            aria-busy={isGuestSubmitting}
+            onSubmit={(event) => void handleGuestSubmit(event)}
             autoComplete="off"
-            required
-          />
-
-          <SecondaryButton
-            className="w-full justify-center py-3 text-base"
-            disabled={isGuestSubmitting}
-            type="submit"
           >
-            {isGuestSubmitting
-              ? "Connexion invite..."
-              : "Continuer en invité"}
-          </SecondaryButton>
-        </form>
+            <label
+              className="mb-2 block text-sm font-medium text-text-muted"
+              htmlFor="guest-username"
+            >
+              Entrer comme invite
+            </label>
+            <Input
+              className="mb-4 w-full"
+              id="guest-username"
+              name="guest_username"
+              type="text"
+              placeholder="Pseudo unique"
+              value={guestUsername}
+              onChange={(event) => setGuestUsername(event.target.value)}
+              disabled={isGuestSubmitting}
+              minLength={AUTH_USERNAME_MIN_LENGTH}
+              maxLength={20}
+              autoComplete="off"
+              required
+            />
 
-        <p className="mt-5 text-center text-sm text-text/70">
-          Pas de compte ?{" "}
-          <Link className="font-semibold underline" to="/register">
-            S'inscrire
-          </Link>
-        </p>
+            <SecondaryButton
+              className="w-full justify-center py-3 text-base"
+              disabled={isGuestSubmitting}
+              type="submit"
+            >
+              {isGuestSubmitting
+                ? "Connexion invite..."
+                : "Continuer en invite"}
+            </SecondaryButton>
+          </form>
 
-        <p className="mt-4 text-center text-xs leading-6 text-text/60">
-          Les informations sur l'utilisation du service sont disponibles dans
-          nos{" "}
-          <Link
-            className="font-semibold underline underline-offset-4"
-            to="/conditions-utilisation"
-          >
-            conditions d'utilisation
-          </Link>{" "}
-          et notre{" "}
-          <Link
-            className="font-semibold underline underline-offset-4"
-            to="/politique-confidentialite"
-          >
-            politique de confidentialite
-          </Link>
-          .
-        </p>
-      </Card>
+          <p className="mt-5 text-center text-sm text-text-muted">
+            Pas de compte ?{" "}
+            <Link className="font-semibold underline" to="/register">
+              S'inscrire
+            </Link>
+          </p>
+
+          <p className="mt-4 text-center text-xs leading-6 text-text-muted">
+            Les informations sur l'utilisation du service sont disponibles dans
+            nos{" "}
+            <Link
+              className="font-semibold underline underline-offset-4"
+              to="/conditions-utilisation"
+            >
+              conditions d'utilisation
+            </Link>{" "}
+            et notre{" "}
+            <Link
+              className="font-semibold underline underline-offset-4"
+              to="/politique-confidentialite"
+            >
+              politique de confidentialite
+            </Link>
+            .
+          </p>
+        </CyberCard>
+      </div>
     </main>
   );
 }

@@ -12,7 +12,7 @@ export default function SectionLabel({
 }: SectionLabelProps) {
   return (
     <p
-      className={`text-xs font-bold uppercase tracking-wide ${className}`}
+      className={`cyber-eyebrow font-semibold ${className}`}
       {...props}
     >
       {children}

@@ -7,9 +7,7 @@ type PanelProps = {
 
 export default function Panel({ children, className = "" }: PanelProps) {
   return (
-    <div
-      className={`flex flex-col rounded-2xl border border-white/10 bg-surface ${className}`}
-    >
+    <div className={`cyber-panel flex flex-col rounded-2xl ${className}`}>
       {children}
     </div>
   );

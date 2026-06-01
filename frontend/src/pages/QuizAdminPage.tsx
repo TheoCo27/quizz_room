@@ -3,10 +3,8 @@ import { useNavigate } from "react-router-dom";
 import QuestionComposer from "../components/QuizBuilder/QuestionComposer";
 import QuizRulesCard from "../components/QuizBuilder/QuizRulesCard";
 import QuizSetupCard from "../components/QuizBuilder/QuizSetupCard";
-import SectionHeader from "../components/section-header";
-import SectionLabel from "../components/section-label";
+import { CyberBadge, CyberButton, CyberCard } from "../components/cyber";
 import PrimaryButton from "../components/ui/PrimaryButton";
-import SecondaryButton from "../components/ui/SecondaryButton";
 import { useAuthSession } from "../hooks/useAuthSession";
 import { getUserFacingErrorMessage } from "../services/api";
 import { createQuiz } from "../services/quizzes";
@@ -167,14 +165,17 @@ export default function QuizAdminPage() {
           onValidateAndAddQuestion={handleValidateAndAddQuestion}
         />
 
-        <section
-          className={`rounded-4xl border border-slate-900/10 ${questions.length > 1 ? "" : "h-fit"} bg-slate-950 p-6 shadow-[0_24px_70px_rgba(15,23,42,0.07)] flex flex-col overflow-hidden`}
+        <CyberCard
+          className={`rounded-4xl p-6 ${questions.length > 1 ? "" : "h-fit"} flex flex-col overflow-hidden`}
+          accent="magenta"
         >
-          <SectionLabel className="text-text/55">Quiz construit</SectionLabel>
-          <SectionHeader>Questions validées</SectionHeader>
-          <p className="mt-2 text-sm text-white/70">
-            {questions.length} question{questions.length > 1 ? "s" : ""} prête
-            {questions.length > 1 ? "s" : ""} à jouer.
+          <p className="cyber-eyebrow">Quiz construit</p>
+          <h2 className="mt-2 cyber-title text-lg text-text">
+            Questions validees
+          </h2>
+          <p className="mt-2 text-sm text-text-muted">
+            {questions.length} question{questions.length > 1 ? "s" : ""} prete
+            {questions.length > 1 ? "s" : ""} a jouer.
           </p>
 
           <div className="mt-6 space-y-4 overflow-y-auto max-h-[min(45vh,40rem)]">
@@ -185,10 +186,11 @@ export default function QuizAdminPage() {
                   className="rounded-3xl border border-white/10 bg-white/6 p-4"
                 >
                   <div className="flex items-center justify-between gap-3">
-                    <span className="text-xs font-semibold uppercase tracking-[0.22em] text-amber-200">
-                      Question {index + 1}
-                    </span>
-                    <SecondaryButton
+                    <CyberBadge variant="info">Question {index + 1}</CyberBadge>
+                    <CyberButton
+                      size="sm"
+                      variant="danger"
+                      glow={false}
                       onClick={() =>
                         setQuestions((currentQuestions) =>
                           currentQuestions.filter(
@@ -198,20 +200,20 @@ export default function QuizAdminPage() {
                       }
                     >
                       Supprimer
-                    </SecondaryButton>
+                    </CyberButton>
                   </div>
-                  <p className="mt-3 text-base font-medium text-white">
+                  <p className="mt-3 text-base font-medium text-text">
                     {question.questionText}
                   </p>
-                  <ol className="mt-4 space-y-2 text-sm text-white/74">
+                  <ol className="mt-4 space-y-2 text-sm text-text-muted">
                     {question.options.map((option, optionIndex) => (
                       <li
                         key={`${option}-${optionIndex + 1}`}
                         className={[
-                          "rounded-xl px-3 py-2",
+                          "rounded-xl border px-3 py-2",
                           question.correctAnswerIndex === optionIndex
-                            ? "bg-emerald-400/18 text-emerald-100"
-                            : "bg-white/6",
+                            ? "border-success/40 bg-success/10 text-success"
+                            : "border-white/10 bg-white/6",
                         ].join(" ")}
                       >
                         {option}
@@ -221,14 +223,14 @@ export default function QuizAdminPage() {
                 </article>
               ))
             ) : (
-              <div className="rounded-3xl border border-dashed border-white/18 px-4 py-6 text-sm text-white/62">
+              <div className="rounded-3xl border border-dashed border-white/18 px-4 py-6 text-sm text-text-muted">
                 Aucune question validée pour l'instant.
               </div>
             )}
           </div>
 
           {submitError ? (
-            <p className="mt-5 rounded-2xl border border-rose-300/25 bg-rose-300/10 px-4 py-3 text-sm text-rose-100">
+            <p className="mt-5 rounded-2xl border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger">
               {submitError}
             </p>
           ) : null}
@@ -242,7 +244,7 @@ export default function QuizAdminPage() {
           >
             {isSubmitting ? "Validation..." : "Valider le quiz"}
           </PrimaryButton>
-        </section>
+        </CyberCard>
       </div>
     </main>
   );
