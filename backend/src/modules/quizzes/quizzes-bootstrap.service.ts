@@ -20,10 +20,7 @@ export class QuizzesBootstrapService implements OnModuleInit {
       },
     });
 
-    if (existingDefaultQuizCount === DEFAULT_QUIZZES.length) {
-      return;
-    }
-
+    // Removed early return to ensure default quizzes are synced on startup
     await upsertDefaultQuizzes(this.prisma.client);
     this.logger.log(
       `${DEFAULT_QUIZZES.length} default quizzes are now available.`,
