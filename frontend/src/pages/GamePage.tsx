@@ -10,7 +10,7 @@ type QuestionPayload = {
   questionText: string;
   answers: string[];
   position: number;
-  durationSec: number;
+  durationSec: number | null;
   totalQuestions: number;
 };
 
@@ -29,6 +29,7 @@ export default function GamePage() {
   const [question, setQuestion] = useState<QuestionPayload | null>(null);
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
+  const [hasSubmitted, setHasSubmitted] = useState(false);
   const [result, setResult] = useState<QuestionResultPayload | null>(null);
   const [scores, setScores] = useState<Map<number, number>>(new Map());
 
@@ -46,8 +47,9 @@ export default function GamePage() {
 
     const onQuestion = (data: QuestionPayload) => {
       setQuestion(data);
-      setTimeLeft(data.durationSec);
+      setTimeLeft(data.durationSec ?? null);
       setSelectedAnswer(null);
+      setHasSubmitted(false);
       setResult(null);
     };
 
@@ -101,11 +103,16 @@ export default function GamePage() {
   }, [timeLeft, result]);
 
   const handleSelectAnswer = (answer: string) => {
-    if (selectedAnswer || result || timeLeft === 0) return;
-    
+    if (hasSubmitted || result || timeLeft === 0) return;
     setSelectedAnswer(answer);
+  };
+
+  const handleSubmitAnswer = () => {
+    if (!selectedAnswer || hasSubmitted || result || timeLeft === 0) return;
+
     const socket = getSocket();
-    socket.emit("submit_answer", { roomId, answer });
+    socket.emit("submit_answer", { roomId, answer: selectedAnswer });
+    setHasSubmitted(true);
   };
 
   const getUsername = (userId: number) => {
@@ -150,7 +157,7 @@ export default function GamePage() {
                     <span className={`text-2xl font-bold px-4 py-2 rounded-full border ${
                       timeLeft !== null && timeLeft <= 5 ? 'text-red-400 border-red-500/50 bg-red-900/20 animate-pulse' : 'text-secondary border-secondary/30 bg-secondary/10'
                     }`}>
-                      {timeLeft}s
+                      {timeLeft === null ? "Illimite" : `${timeLeft}s`}
                     </span>
                   </div>
 
@@ -198,7 +205,7 @@ export default function GamePage() {
                         <button
                           key={idx}
                           onClick={() => handleSelectAnswer(ans)}
-                          disabled={!!result || !!selectedAnswer || timeLeft === 0}
+                          disabled={!!result || hasSubmitted || timeLeft === 0}
                           className={btnClass}
                         >
                           {ans}
@@ -206,6 +213,18 @@ export default function GamePage() {
                       );
                     })}
                   </div>
+
+                  {!result && (
+                    <div className="mt-6 flex justify-center">
+                      <button
+                        onClick={handleSubmitAnswer}
+                        disabled={!selectedAnswer || hasSubmitted || timeLeft === 0}
+                        className="px-6 py-3 font-bold bg-primary hover:bg-primary/90 text-background disabled:opacity-50 disabled:cursor-not-allowed rounded"
+                      >
+                        {hasSubmitted ? "Reponse envoyee" : "Valider ma reponse"}
+                      </button>
+                    </div>
+                  )}
                 </>
               )}
             </CyberPanel>

@@ -226,7 +226,7 @@ export class RoomsService {
       throw new BadRequestException("Seul le créateur peut modifier la partie");
     }
 
-    if (room.status !== RoomStatus.WAITING) {
+    if (room.status === RoomStatus.PLAYING) {
       throw new BadRequestException("Impossible de modifier une partie en cours");
     }
 

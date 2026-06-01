@@ -10,14 +10,17 @@ interface GameState {
   currentQuestionIndex: number;
   scores: Map<number, number>;
   answers: Map<number, string>;
-  questionEndTime: number;
+  questionEndTime: number | null;
+  questionDurationSec: number | null;
   interval?: NodeJS.Timeout;
+  isEvaluating?: boolean;
 }
 
 @Injectable()
 export class QuizGameService {
   private activeGames = new Map<string, GameState>();
   private readonly logger = new Logger(QuizGameService.name);
+  private server: Server | null = null;
 
   constructor(
     private prisma: PrismaService,
@@ -26,6 +29,8 @@ export class QuizGameService {
 
   async startGameLoop(roomId: string, server: Server) {
     if (this.activeGames.has(roomId)) return;
+
+    this.server = server;
 
     const room = await this.prisma.client.room.findUnique({
       where: { id: roomId },
@@ -46,13 +51,21 @@ export class QuizGameService {
       return;
     }
 
+    const questionDurationSec =
+      room.quiz.questionDurationSec === null
+        ? null
+        : room.quiz.questionDurationSec && room.quiz.questionDurationSec > 0
+          ? room.quiz.questionDurationSec
+          : 10;
+
     const gameState: GameState = {
       roomId,
       questions: room.quiz.questions,
       currentQuestionIndex: 0,
       scores: new Map<number, number>(),
       answers: new Map<number, string>(),
-      questionEndTime: 0,
+      questionEndTime: null,
+      questionDurationSec,
     };
 
     room.players.forEach(p => {
@@ -65,17 +78,44 @@ export class QuizGameService {
     this.sendNextQuestion(roomId, server);
   }
 
-  submitAnswer(roomId: string, userId: number, answer: string) {
+  async submitAnswer(roomId: string, userId: number, answer: string) {
     const game = this.activeGames.get(roomId);
     if (!game) return;
 
-    if (Date.now() > game.questionEndTime) {
+    if (game.questionEndTime !== null && Date.now() > game.questionEndTime) {
       // Too late
       return;
     }
 
     // Only one answer per question per user allowed? Or last answer counts? Let's say last answer counts.
     game.answers.set(userId, answer);
+
+    if (game.questionDurationSec === null) {
+      if (game.isEvaluating || !this.server) return;
+
+      const room = await this.prisma.client.room.findUnique({
+        where: { id: roomId },
+        include: { players: true },
+      });
+
+      if (!room) return;
+
+      const connectedPlayers = room.players.filter((player) => player.isConnected);
+      if (connectedPlayers.length === 0) return;
+
+      const allAnswered = connectedPlayers.every((player) =>
+        game.answers.has(player.userId),
+      );
+
+      if (allAnswered) {
+        game.isEvaluating = true;
+        try {
+          await this.evaluateAnswersAndSendResult(roomId, this.server);
+        } finally {
+          game.isEvaluating = false;
+        }
+      }
+    }
   }
 
   private sendNextQuestion(roomId: string, server: Server) {
@@ -90,25 +130,23 @@ export class QuizGameService {
     const question = game.questions[game.currentQuestionIndex];
     game.answers.clear();
     
-    // Default 15 seconds if not specified in quiz (but quiz has questionDurationSec?)
-    // Let's check quiz questionDurationSec. 
-    // Wait, in schema, quiz has questionDurationSec. Let's assume 15s if not found.
-    // Actually we didn't query quiz in the state, only questions. Let's just use 15s.
-    const durationSec = 15;
-    game.questionEndTime = Date.now() + durationSec * 1000;
+    const durationSec = game.questionDurationSec;
+    game.questionEndTime = durationSec ? Date.now() + durationSec * 1000 : null;
 
     server.to(roomId).emit("question", {
       id: question.id,
       questionText: question.questionText,
       answers: question.answers,
       position: question.position,
-      durationSec,
+      durationSec: durationSec ?? null,
       totalQuestions: game.questions.length,
     });
 
-    game.interval = setTimeout(() => {
-      this.evaluateAnswersAndSendResult(roomId, server);
-    }, durationSec * 1000);
+    if (durationSec) {
+      game.interval = setTimeout(() => {
+        this.evaluateAnswersAndSendResult(roomId, server);
+      }, durationSec * 1000);
+    }
   }
 
   private async evaluateAnswersAndSendResult(roomId: string, server: Server) {
@@ -154,6 +192,8 @@ export class QuizGameService {
     setTimeout(() => {
       this.sendNextQuestion(roomId, server);
     }, 5000);
+
+    game.isEvaluating = false;
   }
 
   private async endGame(roomId: string, server: Server) {
