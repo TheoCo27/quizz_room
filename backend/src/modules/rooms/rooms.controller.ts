@@ -7,6 +7,9 @@ import { ok, type ApiResponse } from "../../common/http/api-response";
 import { IsEnum, IsInt, Min, Max, IsOptional } from "class-validator";
 
 class CreateRoomDto {
+  @IsOptional()
+  name?: string;
+
   @IsEnum(GameType)
   gameType: GameType;
 
@@ -35,7 +38,7 @@ export class RoomsController {
   ): Promise<ApiResponse<any>> {
     const user = (req as any).user;
     const maxPlayers = dto.maxPlayers ?? 5;
-    const room = await this.roomsService.createRoom(user.sub, dto.gameType, maxPlayers);
+    const room = await this.roomsService.createRoom(user.sub, dto.gameType, maxPlayers, dto.name);
     return ok(room);
   }
 }

@@ -14,7 +14,7 @@ import { AuthService } from "../auth/auth.service";
 import { RoomsService } from "./rooms.service";
 import { JwtService } from "@nestjs/jwt";
 
-@WebSocketGateway(8080, { cors: true, namespace: "/rooms" })
+@WebSocketGateway({ cors: true, namespace: "/rooms" })
 export class RoomsGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
@@ -55,9 +55,9 @@ export class RoomsGateway
       const payload = await this.jwtService.verifyAsync(token);
       
       // Valider via AuthService
-      await this.authService.getSessionUser(payload.sub);
+      const user = await this.authService.getSessionUser(payload.sub);
 
-      client.data.user = payload;
+      client.data.user = user;
       this.logger.log("Client connected: " + client.id);
     } catch (error: any) {
       this.logger.error("Connection error for client " + client.id + ": " + error.message);
@@ -123,6 +123,7 @@ export class RoomsGateway
   ) {
     try {
       const userId = client.data.user.id;
+      this.logger.log(`Client ${client.id} (user ${userId}) explicitly requested to leave room ${data.roomId}`);
       const updatedRoom = await this.roomsService.leaveRoom(data.roomId, userId);
 
       if (updatedRoom != null) {

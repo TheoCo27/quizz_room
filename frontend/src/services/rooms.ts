@@ -17,6 +17,7 @@ export type RoomPlayer = {
 
 export type Room = {
   id: string;
+  name?: string | null;
   hostId: number;
   gameType: "QUIZ"; // update this as needed based on Prisma GameType
   status: "WAITING" | "PLAYING" | "FINISHED";
@@ -34,7 +35,7 @@ export async function getRooms(): Promise<Room[]> {
   return apiRequest<Room[]>("/rooms");
 }
 
-export async function createRoom(payload: { gameType: string; maxPlayers?: number }): Promise<Room> {
+export async function createRoom(payload: { gameType: string; maxPlayers?: number; name?: string }): Promise<Room> {
   return apiRequest<Room>("/rooms", {
     method: "POST",
     body: JSON.stringify(payload),

@@ -20,6 +20,7 @@ const proxyPaths = [
   "/scores",
   "/quizzes",
   "/rooms",
+  "/socket.io",
 ];
 
 module.exports = {
@@ -94,6 +95,7 @@ module.exports = {
         target: backendTarget,
         changeOrigin: true,
         secure: fs.existsSync(trustedCaPath),
+        ws: true,
       },
     ],
   },

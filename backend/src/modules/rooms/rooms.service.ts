@@ -7,9 +7,10 @@ import { GameType, RoomStatus } from '../../../generated/prisma/client';
 export class RoomsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async createRoom(hostId: number, gameType: GameType, maxPlayers: number = 5) {
+  async createRoom(hostId: number, gameType: GameType, maxPlayers: number = 5, name?: string) {
     return this.prisma.client.room.create({
       data: {
+        name,
         hostId,
         gameType,
         status: RoomStatus.WAITING,
@@ -98,9 +99,14 @@ export class RoomsService {
     if (!room) return null;
 
     if (room.players.length === 0) {
-      await this.prisma.client.room.delete({
-        where: { id: roomId },
-      });
+      try {
+        console.log(`[RoomsService] Deleting empty room ${roomId} after user ${userId} left.`);
+        await this.prisma.client.room.delete({
+          where: { id: roomId },
+        });
+      } catch (e) {
+        // Ignorer si la room a déjà été supprimée
+      }
       return null;
     }
 

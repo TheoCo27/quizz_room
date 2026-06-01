@@ -11,6 +11,7 @@ export default function RoomPage() {
   const navigate = useNavigate();
   const { user, isLoading } = useAuthSession();
   const [room, setRoom] = useState<Room | null>(null);
+  const roomStatusRef = React.useRef<string | null>(null);
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [countdown, setCountdown] = useState<number | null>(null);
@@ -20,6 +21,18 @@ export default function RoomPage() {
   }, []);
 
   useEffect(() => {
+    if (room) {
+      roomStatusRef.current = room.status;
+    }
+  }, [room]);
+
+  useEffect(() => {
+    // Annuler tout "leave_room" en attente si on remonte (Strict Mode)
+    if ((window as any).leaveRoomTimeout) {
+      clearTimeout((window as any).leaveRoomTimeout);
+      (window as any).leaveRoomTimeout = null;
+    }
+
     if (isLoading || !user || !roomId) return;
 
     const socket = getSocket();
@@ -83,12 +96,11 @@ export default function RoomPage() {
       socket.off("error", onError);
       
       // Ne quitte pas la salle si la partie est en cours
-      setRoom((currentRoom) => {
-        if (currentRoom?.status !== "PLAYING") {
+      if (roomStatusRef.current !== "PLAYING") {
+        (window as any).leaveRoomTimeout = setTimeout(() => {
           socket.emit("leave_room", { roomId });
-        }
-        return currentRoom;
-      });
+        }, 500);
+      }
     };
   }, [isLoading, user, roomId, navigate]);
 
@@ -141,7 +153,7 @@ export default function RoomPage() {
 
           <div className="flex justify-between items-center mb-8">
             <h1 className="cyber-title text-3xl text-text">
-              Salle de {room?.host?.username || "..."}
+              {room?.name ? room.name : `Salle de ${room?.host?.username || "..."}`}
             </h1>
             <button
               onClick={() => navigate("/lobby")}

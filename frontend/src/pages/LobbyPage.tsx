@@ -10,6 +10,7 @@ export default function LobbyPage() {
   const [rooms, setRooms] = useState<Room[]>([]);
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [roomName, setRoomName] = useState("");
 
   const fetchRooms = async () => {
     try {
@@ -33,7 +34,11 @@ export default function LobbyPage() {
     setIsCreating(true);
     setError(null);
     try {
-      const room = await createRoom({ gameType: "QUIZ", maxPlayers: 5 });
+      const payload: { gameType: string; maxPlayers: number; name?: string } = { gameType: "QUIZ", maxPlayers: 5 };
+      if (roomName.trim()) {
+        payload.name = roomName.trim();
+      }
+      const room = await createRoom(payload);
       navigate(`/room/${room.id}`);
     } catch (err: any) {
       setError(err.message || "Erreur lors de la création de la salle");
@@ -75,20 +80,29 @@ export default function LobbyPage() {
     <main className="flex flex-1 px-6 py-10">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-8">
         <CyberPanel className="rounded-4xl p-8 md:p-10">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div>
               <h1 className="cyber-title text-3xl text-text">Lobby</h1>
               <p className="mt-4 text-sm leading-7 text-text-muted">
                 Rejoignez une salle ou créez la vôtre pour jouer avec vos amis.
               </p>
             </div>
-            <button
-              onClick={handleCreateRoom}
-              disabled={isCreating}
-              className="cyber-button px-6 py-3 font-bold"
-            >
-              {isCreating ? "Création..." : "Créer une salle"}
-            </button>
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                placeholder="Nom de la salle (optionnel)"
+                value={roomName}
+                onChange={(e) => setRoomName(e.target.value)}
+                className="bg-background border border-border/50 text-text px-4 py-3 rounded"
+              />
+              <button
+                onClick={handleCreateRoom}
+                disabled={isCreating}
+                className="cyber-button px-6 py-3 font-bold"
+              >
+                {isCreating ? "Création..." : "Créer"}
+              </button>
+            </div>
           </div>
 
           {error && (
@@ -106,7 +120,9 @@ export default function LobbyPage() {
                 {rooms.map((room) => (
                   <div key={room.id} className="border border-border/30 rounded-xl p-4 bg-background/50 hover:bg-background/80 transition-colors">
                     <div className="flex justify-between items-start mb-2">
-                      <h3 className="font-bold text-lg text-primary">Salle de {room.host?.username || "Joueur"}</h3>
+                      <h3 className="font-bold text-lg text-primary">
+                        {room.name ? room.name : `Salle de ${room.host?.username || "Joueur"}`}
+                      </h3>
                       <span className="text-xs px-2 py-1 rounded bg-secondary/20 text-secondary border border-secondary/30">
                         {room.gameType}
                       </span>
