@@ -81,14 +81,18 @@ export class RoomsService {
     });
 
     if (room.status !== RoomStatus.WAITING) {
-      if (room.status === RoomStatus.PLAYING && existingPlayer) {
-        // Player is reconnecting
-        await this.prisma.client.roomPlayer.update({
-          where: { id: existingPlayer.id },
-          data: { isConnected: true },
-        });
+      if (existingPlayer) {
+        if (room.status === RoomStatus.PLAYING) {
+          // Player is reconnecting
+          await this.prisma.client.roomPlayer.update({
+            where: { id: existingPlayer.id },
+            data: { isConnected: true },
+          });
+        }
+
         return this.getRoomById(roomId);
       }
+
       throw new BadRequestException("La room n'est pas en attente");
     }
 
