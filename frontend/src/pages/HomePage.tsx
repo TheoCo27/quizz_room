@@ -72,10 +72,12 @@ export default function HomePage() {
               <CyberBadge variant="warning">Classements</CyberBadge>
             </div>
             <div className="mt-6 flex flex-wrap gap-3">
-              <Link to="/admin">
-                <PrimaryButton>Configurer un quiz</PrimaryButton>
+              <Link to="/lobby">
+                <PrimaryButton>Créer une partie</PrimaryButton>
               </Link>
-              <SecondaryButton disabled>Rejoindre une partie</SecondaryButton>
+              <Link to="/lobby">
+                <SecondaryButton>Rejoindre une partie</SecondaryButton>
+              </Link>
             </div>
           </CyberCard>
 

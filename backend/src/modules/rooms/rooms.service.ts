@@ -7,9 +7,10 @@ import { GameType, RoomStatus } from '../../../generated/prisma/client';
 export class RoomsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async createRoom(hostId: number, gameType: GameType, maxPlayers: number = 5) {
+  async createRoom(hostId: number, gameType: GameType, maxPlayers: number = 5, name?: string) {
     return this.prisma.client.room.create({
       data: {
+        name,
         hostId,
         gameType,
         status: RoomStatus.WAITING,
@@ -24,6 +25,17 @@ export class RoomsService {
         host: { select: { id: true, username: true, avatar_url: true } },
         players: { include: { user: { select: { id: true, username: true, avatar_url: true } } } },
       },
+    });
+  }
+
+  async getWaitingRooms() {
+    return this.prisma.client.room.findMany({
+      where: { status: RoomStatus.WAITING },
+      include: {
+        host: { select: { id: true, username: true, avatar_url: true } },
+        _count: { select: { players: true } }
+      },
+      orderBy: { createdAt: 'desc' },
     });
   }
 
@@ -87,9 +99,14 @@ export class RoomsService {
     if (!room) return null;
 
     if (room.players.length === 0) {
-      await this.prisma.client.room.delete({
-        where: { id: roomId },
-      });
+      try {
+        console.log(`[RoomsService] Deleting empty room ${roomId} after user ${userId} left.`);
+        await this.prisma.client.room.delete({
+          where: { id: roomId },
+        });
+      } catch (e) {
+        // Ignorer si la room a déjà été supprimée
+      }
       return null;
     }
 
@@ -137,12 +154,56 @@ export class RoomsService {
       throw new BadRequestException("Tous les joueurs doivent être prêts");
     }
 
+    if (!room.quizId) {
+      throw new BadRequestException("Veuillez sélectionner un quiz avant de démarrer");
+    }
+
     await this.prisma.client.room.update({
       where: { id: roomId },
       data: { status: RoomStatus.PLAYING },
     });
 
     return this.getRoomById(roomId);
+  }
+
+  async updateRoomConfig(roomId: string, userId: number, config: { quizId?: number; maxPlayers?: number }) {
+    const room = await this.getRoomById(roomId);
+
+    if (room.hostId !== userId) {
+      throw new BadRequestException("Seul le créateur peut modifier la partie");
+    }
+
+    if (room.status !== RoomStatus.WAITING) {
+      throw new BadRequestException("Impossible de modifier une partie en cours");
+    }
+
+    await this.prisma.client.room.update({
+      where: { id: roomId },
+      data: {
+        ...(config.quizId !== undefined && { quizId: config.quizId }),
+        ...(config.maxPlayers !== undefined && { maxPlayers: config.maxPlayers }),
+      },
+    });
+
+    return this.getRoomById(roomId);
+  }
+
+  async kickPlayer(roomId: string, hostId: number, targetUserId: number) {
+    const room = await this.getRoomById(roomId);
+
+    if (room.hostId !== hostId) {
+      throw new BadRequestException("Seul le créateur peut expulser un joueur");
+    }
+
+    if (hostId === targetUserId) {
+      throw new BadRequestException("Vous ne pouvez pas vous expulser vous-même");
+    }
+
+    if (room.status !== RoomStatus.WAITING) {
+      throw new BadRequestException("Impossible d'expulser pendant une partie en cours");
+    }
+
+    return this.leaveRoom(roomId, targetUserId);
   }
 
   async endGame(roomId: string) {

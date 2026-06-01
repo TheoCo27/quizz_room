@@ -1,9 +1,13 @@
 export { default as FriendsPage } from "./FriendsPage";
+export { default as GamePage } from "./GamePage";
 export { default as HomePage } from "./HomePage";
+export { default as LobbyPage } from "./LobbyPage";
 export { default as LoginPage } from "./LoginPage";
 export { default as NotFound } from "./NotFound";
 export { default as PrivacyPolicyPage } from "./PrivacyPolicyPage";
 export { default as ProfilePage } from "./ProfilePage";
 export { default as QuizAdminPage } from "./QuizAdminPage";
 export { default as RegisterPage } from "./RegisterPage";
+export { default as ResultsPage } from "./ResultsPage";
+export { default as RoomPage } from "./RoomPage";
 export { default as TermsOfServicePage } from "./TermsOfServicePage";

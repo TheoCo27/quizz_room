@@ -67,6 +67,7 @@ model Quiz {
 
   questions          QuizQuestion[]    @relation("QuizQuestions")
   leaderboardEntries QuizLeaderboard[] @relation("QuizLeaderboardEntries")
+  rooms              Room[]
 }
 
 model QuizQuestion {
@@ -137,6 +138,9 @@ model Room {
   status     RoomStatus @default(WAITING)
   gameType   GameType
   maxPlayers Int        @default(8) // J'ai rajouter ça mais pas sur
+
+  quizId Int?
+  quiz   Quiz? @relation(fields: [quizId], references: [id])
 
   // relations
   hostId Int

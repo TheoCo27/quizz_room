@@ -14,7 +14,7 @@ import { AuthService } from "../auth/auth.service";
 import { RoomsService } from "./rooms.service";
 import { JwtService } from "@nestjs/jwt";
 
-@WebSocketGateway(8080, { cors: true, namespace: "/rooms" })
+@WebSocketGateway({ cors: true, namespace: "/rooms" })
 export class RoomsGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
@@ -35,9 +35,17 @@ export class RoomsGateway
 
   async handleConnection(client: Socket) {
     try {
-      const token =
+      let token =
         client.handshake.auth?.token ||
         (client.handshake.headers?.authorization || "").split(" ")[1];
+
+      if (!token && client.handshake.headers?.cookie) {
+        const cookies = client.handshake.headers.cookie.split(";").map(c => c.trim());
+        const accessCookie = cookies.find(c => c.startsWith("access_token="));
+        if (accessCookie) {
+          token = accessCookie.split("=")[1];
+        }
+      }
 
       if (!token) {
         this.logger.warn("No token provided for client " + client.id);
@@ -47,9 +55,9 @@ export class RoomsGateway
       const payload = await this.jwtService.verifyAsync(token);
       
       // Valider via AuthService
-      await this.authService.getSessionUser(payload.sub);
+      const user = await this.authService.getSessionUser(payload.sub);
 
-      client.data.user = payload;
+      client.data.user = user;
       this.logger.log("Client connected: " + client.id);
     } catch (error: any) {
       this.logger.error("Connection error for client " + client.id + ": " + error.message);
@@ -115,6 +123,7 @@ export class RoomsGateway
   ) {
     try {
       const userId = client.data.user.id;
+      this.logger.log(`Client ${client.id} (user ${userId}) explicitly requested to leave room ${data.roomId}`);
       const updatedRoom = await this.roomsService.leaveRoom(data.roomId, userId);
 
       if (updatedRoom != null) {
@@ -158,6 +167,48 @@ export class RoomsGateway
       this.server.to(data.roomId).emit("game_starting", { countdown: 5 });
     } catch (error: any) {
       this.logger.error(`Error in start_game: ${error.message}`);
+      client.emit("error", { message: error.message });
+    }
+  }
+
+  @SubscribeMessage("update_config")
+  async handleUpdateConfig(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { roomId: string; config: { quizId?: number; maxPlayers?: number } }
+  ) {
+    try {
+      const userId = client.data.user.id;
+      const updatedRoom = await this.roomsService.updateRoomConfig(data.roomId, userId, data.config);
+      this.server.to(data.roomId).emit("room_state_updated", updatedRoom);
+    } catch (error: any) {
+      this.logger.error(`Error in update_config: ${error.message}`);
+      client.emit("error", { message: error.message });
+    }
+  }
+
+  @SubscribeMessage("kick_player")
+  async handleKickPlayer(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { roomId: string; targetUserId: number }
+  ) {
+    try {
+      const userId = client.data.user.id;
+      const updatedRoom = await this.roomsService.kickPlayer(data.roomId, userId, data.targetUserId);
+      
+      // Notify the kicked user directly
+      const sockets = await this.server.in(data.roomId).fetchSockets();
+      for (const socket of sockets) {
+        if (socket.data?.user?.id === data.targetUserId) {
+          socket.emit("kicked_from_room");
+          socket.leave(data.roomId);
+        }
+      }
+
+      if (updatedRoom) {
+        this.server.to(data.roomId).emit("room_state_updated", updatedRoom);
+      }
+    } catch (error: any) {
+      this.logger.error(`Error in kick_player: ${error.message}`);
       client.emit("error", { message: error.message });
     }
   }

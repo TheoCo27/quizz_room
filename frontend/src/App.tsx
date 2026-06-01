@@ -3,13 +3,17 @@ import Footer from "./components/Footer";
 import Navbar from "./components/Navbar";
 import {
   FriendsPage,
+  GamePage,
   HomePage,
+  LobbyPage,
   LoginPage,
   NotFound,
   PrivacyPolicyPage,
   ProfilePage,
   QuizAdminPage,
   RegisterPage,
+  ResultsPage,
+  RoomPage,
   TermsOfServicePage,
 } from "./pages";
 
@@ -20,6 +24,10 @@ export default function App() {
       <div className="flex flex-1 flex-col">
         <Routes>
           <Route path="/" element={<HomePage />} />
+          <Route path="/lobby" element={<LobbyPage />} />
+          <Route path="/room/:id" element={<RoomPage />} />
+          <Route path="/game/:id" element={<GamePage />} />
+          <Route path="/results" element={<ResultsPage />} />
           <Route path="/admin" element={<QuizAdminPage />} />
           <Route path="/friends" element={<FriendsPage />} />
           <Route path="/profile" element={<ProfilePage />} />
