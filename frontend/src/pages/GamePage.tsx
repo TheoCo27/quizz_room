@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { CyberPanel } from "../components/cyber";
-import { getSocket } from "../services/socket";
+import { connectSocket, getSocket } from "../services/socket";
 import { useAuthSession } from "../hooks/useAuthSession";
 import { Room } from "../services/rooms";
 
@@ -34,6 +34,7 @@ export default function GamePage() {
 
   useEffect(() => {
     if (!roomId) return;
+    connectSocket();
     const socket = getSocket();
 
     const onRoomStateUpdated = (updatedRoom: Room) => {

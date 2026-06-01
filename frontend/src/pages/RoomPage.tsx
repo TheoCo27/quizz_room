@@ -43,6 +43,7 @@ export default function RoomPage() {
     };
 
     const onRoomStateUpdated = (updatedRoom: Room) => {
+      roomStatusRef.current = updatedRoom.status;
       setRoom(updatedRoom);
       if (updatedRoom.status === "PLAYING") {
         navigate(`/game/${roomId}`);
@@ -136,7 +137,8 @@ export default function RoomPage() {
   const isHost = room?.hostId === user.id;
   const myPlayer = room?.players?.find((p) => p.userId === user.id);
   const allReady = room?.players?.every((p) => p.isReady);
-  const canStart = isHost && (room?.players?.length || 0) >= 2 && allReady && room?.quizId;
+  const hasMinPlayers = (room?.players?.length || 0) >= 1;
+  const canStart = isHost && hasMinPlayers && allReady && room?.quizId;
 
   const selectedQuiz = quizzes.find((q) => q.id === room?.quizId);
 
@@ -245,7 +247,7 @@ export default function RoomPage() {
                       </button>
                       {!canStart && (
                         <div className="text-xs text-yellow-400 text-center space-y-1">
-                          {(room?.players?.length || 0) < 2 && <p>Il faut au moins 2 joueurs.</p>}
+                          {!hasMinPlayers && <p>Il faut au moins 1 joueur.</p>}
                           {!allReady && (room?.players?.length || 0) >= 2 && <p>Tous les joueurs doivent être prêts.</p>}
                           {!room?.quizId && <p>Veuillez sélectionner un quiz.</p>}
                         </div>

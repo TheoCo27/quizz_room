@@ -159,8 +159,8 @@ export class RoomsService {
       throw new BadRequestException("Seul le créateur peut démarrer la partie");
     }
 
-    if (room.players.length < 2) {
-      throw new BadRequestException("Il faut au moins 2 joueurs pour démarrer");
+    if (room.players.length < 1) {
+      throw new BadRequestException("Il faut au moins 1 joueur pour démarrer");
     }
 
     const allReady = room.players.every((p) => p.isReady);
@@ -283,17 +283,6 @@ export class RoomsService {
 
         const room = await this.getRoomById(rp.roomId);
         affectedRooms.push({ roomId: rp.roomId, room, action: 'disconnect' });
-      }
-    }
-
-    return affectedRooms;
-  }
-}
-  const finishedRoom = await this.endGame(rp.roomId);
-          affectedRooms.push({ roomId: rp.roomId, room: finishedRoom, action: 'end' });
-        } else {
-          affectedRooms.push({ roomId: rp.roomId, room, action: 'disconnect' });
-        }
       }
     }
 
