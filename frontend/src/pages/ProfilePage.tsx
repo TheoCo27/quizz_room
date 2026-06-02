@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   CyberAvatar,
   CyberBadge,
@@ -20,7 +20,8 @@ import { getUserWinsRank, type UserWinsRank } from "../services/scores";
 import { updateMyAvatar, updateMyProfile } from "../services/users";
 import { calculateLevelData } from "../utils/level";
 
-import { getMyQuizzes, deleteQuiz, type Quiz } from "../services/quizzes";
+import { getQuizzes, getMyQuizzes, deleteQuiz, type Quiz } from "../services/quizzes";
+import { createRoom } from "../services/rooms";
 
 const MAX_AVATAR_SIZE_BYTES = 2 * 1024 * 1024;
 const SUPPORTED_AVATAR_TYPES = new Set([
@@ -36,7 +37,8 @@ type ProfileTabId =
   | "social"
   | "security"
   | "preferences"
-  | "quizzes";
+  | "quizzes"
+  | "discover_quizzes";
 
 function formatJoinedDate(createdAt: string) {
   try {
@@ -81,6 +83,7 @@ function readFileAsDataUrl(file: File): Promise<string> {
 
 export default function ProfilePage() {
   const { user, isLoading, refreshSession } = useAuthSession();
+  const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [isAvatarSubmitting, setIsAvatarSubmitting] = useState(false);
   const [profileUsername, setProfileUsername] = useState("");
@@ -99,6 +102,8 @@ export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState<ProfileTabId>("overview");
   const [myQuizzes, setMyQuizzes] = useState<Quiz[]>([]);
   const [isQuizzesLoading, setIsQuizzesLoading] = useState(false);
+  const [allQuizzes, setAllQuizzes] = useState<Quiz[]>([]);
+  const [isAllQuizzesLoading, setIsAllQuizzesLoading] = useState(false);
   const [winsRankData, setWinsRankData] = useState<UserWinsRank | null>(null);
 
   const levelData = calculateLevelData(user?.xp ?? 0);
@@ -123,8 +128,27 @@ export default function ProfilePage() {
         .then(setMyQuizzes)
         .catch(console.error)
         .finally(() => setIsQuizzesLoading(false));
+    } else if (activeTab === "discover_quizzes") {
+      setIsAllQuizzesLoading(true);
+      getQuizzes()
+        .then(setAllQuizzes)
+        .catch(console.error)
+        .finally(() => setIsAllQuizzesLoading(false));
     }
   }, [activeTab]);
+
+  const handleLaunchQuiz = async (quizId: number) => {
+    try {
+      const room = await createRoom({
+        gameType: "QUIZ",
+        maxPlayers: 5,
+        quizId,
+      });
+      navigate(`/room/${room.id}`);
+    } catch (error) {
+      alert(getUserFacingErrorMessage(error, "Impossible de lancer la partie."));
+    }
+  };
 
   const handleDeleteQuiz = async (quizId: number) => {
     if (!window.confirm("Voulez-vous vraiment supprimer ce quiz ?")) return;
@@ -316,6 +340,7 @@ export default function ProfilePage() {
 
   const profileTabs: Array<{ id: ProfileTabId; label: string }> = [
     { id: "overview", label: "Vue d'ensemble" },
+    { id: "discover_quizzes", label: "Découvrir les quiz" },
     { id: "quizzes", label: "Mes quizz" },
     { id: "history", label: "Historique" },
     { id: "achievements", label: "Succes" },
@@ -536,6 +561,63 @@ export default function ProfilePage() {
                 </div>
               </li>
             ))}
+          </ul>
+        )}
+      </CyberCard>
+    ),
+    discover_quizzes: (
+      <CyberCard className="rounded-4xl p-6" accent="magenta">
+        <p className="cyber-eyebrow">Découverte</p>
+        <h3 className="mt-2 cyber-title text-sm text-text">
+          Découvrir les quiz
+        </h3>
+        <p className="mt-2 text-sm text-text-muted">
+          Trouve n'importe quel quiz créé par n'importe quel joueur et lance instantanément une partie !
+        </p>
+        {isAllQuizzesLoading ? (
+          <p className="mt-5 text-sm text-text-muted">Chargement...</p>
+        ) : allQuizzes.length === 0 ? (
+          <p className="mt-5 text-sm text-text-muted">Aucun quiz n'est disponible sur le serveur.</p>
+        ) : (
+          <ul className="mt-5 space-y-3 text-sm text-text">
+            {allQuizzes.map((quiz) => {
+              const isOwner = quiz.authorId === user?.id;
+              return (
+                <li
+                  key={quiz.id}
+                  className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3"
+                >
+                  <div className="flex flex-col">
+                    <span className="font-bold text-text">{quiz.title}</span>
+                    <span className="text-xs text-text-muted">
+                      {quiz.questions.length} question{quiz.questions.length > 1 ? "s" : ""} | Créé par :{" "}
+                      <span className="text-secondary font-bold">
+                        {quiz.author?.username || "Système"}
+                      </span>
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <PrimaryButton
+                      onClick={() => void handleLaunchQuiz(quiz.id)}
+                    >
+                      Lancer
+                    </PrimaryButton>
+                    {isOwner && (
+                      <>
+                        <Link to={`/admin/${quiz.id}`}>
+                          <SecondaryButton>Editer</SecondaryButton>
+                        </Link>
+                        <SecondaryButton
+                          onClick={() => void handleDeleteQuiz(quiz.id)}
+                        >
+                          Supprimer
+                        </SecondaryButton>
+                      </>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         )}
       </CyberCard>

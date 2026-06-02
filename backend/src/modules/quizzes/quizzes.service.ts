@@ -23,6 +23,11 @@ export type QuizResponse = {
   title: string;
   questionDurationSec: number | null;
   createdAt: string;
+  authorId?: number | null;
+  author?: {
+    id: number;
+    username: string;
+  } | null;
   questions: QuizQuestionResponse[];
 };
 
@@ -31,6 +36,11 @@ type QuizWithQuestions = {
   title: string;
   questionDurationSec: number | null;
   createdAt: Date;
+  authorId: number | null;
+  author?: {
+    id: number;
+    username: string;
+  } | null;
   questions: Array<{
     id: number;
     questionText: string;
@@ -41,6 +51,7 @@ type QuizWithQuestions = {
     createdAt: Date;
   }>;
 };
+
 
 @Injectable()
 export class QuizzesService {
@@ -72,6 +83,12 @@ export class QuizzesService {
         },
       },
       include: {
+        author: {
+          select: {
+            id: true,
+            username: true,
+          },
+        },
         questions: {
           orderBy: {
             position: "asc",
@@ -90,6 +107,12 @@ export class QuizzesService {
         createdAt: "desc",
       },
       include: {
+        author: {
+          select: {
+            id: true,
+            username: true,
+          },
+        },
         questions: {
           orderBy: {
             position: "asc",
@@ -106,7 +129,15 @@ export class QuizzesService {
     const quizzes = (await this.prisma.client.quiz.findMany({
       where: { authorId },
       orderBy: { createdAt: "desc" },
-      include: { questions: { orderBy: { position: "asc" } } },
+      include: {
+        author: {
+          select: {
+            id: true,
+            username: true,
+          },
+        },
+        questions: { orderBy: { position: "asc" } },
+      },
     })) as QuizWithQuestions[];
     
     return quizzes.map((quiz) => this.toQuizResponse(quiz));
@@ -139,7 +170,15 @@ export class QuizzesService {
           }),
         },
       },
-      include: { questions: { orderBy: { position: "asc" } } },
+      include: {
+        author: {
+          select: {
+            id: true,
+            username: true,
+          },
+        },
+        questions: { orderBy: { position: "asc" } },
+      },
     })) as QuizWithQuestions;
 
     return this.toQuizResponse(updatedQuiz);
@@ -167,6 +206,12 @@ export class QuizzesService {
     const quiz = (await this.prisma.client.quiz.findUnique({
       where: { id: quizId },
       include: {
+        author: {
+          select: {
+            id: true,
+            username: true,
+          },
+        },
         questions: {
           orderBy: {
             position: "asc",
@@ -200,6 +245,8 @@ export class QuizzesService {
       title: quiz.title,
       questionDurationSec: quiz.questionDurationSec,
       createdAt: quiz.createdAt.toISOString(),
+      authorId: quiz.authorId,
+      author: quiz.author ? { id: quiz.author.id, username: quiz.author.username } : null,
       questions: quiz.questions.map((question) => ({
         id: question.id,
         questionText: question.questionText,

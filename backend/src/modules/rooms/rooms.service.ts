@@ -11,13 +11,14 @@ export class RoomsService {
 
   constructor(private readonly prisma: PrismaService) {}
 
-  async createRoom(hostId: number, gameType: GameType, maxPlayers: number = 5, name?: string) {
+  async createRoom(hostId: number, gameType: GameType, maxPlayers: number = 5, name?: string, quizId?: number) {
     return this.prisma.client.room.create({
       data: {
         name,
         hostId,
         gameType,
         status: RoomStatus.WAITING,
+        quizId,
         players: {
           create: {
             userId: hostId,
@@ -163,7 +164,7 @@ export class RoomsService {
     const room = await this.getRoomById(roomId);
 
     if (room.hostId !== userId) {
-      throw new BadRequestException("Seul le createur peut supprimer la salle");
+      throw new BadRequestException("Seul l'hôte de la salle peut supprimer la salle");
     }
 
     this.cancelEmptyRoomCleanup(roomId);
@@ -195,7 +196,7 @@ export class RoomsService {
     const room = await this.getRoomById(roomId);
 
     if (room.hostId !== userId) {
-      throw new BadRequestException("Seul le créateur peut démarrer la partie");
+      throw new BadRequestException("Seul l'hôte de la salle peut démarrer la partie");
     }
 
     if (room.players.length < 1) {
@@ -223,7 +224,7 @@ export class RoomsService {
     const room = await this.getRoomById(roomId);
 
     if (room.hostId !== userId) {
-      throw new BadRequestException("Seul le créateur peut modifier la partie");
+      throw new BadRequestException("Seul l'hôte de la salle peut modifier la partie");
     }
 
     if (room.status === RoomStatus.PLAYING) {
@@ -245,7 +246,7 @@ export class RoomsService {
     const room = await this.getRoomById(roomId);
 
     if (room.hostId !== hostId) {
-      throw new BadRequestException("Seul le créateur peut expulser un joueur");
+      throw new BadRequestException("Seul l'hôte de la salle peut expulser un joueur");
     }
 
     if (hostId === targetUserId) {

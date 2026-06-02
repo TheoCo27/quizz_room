@@ -35,7 +35,7 @@ export async function getRooms(): Promise<Room[]> {
   return apiRequest<Room[]>("/rooms");
 }
 
-export async function createRoom(payload: { gameType: string; maxPlayers?: number; name?: string }): Promise<Room> {
+export async function createRoom(payload: { gameType: string; maxPlayers?: number; name?: string; quizId?: number }): Promise<Room> {
   return apiRequest<Room>("/rooms", {
     method: "POST",
     body: JSON.stringify(payload),
