@@ -3,8 +3,12 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { PrismaService } from '../../prisma/prisma.service';
 import { GameType, RoomStatus } from '../../../generated/prisma/client';
 
+const EMPTY_ROOM_CLEANUP_DELAY_MS = 15000;
+
 @Injectable()
 export class RoomsService {
+  private readonly cleanupTimers = new Map<string, NodeJS.Timeout>();
+
   constructor(private readonly prisma: PrismaService) {}
 
   async createRoom(hostId: number, gameType: GameType, maxPlayers: number = 5, name?: string) {
@@ -54,10 +58,41 @@ export class RoomsService {
     return room;
   }
 
+  async ensurePlayerInRoom(roomId: string, userId: number) {
+    await this.getRoomById(roomId);
+
+    const player = await this.prisma.client.roomPlayer.findUnique({
+      where: { roomId_userId: { roomId, userId } },
+    });
+
+    if (!player) {
+      throw new BadRequestException("Vous n'etes pas dans la salle");
+    }
+
+    return player;
+  }
+
   async joinRoom(roomId: string, userId: number) {
     const room = await this.getRoomById(roomId);
+    this.cancelEmptyRoomCleanup(roomId);
+
+    const existingPlayer = await this.prisma.client.roomPlayer.findUnique({
+      where: { roomId_userId: { roomId, userId } },
+    });
 
     if (room.status !== RoomStatus.WAITING) {
+      if (existingPlayer) {
+        if (room.status === RoomStatus.PLAYING) {
+          // Player is reconnecting
+          await this.prisma.client.roomPlayer.update({
+            where: { id: existingPlayer.id },
+            data: { isConnected: true },
+          });
+        }
+
+        return this.getRoomById(roomId);
+      }
+
       throw new BadRequestException("La room n'est pas en attente");
     }
 
@@ -65,17 +100,19 @@ export class RoomsService {
       throw new BadRequestException("La limite de joueurs est atteinte");
     }
 
-    const existingPlayer = await this.prisma.client.roomPlayer.findUnique({
-      where: { roomId_userId: { roomId, userId } },
-    });
-
     if (!existingPlayer) {
       await this.prisma.client.roomPlayer.create({
         data: {
           roomId,
           userId,
           isReady: false,
+          isConnected: true,
         },
+      });
+    } else {
+      await this.prisma.client.roomPlayer.update({
+        where: { id: existingPlayer.id },
+        data: { isConnected: true },
       });
     }
 
@@ -100,6 +137,7 @@ export class RoomsService {
 
     if (room.players.length === 0) {
       try {
+        this.cancelEmptyRoomCleanup(roomId);
         console.log(`[RoomsService] Deleting empty room ${roomId} after user ${userId} left.`);
         await this.prisma.client.room.delete({
           where: { id: roomId },
@@ -119,6 +157,21 @@ export class RoomsService {
     }
 
     return this.getRoomById(roomId);
+  }
+
+  async closeRoom(roomId: string, userId: number) {
+    const room = await this.getRoomById(roomId);
+
+    if (room.hostId !== userId) {
+      throw new BadRequestException("Seul le createur peut supprimer la salle");
+    }
+
+    this.cancelEmptyRoomCleanup(roomId);
+    await this.prisma.client.room.delete({
+      where: { id: roomId },
+    });
+
+    return room;
   }
 
   async toggleReady(roomId: string, userId: number) {
@@ -145,8 +198,8 @@ export class RoomsService {
       throw new BadRequestException("Seul le créateur peut démarrer la partie");
     }
 
-    if (room.players.length < 2) {
-      throw new BadRequestException("Il faut au moins 2 joueurs pour démarrer");
+    if (room.players.length < 1) {
+      throw new BadRequestException("Il faut au moins 1 joueur pour démarrer");
     }
 
     const allReady = room.players.every((p) => p.isReady);
@@ -173,7 +226,7 @@ export class RoomsService {
       throw new BadRequestException("Seul le créateur peut modifier la partie");
     }
 
-    if (room.status !== RoomStatus.WAITING) {
+    if (room.status === RoomStatus.PLAYING) {
       throw new BadRequestException("Impossible de modifier une partie en cours");
     }
 
@@ -259,8 +312,19 @@ export class RoomsService {
 
     for (const rp of roomPlayers) {
       if (rp.room.status === RoomStatus.WAITING) {
-        const updatedRoom = await this.leaveRoom(rp.roomId, userId);
-        affectedRooms.push({ roomId: rp.roomId, room: updatedRoom, action: 'leave' });
+        await this.prisma.client.roomPlayer.update({
+          where: { id: rp.id },
+          data: { isConnected: false },
+        });
+
+        const room = await this.getRoomById(rp.roomId);
+        const hasConnectedPlayer = room.players.some((player) => player.isConnected);
+
+        if (!hasConnectedPlayer) {
+          this.scheduleEmptyRoomCleanup(rp.roomId);
+        }
+
+        affectedRooms.push({ roomId: rp.roomId, room, action: 'disconnect' });
       } else if (rp.room.status === RoomStatus.PLAYING) {
         await this.prisma.client.roomPlayer.update({
           where: { id: rp.id },
@@ -268,17 +332,50 @@ export class RoomsService {
         });
 
         const room = await this.getRoomById(rp.roomId);
-        const connectedPlayers = room.players.filter(p => p.isConnected);
-
-        if (connectedPlayers.length <= 1) {
-          const finishedRoom = await this.endGame(rp.roomId);
-          affectedRooms.push({ roomId: rp.roomId, room: finishedRoom, action: 'end' });
-        } else {
-          affectedRooms.push({ roomId: rp.roomId, room, action: 'disconnect' });
-        }
+        affectedRooms.push({ roomId: rp.roomId, room, action: 'disconnect' });
       }
     }
 
     return affectedRooms;
+  }
+
+  private scheduleEmptyRoomCleanup(roomId: string) {
+    if (this.cleanupTimers.has(roomId)) return;
+
+    const timeout = setTimeout(() => {
+      void this.cleanupEmptyRoom(roomId);
+    }, EMPTY_ROOM_CLEANUP_DELAY_MS);
+
+    this.cleanupTimers.set(roomId, timeout);
+  }
+
+  private cancelEmptyRoomCleanup(roomId: string) {
+    const timeout = this.cleanupTimers.get(roomId);
+    if (!timeout) return;
+
+    clearTimeout(timeout);
+    this.cleanupTimers.delete(roomId);
+  }
+
+  private async cleanupEmptyRoom(roomId: string) {
+    this.cleanupTimers.delete(roomId);
+
+    try {
+      const room = await this.prisma.client.room.findUnique({
+        where: { id: roomId },
+        include: { players: true },
+      });
+
+      if (!room) return;
+
+      const hasConnectedPlayer = room.players.some((player) => player.isConnected);
+      if (hasConnectedPlayer) return;
+
+      await this.prisma.client.room.delete({
+        where: { id: roomId },
+      });
+    } catch {
+      // Ignore cleanup errors or race conditions.
+    }
   }
 }

@@ -20,7 +20,7 @@ export type Quiz = {
 
 export type CreateQuizPayload = {
   title: string;
-  questionDurationSec?: 10 | 30 | null;
+  questionDurationSec?: 0 | 10 | 30 | null;
   questions: Array<{
     questionText: string;
     answers: string[];
@@ -41,5 +41,22 @@ export function createQuiz(payload: CreateQuizPayload): Promise<Quiz> {
   return apiRequest<Quiz>("/quizzes", {
     method: "POST",
     body: JSON.stringify(payload),
+  });
+}
+
+export function getMyQuizzes(): Promise<Quiz[]> {
+  return apiRequest<Quiz[]>("/quizzes/me");
+}
+
+export function updateQuiz(quizId: number, payload: CreateQuizPayload): Promise<Quiz> {
+  return apiRequest<Quiz>(`/quizzes/${quizId}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function deleteQuiz(quizId: number): Promise<void> {
+  return apiRequest<void>(`/quizzes/${quizId}`, {
+    method: "DELETE",
   });
 }

@@ -167,6 +167,75 @@ export class ScoresService {
       });
   }
 
+  // Retourne le classement base sur le nombre total de victoires.
+  async getWinsLeaderboard(limit = 10): Promise<{ userId: number; username: string; totalWins: number }[]> {
+    const users = await this.prisma.client.user.findMany({
+      select: {
+        id: true,
+        username: true,
+        _count: {
+          select: {
+            matchHistoryEntries: {
+              where: {
+                isWinner: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const leaderboard = users.map((user) => ({
+      userId: user.id,
+      username: user.username,
+      totalWins: user._count.matchHistoryEntries,
+    }));
+
+    leaderboard.sort((a, b) => {
+      if (b.totalWins !== a.totalWins) {
+        return b.totalWins - a.totalWins;
+      }
+      return a.username.localeCompare(b.username);
+    });
+
+    return leaderboard.slice(0, limit);
+  }
+
+  // Retourne les statistiques de victoire et le rang d'un utilisateur.
+  async getUserWinsRank(userId: number): Promise<{ userId: number; totalWins: number; gamesPlayed: number; rank: number }> {
+    const totalWins = await this.prisma.client.matchHistoryPlayer.count({
+      where: {
+        userId,
+        isWinner: true,
+      },
+    });
+
+    const gamesPlayed = await this.prisma.client.matchHistoryPlayer.count({
+      where: {
+        userId,
+      },
+    });
+
+    const rows = await this.prisma.client.$queryRaw<{ count: bigint }[]>`
+      SELECT COUNT(*) as count FROM (
+        SELECT "userId", COUNT(*) as w
+        FROM "MatchHistoryPlayer"
+        WHERE "isWinner" = true
+        GROUP BY "userId"
+        HAVING COUNT(*) > ${totalWins}
+      ) AS sub
+    `;
+
+    const higherRankCount = rows.length > 0 ? Number(rows[0].count) : 0;
+
+    return {
+      userId,
+      totalWins,
+      gamesPlayed,
+      rank: higherRankCount + 1,
+    };
+  }
+
   // Associe un score aux informations utilisateur correspondantes.
   private async toUserScore(entry: {
     userId: number;

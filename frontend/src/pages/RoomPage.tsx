@@ -6,15 +6,29 @@ import { useAuthSession } from "../hooks/useAuthSession";
 import { Room } from "../services/rooms";
 import { getQuizzes, Quiz } from "../services/quizzes";
 
+type RoomChatMessage = {
+  id: string;
+  userId: number;
+  username: string;
+  avatar_url: string | null;
+  content: string;
+  createdAt: string;
+};
+
 export default function RoomPage() {
   const { id: roomId } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user, isLoading } = useAuthSession();
   const [room, setRoom] = useState<Room | null>(null);
   const roomStatusRef = React.useRef<string | null>(null);
+  const skipLeaveRef = React.useRef(false);
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [countdown, setCountdown] = useState<number | null>(null);
+  const [chatMessages, setChatMessages] = useState<RoomChatMessage[]>([]);
+  const [chatInput, setChatInput] = useState("");
+  const chatListRef = React.useRef<HTMLDivElement | null>(null);
+  const shouldAutoScrollRef = React.useRef(true);
 
   useEffect(() => {
     getQuizzes().then(setQuizzes).catch(console.error);
@@ -27,6 +41,14 @@ export default function RoomPage() {
   }, [room]);
 
   useEffect(() => {
+    const chatList = chatListRef.current;
+    if (!chatList) return;
+    if (shouldAutoScrollRef.current) {
+      chatList.scrollTop = chatList.scrollHeight;
+    }
+  }, [chatMessages]);
+
+  useEffect(() => {
     // Annuler tout "leave_room" en attente si on remonte (Strict Mode)
     if ((window as any).leaveRoomTimeout) {
       clearTimeout((window as any).leaveRoomTimeout);
@@ -34,6 +56,8 @@ export default function RoomPage() {
     }
 
     if (isLoading || !user || !roomId) return;
+
+    setChatMessages([]);
 
     const socket = getSocket();
     connectSocket();
@@ -43,6 +67,7 @@ export default function RoomPage() {
     };
 
     const onRoomStateUpdated = (updatedRoom: Room) => {
+      roomStatusRef.current = updatedRoom.status;
       setRoom(updatedRoom);
       if (updatedRoom.status === "PLAYING") {
         navigate(`/game/${roomId}`);
@@ -50,13 +75,13 @@ export default function RoomPage() {
     };
 
     const onRoomClosed = () => {
-      setError("La salle a été fermée.");
-      setTimeout(() => navigate("/lobby"), 3000);
+      skipLeaveRef.current = true;
+      navigate("/lobby");
     };
 
     const onKicked = () => {
-      setError("Vous avez été expulsé de la salle.");
-      setTimeout(() => navigate("/lobby"), 3000);
+      skipLeaveRef.current = true;
+      navigate("/lobby");
     };
 
     const onGameStarting = (data: { countdown: number }) => {
@@ -76,6 +101,10 @@ export default function RoomPage() {
       setError(data.message);
     };
 
+    const onRoomMessage = (message: RoomChatMessage) => {
+      setChatMessages((prev) => [...prev, message].slice(-100));
+    };
+
     if (socket.connected) {
       socket.emit("join_room", { roomId });
     }
@@ -86,6 +115,7 @@ export default function RoomPage() {
     socket.on("kicked_from_room", onKicked);
     socket.on("game_starting", onGameStarting);
     socket.on("error", onError);
+    socket.on("room_message", onRoomMessage);
 
     return () => {
       socket.off("connect", onConnect);
@@ -94,9 +124,10 @@ export default function RoomPage() {
       socket.off("kicked_from_room", onKicked);
       socket.off("game_starting", onGameStarting);
       socket.off("error", onError);
+      socket.off("room_message", onRoomMessage);
       
       // Ne quitte pas la salle si la partie est en cours
-      if (roomStatusRef.current !== "PLAYING") {
+      if (roomStatusRef.current !== "PLAYING" && !skipLeaveRef.current) {
         (window as any).leaveRoomTimeout = setTimeout(() => {
           socket.emit("leave_room", { roomId });
         }, 500);
@@ -112,6 +143,18 @@ export default function RoomPage() {
     return <div className="p-10 text-center text-text">Non autorisé</div>;
   }
 
+  const handleLeaveRoom = () => {
+    if (!roomId) return;
+    skipLeaveRef.current = true;
+    if ((window as any).leaveRoomTimeout) {
+      clearTimeout((window as any).leaveRoomTimeout);
+      (window as any).leaveRoomTimeout = null;
+    }
+    const socket = getSocket();
+    socket.emit("leave_room", { roomId });
+    navigate("/lobby");
+  };
+
   const handleToggleReady = () => {
     const socket = getSocket();
     socket.emit("toggle_ready", { roomId });
@@ -120,6 +163,13 @@ export default function RoomPage() {
   const handleStartGame = () => {
     const socket = getSocket();
     socket.emit("start_game", { roomId });
+  };
+
+  const handleDeleteRoom = () => {
+    if (!roomId) return;
+    if (!window.confirm("Etes-vous sur de vouloir supprimer la salle ?")) return;
+    const socket = getSocket();
+    socket.emit("close_room", { roomId });
   };
 
   const handleQuizChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -136,9 +186,26 @@ export default function RoomPage() {
   const isHost = room?.hostId === user.id;
   const myPlayer = room?.players?.find((p) => p.userId === user.id);
   const allReady = room?.players?.every((p) => p.isReady);
-  const canStart = isHost && (room?.players?.length || 0) >= 2 && allReady && room?.quizId;
+  const hasMinPlayers = (room?.players?.length || 0) >= 1;
+  const canStart = isHost && hasMinPlayers && allReady && room?.quizId;
 
   const selectedQuiz = quizzes.find((q) => q.id === room?.quizId);
+
+  const handleSendMessage = (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!roomId) return;
+    const content = chatInput.trim();
+    if (!content) return;
+    const socket = getSocket();
+    socket.emit("room_message", { roomId, content });
+    setChatInput("");
+  };
+
+  const formatChatTime = (isoDate: string) => {
+    const date = new Date(isoDate);
+    if (Number.isNaN(date.getTime())) return "";
+    return date.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+  };
 
   return (
     <main className="flex flex-1 px-6 py-10">
@@ -155,12 +222,22 @@ export default function RoomPage() {
             <h1 className="cyber-title text-3xl text-text">
               {room?.name ? room.name : `Salle de ${room?.host?.username || "..."}`}
             </h1>
-            <button
-              onClick={() => navigate("/lobby")}
-              className="px-4 py-2 border border-border/50 text-text-muted hover:text-text hover:bg-background rounded"
-            >
-              Quitter la salle
-            </button>
+            <div className="flex items-center gap-3">
+              {isHost && (
+                <button
+                  onClick={handleDeleteRoom}
+                  className="px-4 py-2 border border-red-500/50 text-red-300 hover:text-red-200 hover:bg-red-900/30 rounded"
+                >
+                  Supprimer la salle
+                </button>
+              )}
+              <button
+                onClick={handleLeaveRoom}
+                className="px-4 py-2 border border-border/50 text-text-muted hover:text-text hover:bg-background rounded"
+              >
+                Quitter la salle
+              </button>
+            </div>
           </div>
 
           {error && (
@@ -173,16 +250,31 @@ export default function RoomPage() {
             <div className="lg:col-span-2">
               <h2 className="text-xl font-bold text-text mb-4">Joueurs ({room?.players?.length || 0}/{room?.maxPlayers || 0})</h2>
               <div className="space-y-4">
-                {room?.players?.map((player) => (
+                {[...(room?.players || [])].sort((a, b) => b.score - a.score).map((player, index) => (
                   <div key={player.id} className="flex items-center justify-between p-4 bg-background/50 rounded-xl border border-border/30">
                     <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-full bg-secondary/20 flex items-center justify-center text-secondary font-bold">
-                        {player.user?.username?.charAt(0).toUpperCase() || "?"}
+                      {player.user?.avatar_url ? (
+                        <img
+                          src={player.user.avatar_url}
+                          alt={player.user.username || "Avatar"}
+                          className="w-10 h-10 rounded-full object-cover border border-secondary/20"
+                          loading="lazy"
+                          referrerPolicy="no-referrer"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-secondary/20 flex items-center justify-center text-secondary font-bold">
+                          {player.user?.username?.charAt(0).toUpperCase() || "?"}
+                        </div>
+                      )}
+                      <div className="flex flex-col">
+                        <span className="font-bold text-text">
+                          {player.user?.username || `Joueur ${player.userId}`}
+                          {player.userId === room?.hostId && " 👑"}
+                        </span>
+                        <span className="text-sm text-text-muted">
+                          Rang #{index + 1} - {player.score} pts
+                        </span>
                       </div>
-                      <span className="font-bold text-text">
-                        {player.user?.username || `Joueur ${player.userId}`}
-                        {player.userId === room.hostId && " 👑"}
-                      </span>
                     </div>
                     <div className="flex items-center gap-4">
                       <span className={`px-3 py-1 rounded text-sm ${player.isReady ? 'bg-green-500/20 text-green-400 border border-green-500/50' : 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/50'}`}>
@@ -201,6 +293,66 @@ export default function RoomPage() {
                   </div>
                 ))}
               </div>
+
+              <div className="mt-6 p-6 bg-background/50 rounded-xl border border-border/30 flex flex-col h-80">
+                <h3 className="font-bold text-lg text-text">Chat de la salle</h3>
+                <div
+                  ref={chatListRef}
+                  className="mt-4 flex-1 overflow-y-auto space-y-4 pr-2"
+                  onScroll={() => {
+                    const chatList = chatListRef.current;
+                    if (!chatList) return;
+                    const distanceToBottom = chatList.scrollHeight - chatList.scrollTop - chatList.clientHeight;
+                    shouldAutoScrollRef.current = distanceToBottom < 40;
+                  }}
+                >
+                  {chatMessages.length === 0 ? (
+                    <p className="text-sm text-text-muted italic">Aucun message pour le moment.</p>
+                  ) : (
+                    chatMessages.map((message) => (
+                      <div key={message.id} className="flex items-start gap-3">
+                        {message.avatar_url ? (
+                          <img
+                            src={message.avatar_url}
+                            alt={message.username || "Avatar"}
+                            className="w-8 h-8 rounded-full object-cover border border-secondary/20"
+                            loading="lazy"
+                            referrerPolicy="no-referrer"
+                          />
+                        ) : (
+                          <div className="w-8 h-8 rounded-full bg-secondary/20 flex items-center justify-center text-secondary font-bold">
+                            {message.username?.charAt(0).toUpperCase() || "?"}
+                          </div>
+                        )}
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 text-xs text-text-muted">
+                            <span className="font-bold text-text">{message.username}</span>
+                            <span>{formatChatTime(message.createdAt)}</span>
+                          </div>
+                          <p className="text-sm text-text break-words">{message.content}</p>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+                <form onSubmit={handleSendMessage} className="mt-4 flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={chatInput}
+                    onChange={(e) => setChatInput(e.target.value)}
+                    placeholder="Ecrire un message..."
+                    maxLength={500}
+                    className="flex-1 bg-background border border-border/50 text-text px-3 py-2 rounded"
+                  />
+                  <button
+                    type="submit"
+                    disabled={!chatInput.trim()}
+                    className="px-4 py-2 font-bold bg-primary hover:bg-primary/90 text-background disabled:opacity-50 disabled:cursor-not-allowed rounded"
+                  >
+                    Envoyer
+                  </button>
+                </form>
+              </div>
             </div>
 
             <div className="flex flex-col gap-6">
@@ -213,11 +365,13 @@ export default function RoomPage() {
                       <select
                         value={room?.quizId || ""}
                         onChange={handleQuizChange}
-                        className="w-full bg-background border border-border/50 text-text p-2 rounded"
+                        className="room-quiz-select w-full bg-background/90 border border-secondary/60 text-text p-2 rounded focus:outline-none focus:ring-2 focus:ring-secondary/40 focus:border-secondary shadow-[0_0_18px_rgba(56,189,248,0.15)]"
                       >
-                        <option value="" disabled>-- Choisir un quiz --</option>
+                        <option value="" disabled className="text-text-muted bg-background">-- Choisir un quiz --</option>
                         {quizzes.map(q => (
-                          <option key={q.id} value={q.id}>{q.title}</option>
+                          <option key={q.id} value={q.id} className="bg-background text-text">
+                            {q.title}
+                          </option>
                         ))}
                       </select>
                     ) : (
@@ -235,16 +389,22 @@ export default function RoomPage() {
                   </button>
 
                   {isHost && (
-                    <button
-                      onClick={handleStartGame}
-                      disabled={!canStart}
-                      className="px-4 py-3 font-bold w-full bg-primary hover:bg-primary/90 text-background disabled:opacity-50 disabled:cursor-not-allowed rounded"
-                    >
-                      Démarrer la partie
-                    </button>
-                  )}
-                  {isHost && !room?.quizId && (
-                    <p className="text-xs text-yellow-400 text-center">Veuillez sélectionner un quiz</p>
+                    <>
+                      <button
+                        onClick={handleStartGame}
+                        disabled={!canStart}
+                        className="px-4 py-3 font-bold w-full bg-primary hover:bg-primary/90 text-background disabled:opacity-50 disabled:cursor-not-allowed rounded"
+                      >
+                        Démarrer la partie
+                      </button>
+                      {!canStart && (
+                        <div className="text-xs text-yellow-400 text-center space-y-1">
+                          {!hasMinPlayers && <p>Il faut au moins 1 joueur.</p>}
+                          {!allReady && (room?.players?.length || 0) >= 2 && <p>Tous les joueurs doivent être prêts.</p>}
+                          {!room?.quizId && <p>Veuillez sélectionner un quiz.</p>}
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               </div>

@@ -44,6 +44,7 @@ model User {
   roomMemberships RoomPlayer[]
 
   matchHistoryEntries MatchHistoryPlayer[]
+  createdQuizzes      Quiz[]               @relation("UserQuizzes")
 }
 
 model FriendRequests {
@@ -64,6 +65,9 @@ model Quiz {
   title               String
   questionDurationSec Int?
   createdAt           DateTime @default(now())
+
+  authorId            Int?
+  author              User?    @relation("UserQuizzes", fields: [authorId], references: [id])
 
   questions          QuizQuestion[]    @relation("QuizQuestions")
   leaderboardEntries QuizLeaderboard[] @relation("QuizLeaderboardEntries")

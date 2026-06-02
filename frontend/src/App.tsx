@@ -5,6 +5,7 @@ import {
   FriendsPage,
   GamePage,
   HomePage,
+  LeaderboardPage,
   LobbyPage,
   LoginPage,
   NotFound,
@@ -29,10 +30,12 @@ export default function App() {
           <Route path="/game/:id" element={<GamePage />} />
           <Route path="/results" element={<ResultsPage />} />
           <Route path="/admin" element={<QuizAdminPage />} />
+          <Route path="/admin/:id" element={<QuizAdminPage />} />
           <Route path="/friends" element={<FriendsPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/leaderboard" element={<LeaderboardPage />} />
           <Route
             path="/politique-confidentialite"
             element={<PrivacyPolicyPage />}

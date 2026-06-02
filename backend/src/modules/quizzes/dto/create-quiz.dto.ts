@@ -69,10 +69,10 @@ export class CreateQuizDto {
   title: string;
 
   // Duree standard d'une question pour ce quiz, ou `null` pour un mode libre.
-  @ApiPropertyOptional({ enum: [10, 30], example: 30, nullable: true })
+  @ApiPropertyOptional({ enum: [0, 10, 30], example: 30, nullable: true })
   @IsOptional()
-  @IsIn([10, 30, null])
-  questionDurationSec?: 10 | 30 | null;
+  @IsIn([0, 10, 30, null])
+  questionDurationSec?: 0 | 10 | 30 | null;
 
   // Ensemble ordonne des questions qui composent le quiz.
   @ApiProperty({

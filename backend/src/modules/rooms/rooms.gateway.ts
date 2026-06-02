@@ -13,6 +13,7 @@ import { Server, Socket } from "socket.io";
 import { AuthService } from "../auth/auth.service";
 import { RoomsService } from "./rooms.service";
 import { JwtService } from "@nestjs/jwt";
+import { QuizGameService } from "./quiz-game.service";
 
 @WebSocketGateway({ cors: true, namespace: "/rooms" })
 export class RoomsGateway
@@ -27,6 +28,7 @@ export class RoomsGateway
     private readonly roomsService: RoomsService,
     private readonly authService: AuthService,
     private readonly jwtService: JwtService,
+    private readonly quizGameService: QuizGameService,
   ) {}
 
   afterInit(server: Server) {
@@ -110,6 +112,13 @@ export class RoomsGateway
       
       client.join(data.roomId);
       this.server.to(data.roomId).emit("room_state_updated", updatedRoom);
+
+      if (updatedRoom.status === "PLAYING") {
+        const currentQuestion = this.quizGameService.getActiveGameQuestion(data.roomId, userId);
+        if (currentQuestion) {
+          client.emit("question", currentQuestion);
+        }
+      }
     } catch (error: any) {
       this.logger.error(`Error in join_room: ${error.message}`);
       client.emit("error", { message: error.message });
@@ -139,6 +148,27 @@ export class RoomsGateway
     }
   }
 
+  @SubscribeMessage("close_room")
+  async handleCloseRoom(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { roomId: string }
+  ) {
+    try {
+      const userId = client.data.user.id;
+      await this.roomsService.closeRoom(data.roomId, userId);
+
+      this.server.to(data.roomId).emit("room_closed");
+
+      const sockets = await this.server.in(data.roomId).fetchSockets();
+      for (const socket of sockets) {
+        socket.leave(data.roomId);
+      }
+    } catch (error: any) {
+      this.logger.error(`Error in close_room: ${error.message}`);
+      client.emit("error", { message: error.message });
+    }
+  }
+
   @SubscribeMessage("toggle_ready")
   async handleToggleReady(
     @ConnectedSocket() client: Socket,
@@ -162,12 +192,33 @@ export class RoomsGateway
   ) {
     try {
       const userId = client.data.user.id;
-      await this.roomsService.startGame(data.roomId, userId);
+      // Validates and updates status to PLAYING
+      const updatedRoom = await this.roomsService.startGame(data.roomId, userId);
       
       this.server.to(data.roomId).emit("game_starting", { countdown: 5 });
+      
+      // Delay to let frontend show countdown before navigating and getting the question
+      setTimeout(() => {
+        this.server.to(data.roomId).emit("room_state_updated", updatedRoom);
+        this.quizGameService.startGameLoop(data.roomId, this.server);
+      }, 5000);
+      
     } catch (error: any) {
       this.logger.error(`Error in start_game: ${error.message}`);
       client.emit("error", { message: error.message });
+    }
+  }
+
+  @SubscribeMessage("submit_answer")
+  async handleSubmitAnswer(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { roomId: string; answer: string }
+  ) {
+    try {
+      const userId = client.data.user.id;
+      this.quizGameService.submitAnswer(data.roomId, userId, data.answer);
+    } catch (error: any) {
+      this.logger.error(`Error in submit_answer: ${error.message}`);
     }
   }
 
@@ -182,6 +233,47 @@ export class RoomsGateway
       this.server.to(data.roomId).emit("room_state_updated", updatedRoom);
     } catch (error: any) {
       this.logger.error(`Error in update_config: ${error.message}`);
+      client.emit("error", { message: error.message });
+    }
+  }
+
+  @SubscribeMessage("room_message")
+  async handleRoomMessage(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { roomId: string; content: string }
+  ) {
+    try {
+      const user = client.data.user;
+      const roomId = data?.roomId;
+      const content = (data?.content || "").trim();
+
+      if (!roomId) {
+        client.emit("error", { message: "Room invalide" });
+        return;
+      }
+
+      if (!content) {
+        client.emit("error", { message: "Le message ne peut pas etre vide" });
+        return;
+      }
+
+      if (content.length > 500) {
+        client.emit("error", { message: "Le message est trop long" });
+        return;
+      }
+
+      await this.roomsService.ensurePlayerInRoom(roomId, user.id);
+
+      this.server.to(roomId).emit("room_message", {
+        id: `${Date.now()}-${user.id}-${Math.floor(Math.random() * 10000)}`,
+        userId: user.id,
+        username: user.username,
+        avatar_url: user.avatar_url ?? null,
+        content,
+        createdAt: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      this.logger.error(`Error in room_message: ${error.message}`);
       client.emit("error", { message: error.message });
     }
   }
