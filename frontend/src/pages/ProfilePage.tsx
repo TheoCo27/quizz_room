@@ -16,6 +16,7 @@ import SecondaryButton from "../components/ui/SecondaryButton";
 import { useAuthSession } from "../hooks/useAuthSession";
 import { getUserFacingErrorMessage } from "../services/api";
 import { AUTH_USERNAME_MIN_LENGTH } from "../services/auth";
+import { getUserWinsRank, type UserWinsRank } from "../services/scores";
 import { updateMyAvatar, updateMyProfile } from "../services/users";
 
 import { getMyQuizzes, deleteQuiz, type Quiz } from "../services/quizzes";
@@ -105,6 +106,10 @@ export default function ProfilePage() {
 
     setProfileUsername(user.username);
     setProfileStatus(user.status);
+
+    getUserWinsRank(user.id)
+      .then(setWinsRankData)
+      .catch(() => setWinsRankData(null));
   }, [user]);
 
   useEffect(() => {
@@ -718,9 +723,9 @@ export default function ProfilePage() {
           </div>
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
             <CyberStat
-              label="Parties jouees"
-              value="--"
-              hint="Stats a venir"
+              label="Victoires totales"
+              value={winsRankData ? winsRankData.totalWins.toString() : "--"}
+              hint="Leaderboard global"
             />
             <CyberStat
               label="Taux de victoire"
@@ -729,7 +734,7 @@ export default function ProfilePage() {
             />
             <CyberStat
               label="Classement"
-              value="#--"
+              value={winsRankData ? `#${winsRankData.rank}` : "#--"}
               hint="Leaderboard"
             />
             <CyberStat

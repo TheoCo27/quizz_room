@@ -26,6 +26,22 @@ export class ScoresController {
     return ok(await this.scoresService.getLeaderboard(limit));
   }
 
+  // Retourne le leaderboard base sur le nombre total de victoires.
+  @Get("leaderboard/wins")
+  async getWinsLeaderboard(
+    @Query("limit", new DefaultValuePipe(10), ParseIntPipe) limit: number,
+  ): Promise<ApiResponse<{ userId: number; username: string; totalWins: number }[]>> {
+    return ok(await this.scoresService.getWinsLeaderboard(limit));
+  }
+
+  // Retourne les statistiques de victoire et le rang d'un utilisateur.
+  @Get("users/:userId/wins-rank")
+  async getUserWinsRank(
+    @Param("userId", ParseIntPipe) userId: number,
+  ): Promise<ApiResponse<{ userId: number; totalWins: number; rank: number }>> {
+    return ok(await this.scoresService.getUserWinsRank(userId));
+  }
+
   // Retourne le score global d'un utilisateur donne.
   @Get("users/:userId")
   async getUserScore(

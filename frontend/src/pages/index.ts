@@ -1,6 +1,7 @@
 export { default as FriendsPage } from "./FriendsPage";
 export { default as GamePage } from "./GamePage";
 export { default as HomePage } from "./HomePage";
+export { default as LeaderboardPage } from "./LeaderboardPage";
 export { default as LobbyPage } from "./LobbyPage";
 export { default as LoginPage } from "./LoginPage";
 export { default as NotFound } from "./NotFound";

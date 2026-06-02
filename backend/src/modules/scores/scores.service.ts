@@ -167,6 +167,69 @@ export class ScoresService {
       });
   }
 
+  // Retourne le classement base sur le nombre total de victoires.
+  async getWinsLeaderboard(limit = 10): Promise<{ userId: number; username: string; totalWins: number }[]> {
+    const wins = await this.prisma.client.matchHistoryPlayer.groupBy({
+      by: ["userId"],
+      _count: {
+        id: true,
+      },
+      where: {
+        isWinner: true,
+      },
+      orderBy: {
+        _count: {
+          id: "desc",
+        },
+      },
+      take: limit,
+    });
+
+    const leaderboard = await Promise.all(
+      wins.map(async (entry) => {
+        const user = await this.usersService.findUser({ id: entry.userId });
+        if (!user) {
+          return null;
+        }
+        return {
+          userId: entry.userId,
+          username: user.username,
+          totalWins: entry._count.id,
+        };
+      })
+    );
+
+    return leaderboard.filter((entry): entry is NonNullable<typeof entry> => entry !== null);
+  }
+
+  // Retourne les statistiques de victoire et le rang d'un utilisateur.
+  async getUserWinsRank(userId: number): Promise<{ userId: number; totalWins: number; rank: number }> {
+    const totalWins = await this.prisma.client.matchHistoryPlayer.count({
+      where: {
+        userId,
+        isWinner: true,
+      },
+    });
+
+    const rows = await this.prisma.client.$queryRaw<{ count: bigint }[]>`
+      SELECT COUNT(*) as count FROM (
+        SELECT "userId", COUNT(*) as w
+        FROM "MatchHistoryPlayer"
+        WHERE "isWinner" = true
+        GROUP BY "userId"
+        HAVING COUNT(*) > ${totalWins}
+      ) AS sub
+    `;
+
+    const higherRankCount = rows.length > 0 ? Number(rows[0].count) : 0;
+
+    return {
+      userId,
+      totalWins,
+      rank: higherRankCount + 1,
+    };
+  }
+
   // Associe un score aux informations utilisateur correspondantes.
   private async toUserScore(entry: {
     userId: number;

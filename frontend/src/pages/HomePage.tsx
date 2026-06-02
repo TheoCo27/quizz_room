@@ -182,7 +182,9 @@ export default function HomePage() {
               <CyberBadge variant="success">i18n</CyberBadge>
             </div>
             <div className="mt-6 flex flex-wrap gap-3">
-              <SecondaryButton disabled>Voir le planning</SecondaryButton>
+              <Link to="/leaderboard">
+                <PrimaryButton>Voir le classement global</PrimaryButton>
+              </Link>
             </div>
           </CyberCard>
         </section>
