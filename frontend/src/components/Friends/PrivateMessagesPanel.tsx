@@ -1,4 +1,5 @@
-import type { FormEvent } from "react";
+import { useEffect, useRef, type FormEvent } from "react";
+import type { SafeUser } from "../../services/auth";
 import type { FriendUserSummary, PrivateMessage } from "../../services/users";
 import { CyberBadge, CyberCard } from "../cyber";
 import PrimaryButton from "../ui/PrimaryButton";
@@ -7,7 +8,7 @@ import Input from "../ui/input";
 const PRIVATE_MESSAGE_MAX_LENGTH = 1000;
 
 type PrivateMessagesPanelProps = {
-  currentUserId: number;
+  currentUser: SafeUser;
   selectedFriend: FriendUserSummary | null;
   messages: PrivateMessage[];
   isConversationLoading: boolean;
@@ -32,7 +33,7 @@ function formatTimestamp(value: string) {
 }
 
 export default function PrivateMessagesPanel({
-  currentUserId,
+  currentUser,
   selectedFriend,
   messages,
   isConversationLoading,
@@ -45,8 +46,17 @@ export default function PrivateMessagesPanel({
   const hasReachedMessageLimit =
     messageInput.length >= PRIVATE_MESSAGE_MAX_LENGTH;
 
+  const chatListRef = useRef<HTMLDivElement | null>(null);
+
+  // Auto-scroll to the bottom of the chat list on new messages
+  useEffect(() => {
+    if (chatListRef.current) {
+      chatListRef.current.scrollTop = chatListRef.current.scrollHeight;
+    }
+  }, [messages, isConversationLoading]);
+
   return (
-    <CyberCard className="flex min-h-176 flex-col rounded-4xl p-6" accent="magenta">
+    <CyberCard className="flex flex-col rounded-4xl p-6 h-[38rem]" accent="magenta">
       <div className="border-b border-white/10 pb-5">
         <p className="cyber-eyebrow">Messages prives</p>
         <div className="mt-3 flex flex-wrap items-center gap-3">
@@ -57,30 +67,21 @@ export default function PrivateMessagesPanel({
             <CyberBadge variant="info">Canal prive</CyberBadge>
           ) : null}
         </div>
-        <p className="mt-3 max-w-2xl text-sm leading-7 text-text-muted">
-          {selectedFriend
-            ? "La conversation privee est reservee aux amis acceptes."
-            : "Selectionne un ami dans le reseau pour ouvrir ou reprendre une conversation."}
-        </p>
       </div>
 
       {selectedFriend ? (
         <>
-          <div className="mt-5 flex-1 space-y-3 overflow-y-auto rounded-[1.75rem] border border-white/10 bg-white/5 p-4">
+          <div
+            ref={chatListRef}
+            className="mt-5 flex-1 space-y-4 overflow-y-auto rounded-[1.75rem] border border-white/10 bg-white/5 p-4"
+          >
             {isConversationLoading ? (
               <div className="rounded-[1.25rem] border border-white/10 bg-white/8 px-4 py-4 text-sm text-text-muted">
                 Chargement de la conversation...
               </div>
             ) : null}
 
-            {conversationError ? (
-              <div className="rounded-[1.25rem] border border-danger/30 bg-danger/10 px-4 py-4 text-sm text-danger">
-                {conversationError}
-              </div>
-            ) : null}
-
             {!isConversationLoading &&
-              !conversationError &&
               messages.length === 0 ? (
               <div className="rounded-[1.25rem] border border-white/10 bg-white/8 px-4 py-4 text-sm leading-7 text-text-muted">
                 Aucun message pour l'instant. Lance la conversation avec{" "}
@@ -89,31 +90,36 @@ export default function PrivateMessagesPanel({
             ) : null}
 
             {messages.map((message) => {
-              const isOwnMessage = message.senderId === currentUserId;
+              const isOwnMessage = message.senderId === currentUser.id;
+              const senderUsername = isOwnMessage ? currentUser.username : selectedFriend.username;
+              const senderAvatar = isOwnMessage ? currentUser.avatar_url : selectedFriend.avatar_url;
 
               return (
-                <div
-                  key={message.id}
-                  className={`flex ${isOwnMessage ? "justify-end" : "justify-start"}`}
-                >
-                  <div
-                    className={`max-w-[85%] rounded-[1.4rem] border px-4 py-3 shadow-sm ${isOwnMessage
-                        ? "border-primary/40 bg-primary/10 text-text"
-                        : "border-white/10 bg-white/8 text-text"
-                      }`}
-                  >
-                    <p className="whitespace-pre-wrap text-sm leading-7">
-                      {message.content}
-                    </p>
-                    <div
-                      className={`mt-2 flex items-center gap-2 text-xs ${isOwnMessage ? "text-text-muted" : "text-text-muted"
-                        }`}
-                    >
-                      <span>{formatTimestamp(message.createdAt)}</span>
-                      {isOwnMessage ? (
-                        <span>{message.readAt ? "Lu" : "Envoye"}</span>
-                      ) : null}
+                <div key={message.id} className="flex items-start gap-3">
+                  {senderAvatar ? (
+                    <img
+                      src={senderAvatar}
+                      alt={senderUsername}
+                      className="w-8 h-8 rounded-full object-cover border border-secondary/20"
+                      loading="lazy"
+                      referrerPolicy="no-referrer"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-secondary/20 flex items-center justify-center text-secondary font-bold text-xs">
+                      {senderUsername.charAt(0).toUpperCase()}
                     </div>
+                  )}
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 text-xs text-text-muted">
+                      <span className="font-bold text-text">{senderUsername}</span>
+                      <span>{formatTimestamp(message.createdAt)}</span>
+                      {isOwnMessage && (
+                        <span className="text-[10px] opacity-70">
+                          ({message.readAt ? "Lu" : "Envoye"})
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-sm text-text break-words mt-0.5">{message.content}</p>
                   </div>
                 </div>
               );
@@ -124,36 +130,40 @@ export default function PrivateMessagesPanel({
             className="mt-5"
             onSubmit={(event) => void onMessageSubmit(event)}
           >
+            {conversationError ? (
+              <div className="mb-3 rounded-[1.25rem] border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger">
+                {conversationError}
+              </div>
+            ) : null}
             <label
               className="mb-2 block text-sm font-medium text-text-muted"
               htmlFor="private-message"
             >
               Ecrire a {selectedFriend.username}
             </label>
-            <Input
-              className="w-full"
-              id="private-message"
-              placeholder="Ecris un message privé..."
-              value={messageInput}
-              onChange={(event) => onMessageInputChange(event.target.value)}
-              disabled={isSendingMessage}
-              maxLength={PRIVATE_MESSAGE_MAX_LENGTH}
-              required
-            />
+            <div className="flex items-center gap-2">
+              <Input
+                className="flex-1"
+                id="private-message"
+                placeholder="Ecris un message privé..."
+                value={messageInput}
+                onChange={(event) => onMessageInputChange(event.target.value)}
+                maxLength={PRIVATE_MESSAGE_MAX_LENGTH}
+                required
+              />
+              <PrimaryButton
+                disabled={isSendingMessage || messageInput.length < 1}
+                type="submit"
+              >
+                {isSendingMessage ? "Envoi..." : "Envoyer"}
+              </PrimaryButton>
+            </div>
             {hasReachedMessageLimit ? (
               <p className="mt-3 rounded-[1.25rem] border border-warning/40 bg-warning/10 px-4 py-3 text-sm text-warning">
                 Attention : le message a ete tronque. Maximum{" "}
                 {PRIVATE_MESSAGE_MAX_LENGTH} caracteres.
               </p>
             ) : null}
-            <div className="mt-4 flex justify-end">
-              <PrimaryButton
-                disabled={isSendingMessage || messageInput.length < 1}
-                type="submit"
-              >
-                {isSendingMessage ? "Envoi..." : "Envoyer le message"}
-              </PrimaryButton>
-            </div>
           </form>
         </>
       ) : (

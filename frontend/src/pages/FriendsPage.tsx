@@ -25,10 +25,7 @@ import {
 
 const FRIENDS_POLL_INTERVAL_MS = 2000;
 const CONVERSATION_POLL_INTERVAL_MS = 500;
-const PRIVATE_MESSAGE_RATE_LIMITS = [
-  { limit: 5, windowMs: 5_000 },
-  { limit: 20, windowMs: 60_000 },
-] as const;
+
 
 function areMessagesEqual(left: PrivateMessage[], right: PrivateMessage[]) {
   return (
@@ -50,6 +47,10 @@ function areMessagesEqual(left: PrivateMessage[], right: PrivateMessage[]) {
 
 export default function FriendsPage() {
   const { user, isLoading } = useAuthSession();
+  const chatRateLimitRef = useRef({
+    tokens: 10,
+    lastRefill: Date.now(),
+  });
   const [friendOverview, setFriendOverview] = useState<FriendOverview | null>(
     null,
   );
@@ -394,12 +395,13 @@ export default function FriendsPage() {
       return;
     }
 
-    const rateLimitMessage = consumePrivateMessageRateLimit(
-      privateMessageTimestampsRef.current,
-    );
+    const rateLimitMessage = checkChatLimit(chatRateLimitRef.current);
 
     if (rateLimitMessage) {
       setConversationError(rateLimitMessage);
+      setTimeout(() => {
+        setConversationError((prev) => (prev === rateLimitMessage ? null : prev));
+      }, 4000);
       return;
     }
 
@@ -448,7 +450,7 @@ export default function FriendsPage() {
         />
 
         <PrivateMessagesPanel
-          currentUserId={user.id}
+          currentUser={user}
           selectedFriend={selectedFriend}
           messages={messages}
           isConversationLoading={isConversationLoading}
@@ -463,29 +465,24 @@ export default function FriendsPage() {
   );
 }
 
-function consumePrivateMessageRateLimit(timestamps: number[]): string | null {
+function checkChatLimit(bucket: { tokens: number; lastRefill: number }): string | null {
   const now = Date.now();
-  const maxWindowMs = Math.max(
-    ...PRIVATE_MESSAGE_RATE_LIMITS.map((rule) => rule.windowMs),
-  );
-  const retained = timestamps.filter(
-    (timestamp) => now - timestamp < maxWindowMs,
-  );
+  const capacity = 10;
+  const windowMs = 30000;
+  const replenishRate = capacity / windowMs; // tokens per ms
 
-  for (const rule of PRIVATE_MESSAGE_RATE_LIMITS) {
-    const hitsInWindow = retained.filter(
-      (timestamp) => now - timestamp < rule.windowMs,
-    );
+  const elapsedMs = now - bucket.lastRefill;
+  const addedTokens = elapsedMs * replenishRate;
 
-    if (hitsInWindow.length >= rule.limit) {
-      const retryAfterMs = Math.max(0, rule.windowMs - (now - hitsInWindow[0]));
+  bucket.tokens = Math.min(capacity, bucket.tokens + addedTokens);
+  bucket.lastRefill = now;
 
-      timestamps.splice(0, timestamps.length, ...retained);
-      return `Vous avez envoye trop de messages. Reessayez dans ${Math.ceil(retryAfterMs / 1000)} secondes.`;
-    }
+  if (bucket.tokens >= 1) {
+    bucket.tokens -= 1;
+    return null;
+  } else {
+    const neededTokens = 1 - bucket.tokens;
+    const retryAfterMs = neededTokens / replenishRate;
+    return `Vous devez attendre ${Math.ceil(retryAfterMs / 1000)} seconde(s) avant de renvoyer un message.`;
   }
-
-  retained.push(now);
-  timestamps.splice(0, timestamps.length, ...retained);
-  return null;
 }

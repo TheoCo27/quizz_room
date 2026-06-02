@@ -416,6 +416,16 @@ export class UsersService {
       throw new NotFoundException(`User ${friendId} not found`);
     }
 
+    // Supprimer l'historique des messages privés
+    await this.prisma.client.privateMessage.deleteMany({
+      where: {
+        OR: [
+          { senderId: userId, receiverId: friendId },
+          { senderId: friendId, receiverId: userId },
+        ],
+      },
+    });
+
     const deletedRelations = await this.prisma.client.friendRequests.deleteMany({
       where: {
         status: "accepted",
