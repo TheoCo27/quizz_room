@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import QuestionComposer from "../components/QuizBuilder/QuestionComposer";
 import QuizRulesCard from "../components/QuizBuilder/QuizRulesCard";
 import QuizSetupCard from "../components/QuizBuilder/QuizSetupCard";
@@ -7,7 +7,7 @@ import { CyberBadge, CyberButton, CyberCard } from "../components/cyber";
 import PrimaryButton from "../components/ui/PrimaryButton";
 import { useAuthSession } from "../hooks/useAuthSession";
 import { getUserFacingErrorMessage } from "../services/api";
-import { createQuiz } from "../services/quizzes";
+import { createQuiz, getQuizById, updateQuiz } from "../services/quizzes";
 
 type DraftQuestion = {
   questionText: string;
@@ -23,6 +23,8 @@ const EMPTY_DRAFT: DraftQuestion = {
 
 export default function QuizAdminPage() {
   const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
+  const isEditing = Boolean(id);
   const { user, isLoading } = useAuthSession();
   const [title, setTitle] = useState("");
   const [rule, setRule] = useState<10 | 30 | "unlimited">(10);
@@ -32,6 +34,30 @@ export default function QuizAdminPage() {
   const [questionError, setQuestionError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isFetching, setIsFetching] = useState(isEditing);
+
+  useEffect(() => {
+    if (isEditing && id) {
+      getQuizById(parseInt(id, 10))
+        .then((quiz) => {
+          setTitle(quiz.title);
+          setRule(quiz.questionDurationSec === null || quiz.questionDurationSec === 0 ? "unlimited" : (quiz.questionDurationSec as 10 | 30));
+          setQuestions(
+            quiz.questions.map((q) => ({
+              questionText: q.questionText,
+              options: q.answers,
+              correctAnswerIndex: q.answers.indexOf(q.correctAnswer) !== -1 ? q.answers.indexOf(q.correctAnswer) : 0,
+            }))
+          );
+        })
+        .catch((error) => {
+          setSubmitError(getUserFacingErrorMessage(error, "Impossible de charger le quiz."));
+        })
+        .finally(() => {
+          setIsFetching(false);
+        });
+    }
+  }, [id, isEditing]);
 
   const validateDraftQuestion = () => {
     if (draftQuestion.questionText.trim().length < 6) {
@@ -108,25 +134,39 @@ export default function QuizAdminPage() {
 
     setIsSubmitting(true);
     try {
-      await createQuiz({
+      const payload = {
         title: title.trim(),
-        questionDurationSec: rule === "unlimited" ? 0 : rule,
+        questionDurationSec: (rule === "unlimited" ? 0 : rule) as 0 | 10 | 30 | null,
         questions: questions.map((question) => ({
           questionText: question.questionText,
           answers: question.options,
           correctAnswerIndex: question.correctAnswerIndex,
         })),
-      });
+      };
 
-      navigate("/");
+      if (isEditing && id) {
+        await updateQuiz(parseInt(id, 10), payload);
+      } else {
+        await createQuiz(payload);
+      }
+
+      navigate(isEditing ? "/profile" : "/");
     } catch (error) {
       setSubmitError(
-        getUserFacingErrorMessage(error, "Impossible de creer le quiz."),
+        getUserFacingErrorMessage(error, isEditing ? "Impossible de modifier le quiz." : "Impossible de creer le quiz."),
       );
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  if (isFetching) {
+    return (
+      <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col px-6 py-10 md:px-10">
+        <p className="text-text-muted">Chargement du quiz...</p>
+      </main>
+    );
+  }
 
   return (
     <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col px-6 py-10 md:px-10">

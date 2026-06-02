@@ -47,13 +47,14 @@ export class QuizzesService {
   constructor(private readonly prisma: PrismaService) {}
 
   // Cree un quiz et ses questions en base.
-  async createQuiz(dto: CreateQuizDto): Promise<QuizResponse> {
+  async createQuiz(dto: CreateQuizDto, authorId?: number): Promise<QuizResponse> {
     this.assertValidQuestions(dto);
 
     const quiz = (await this.prisma.client.quiz.create({
       data: {
         title: dto.title.trim(),
         questionDurationSec: dto.questionDurationSec ?? null,
+        authorId,
         questions: {
           create: dto.questions.map((question, index) => {
             const answers = question.answers.map((answer) => answer.trim());
@@ -98,6 +99,67 @@ export class QuizzesService {
     })) as QuizWithQuestions[];
 
     return quizzes.map((quiz) => this.toQuizResponse(quiz));
+  }
+
+  // Retourne les quiz crees par un utilisateur specifique.
+  async listMyQuizzes(authorId: number): Promise<QuizResponse[]> {
+    const quizzes = (await this.prisma.client.quiz.findMany({
+      where: { authorId },
+      orderBy: { createdAt: "desc" },
+      include: { questions: { orderBy: { position: "asc" } } },
+    })) as QuizWithQuestions[];
+    
+    return quizzes.map((quiz) => this.toQuizResponse(quiz));
+  }
+
+  // Met a jour un quiz existant.
+  async updateQuiz(quizId: number, authorId: number, dto: CreateQuizDto): Promise<QuizResponse> {
+    const quiz = await this.prisma.client.quiz.findUnique({ where: { id: quizId } });
+    if (!quiz) throw new NotFoundException(`Quiz ${quizId} not found`);
+    if (quiz.authorId !== authorId) throw new BadRequestException("You can only update your own quizzes");
+    
+    this.assertValidQuestions(dto);
+
+    const updatedQuiz = (await this.prisma.client.quiz.update({
+      where: { id: quizId },
+      data: {
+        title: dto.title.trim(),
+        questionDurationSec: dto.questionDurationSec ?? null,
+        questions: {
+          deleteMany: {},
+          create: dto.questions.map((question, index) => {
+            const answers = question.answers.map((answer) => answer.trim());
+            return {
+              questionText: question.questionText.trim(),
+              answers,
+              correctAnswer: answers[question.correctAnswerIndex],
+              position: index + 1,
+              ...(typeof question.points === "number" ? { points: question.points } : {}),
+            };
+          }),
+        },
+      },
+      include: { questions: { orderBy: { position: "asc" } } },
+    })) as QuizWithQuestions;
+
+    return this.toQuizResponse(updatedQuiz);
+  }
+
+  // Supprime un quiz.
+  async deleteQuiz(quizId: number, authorId: number): Promise<void> {
+    const quiz = await this.prisma.client.quiz.findUnique({ where: { id: quizId } });
+    if (!quiz) throw new NotFoundException(`Quiz ${quizId} not found`);
+    if (quiz.authorId !== authorId) throw new BadRequestException("You can only delete your own quizzes");
+
+    try {
+      await this.prisma.client.$transaction([
+        this.prisma.client.quizQuestion.deleteMany({ where: { quizId } }),
+        this.prisma.client.quizLeaderboard.deleteMany({ where: { quizId } }),
+        this.prisma.client.quiz.delete({ where: { id: quizId } }),
+      ]);
+    } catch (error) {
+      throw new BadRequestException("Cannot delete this quiz, it might be in use.");
+    }
   }
 
   // Recupere un quiz complet par son identifiant.

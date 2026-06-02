@@ -29,6 +29,7 @@ export default function App() {
           <Route path="/game/:id" element={<GamePage />} />
           <Route path="/results" element={<ResultsPage />} />
           <Route path="/admin" element={<QuizAdminPage />} />
+          <Route path="/admin/:id" element={<QuizAdminPage />} />
           <Route path="/friends" element={<FriendsPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/login" element={<LoginPage />} />

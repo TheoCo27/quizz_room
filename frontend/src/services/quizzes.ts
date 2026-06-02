@@ -43,3 +43,20 @@ export function createQuiz(payload: CreateQuizPayload): Promise<Quiz> {
     body: JSON.stringify(payload),
   });
 }
+
+export function getMyQuizzes(): Promise<Quiz[]> {
+  return apiRequest<Quiz[]>("/quizzes/me");
+}
+
+export function updateQuiz(quizId: number, payload: CreateQuizPayload): Promise<Quiz> {
+  return apiRequest<Quiz>(`/quizzes/${quizId}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function deleteQuiz(quizId: number): Promise<void> {
+  return apiRequest<void>(`/quizzes/${quizId}`, {
+    method: "DELETE",
+  });
+}

@@ -18,6 +18,8 @@ import { getUserFacingErrorMessage } from "../services/api";
 import { AUTH_USERNAME_MIN_LENGTH } from "../services/auth";
 import { updateMyAvatar, updateMyProfile } from "../services/users";
 
+import { getMyQuizzes, deleteQuiz, type Quiz } from "../services/quizzes";
+
 const MAX_AVATAR_SIZE_BYTES = 2 * 1024 * 1024;
 const SUPPORTED_AVATAR_TYPES = new Set([
   "image/jpeg",
@@ -31,7 +33,8 @@ type ProfileTabId =
   | "achievements"
   | "social"
   | "security"
-  | "preferences";
+  | "preferences"
+  | "quizzes";
 
 function formatJoinedDate(createdAt: string) {
   try {
@@ -92,6 +95,8 @@ export default function ProfilePage() {
     message: string;
   } | null>(null);
   const [activeTab, setActiveTab] = useState<ProfileTabId>("overview");
+  const [myQuizzes, setMyQuizzes] = useState<Quiz[]>([]);
+  const [isQuizzesLoading, setIsQuizzesLoading] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -101,6 +106,26 @@ export default function ProfilePage() {
     setProfileUsername(user.username);
     setProfileStatus(user.status);
   }, [user]);
+
+  useEffect(() => {
+    if (activeTab === "quizzes") {
+      setIsQuizzesLoading(true);
+      getMyQuizzes()
+        .then(setMyQuizzes)
+        .catch(console.error)
+        .finally(() => setIsQuizzesLoading(false));
+    }
+  }, [activeTab]);
+
+  const handleDeleteQuiz = async (quizId: number) => {
+    if (!window.confirm("Voulez-vous vraiment supprimer ce quiz ?")) return;
+    try {
+      await deleteQuiz(quizId);
+      setMyQuizzes((prev) => prev.filter((q) => q.id !== quizId));
+    } catch (error) {
+      alert(getUserFacingErrorMessage(error, "Impossible de supprimer le quiz."));
+    }
+  };
 
   if (isLoading) {
     return (
@@ -282,6 +307,7 @@ export default function ProfilePage() {
 
   const profileTabs: Array<{ id: ProfileTabId; label: string }> = [
     { id: "overview", label: "Vue d'ensemble" },
+    { id: "quizzes", label: "Mes quizz" },
     { id: "history", label: "Historique" },
     { id: "achievements", label: "Succes" },
     { id: "social", label: "Social" },
@@ -464,6 +490,46 @@ export default function ProfilePage() {
           </div>
         </CyberCard>
       </div>
+    ),
+    quizzes: (
+      <CyberCard className="rounded-4xl p-6">
+        <p className="cyber-eyebrow">Mes Quizz</p>
+        <div className="flex justify-between items-center mt-2">
+          <h3 className="cyber-title text-sm text-text">Gerer mes creations</h3>
+          <Link to="/admin">
+            <PrimaryButton>Nouveau Quiz</PrimaryButton>
+          </Link>
+        </div>
+        <p className="mt-2 text-sm text-text-muted">
+          Edite ou supprime les quiz que tu as crees.
+        </p>
+        {isQuizzesLoading ? (
+          <p className="mt-5 text-sm text-text-muted">Chargement...</p>
+        ) : myQuizzes.length === 0 ? (
+          <p className="mt-5 text-sm text-text-muted">Tu n'as pas encore cree de quiz.</p>
+        ) : (
+          <ul className="mt-5 space-y-3 text-sm text-text">
+            {myQuizzes.map((quiz) => (
+              <li
+                key={quiz.id}
+                className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3"
+              >
+                <span>{quiz.title} ({quiz.questions.length} questions)</span>
+                <div className="flex items-center gap-2">
+                  <Link to={`/admin/${quiz.id}`}>
+                    <SecondaryButton>Editer</SecondaryButton>
+                  </Link>
+                  <SecondaryButton
+                    onClick={() => void handleDeleteQuiz(quiz.id)}
+                  >
+                    Supprimer
+                  </SecondaryButton>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </CyberCard>
     ),
     history: (
       <CyberCard className="rounded-4xl p-6">
