@@ -25,12 +25,11 @@ export default function CyberButton({
             className={`cyber-button ${className}`.trim()}
             data-glow={glow ? "true" : "false"}
             data-size={size}
-            data-text={text}
             data-variant={variant}
             type={type}
             {...props}
         >
-            <span className="cyber-button__label">{children}</span>
+            <span className="cyber-button__label" data-text={text}>{children}</span>
         </button>
     );
 }
