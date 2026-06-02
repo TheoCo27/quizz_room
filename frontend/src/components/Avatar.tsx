@@ -26,7 +26,7 @@ export default function Avatar({
   return (
     <div
       className={[
-        "inline-flex items-center justify-center rounded-full bg-[linear-gradient(135deg,#00f5ff,#ff2bdc)] font-semibold text-white",
+        "inline-flex items-center justify-center rounded-full bg-[linear-gradient(135deg,#fcee0a,#00f0ff)] font-semibold text-black",
         className,
         fallbackClassName,
       ]
