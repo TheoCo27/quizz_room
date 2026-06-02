@@ -65,10 +65,14 @@ body {
   color: var(--color-text);
   background-color: var(--color-bg);
   background-image:
-    radial-gradient(1200px 480px at 20% -20%, rgba(252, 238, 10, 0.12), transparent 60%),
-    radial-gradient(900px 520px at 110% 10%, rgba(0, 240, 255, 0.1), transparent 60%),
-    linear-gradient(180deg, rgba(252, 238, 10, 0.03), transparent 40%),
-    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.02) 0, rgba(255, 255, 255, 0.02) 1px, transparent 1px, transparent 3px);
+    radial-gradient(1200px 480px at 20% -20%, rgba(252, 238, 10, 0.1), transparent 60%),
+    radial-gradient(900px 520px at 110% 10%, rgba(0, 240, 255, 0.08), transparent 60%),
+    linear-gradient(180deg, rgba(7, 7, 9, 0.8), rgba(7, 7, 9, 0.95)),
+    url("./assets/night_city_blueprint.png"),
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.015) 0, rgba(255, 255, 255, 0.015) 1px, transparent 1px, transparent 3px);
+  background-attachment: fixed;
+  background-size: cover, cover, cover, cover, auto;
+  background-position: center;
   min-height: 100vh;
 }
 
