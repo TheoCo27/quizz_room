@@ -282,6 +282,8 @@ export class RoomsService {
     // Determine winner
     const maxScore = Math.max(...room.players.map(p => p.score));
     if (room.players.length > 0) {
+      const winners = room.players.filter(p => p.score === maxScore);
+
       await this.prisma.client.matchHistoryPlayer.updateMany({
         where: {
           matchId: match.id,
@@ -290,6 +292,20 @@ export class RoomsService {
         data: {
           isWinner: true
         }
+      });
+
+      // Award 300 XP to all winners
+      await this.prisma.client.user.updateMany({
+        where: {
+          id: {
+            in: winners.map(w => w.userId),
+          },
+        },
+        data: {
+          xp: {
+            increment: 300,
+          },
+        },
       });
     }
 

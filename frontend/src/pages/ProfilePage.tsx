@@ -18,6 +18,7 @@ import { getUserFacingErrorMessage } from "../services/api";
 import { AUTH_USERNAME_MIN_LENGTH } from "../services/auth";
 import { getUserWinsRank, type UserWinsRank } from "../services/scores";
 import { updateMyAvatar, updateMyProfile } from "../services/users";
+import { calculateLevelData } from "../utils/level";
 
 import { getMyQuizzes, deleteQuiz, type Quiz } from "../services/quizzes";
 
@@ -99,6 +100,8 @@ export default function ProfilePage() {
   const [myQuizzes, setMyQuizzes] = useState<Quiz[]>([]);
   const [isQuizzesLoading, setIsQuizzesLoading] = useState(false);
   const [winsRankData, setWinsRankData] = useState<UserWinsRank | null>(null);
+
+  const levelData = calculateLevelData(user?.xp ?? 0);
 
   useEffect(() => {
     if (!user) {
@@ -688,6 +691,9 @@ export default function ProfilePage() {
                 <CyberBadge variant="info">
                   {user.isGuest ? "Mode invite" : "Compte classique"}
                 </CyberBadge>
+                <CyberBadge variant="success">
+                  Niveau {levelData.level}
+                </CyberBadge>
                 <CyberBadge variant="warning">
                   Membre depuis {formatJoinedDate(user.createdAt)}
                 </CyberBadge>
@@ -747,12 +753,12 @@ export default function ProfilePage() {
               hint="Leaderboard"
             />
             <CyberStat
-              label="XP"
-              value="64/100"
-              hint="Progression"
+              label="Niveau"
+              value={`Niv. ${levelData.level}`}
+              hint={`${levelData.xpInCurrentLevel}/${levelData.xpRequiredForNextLevel} XP`}
             />
           </div>
-          <CyberProgress className="mt-6" label="Experience" value={64} />
+          <CyberProgress className="mt-6" label={`Progression Niveau ${levelData.level}`} value={levelData.percentage} />
         </CyberCard>
       </section>
 

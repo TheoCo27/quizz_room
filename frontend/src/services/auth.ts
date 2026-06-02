@@ -11,6 +11,7 @@ export type SafeUser = {
   avatar_url: string | null;
   status: "online" | "offline";
   createdAt: string;
+  xp: number;
 };
 
 export type LoginPayload = {
