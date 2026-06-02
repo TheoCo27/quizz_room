@@ -61,18 +61,17 @@ export default function RegisterPage() {
     <main className="flex flex-1 px-6 py-10">
       <div className="mx-auto grid w-full max-w-6xl gap-6 lg:grid-cols-[1.05fr_0.95fr]">
         <CyberPanel className="rounded-4xl p-8">
-          <p className="cyber-eyebrow">ft_transcendence</p>
+          <p className="cyber-eyebrow">ft_transcendence // sub-net</p>
           <h1 className="mt-3 cyber-title text-3xl text-text">
-            Cree ton identite
+            Générer profil neuronal
           </h1>
           <p className="mt-4 text-sm leading-7 text-text-muted">
-            Crée un profil pour acceder aux parties en direct, gerer ton
-            reseau d'amis et suivre tes statistiques.
+            Enregistre ton empreinte pour pirater en direct, synchroniser tes Chooms et surveiller tes diagnostics neuro.
           </p>
           <div className="mt-6 flex flex-wrap gap-2">
             <CyberBadge variant="info">Profil public</CyberBadge>
-            <CyberBadge variant="success">Acces amis</CyberBadge>
-            <CyberBadge variant="warning">Stats avancees</CyberBadge>
+            <CyberBadge variant="success">Canal Chooms</CyberBadge>
+            <CyberBadge variant="warning">Diagnostics avancees</CyberBadge>
           </div>
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
             <CyberStat label="Niveau" value="01" hint="Evolution" />
@@ -84,12 +83,12 @@ export default function RegisterPage() {
         </CyberPanel>
 
         <CyberCard className="rounded-4xl p-8" accent="magenta">
-          <p className="cyber-eyebrow">Inscription</p>
+          <p className="cyber-eyebrow">Inscription Réseau</p>
           <h2 className="mt-3 cyber-title text-2xl text-text">
-            S'inscrire
+            Créer une empreinte synaptique
           </h2>
           <p className="mt-3 text-sm text-text-muted">
-            Ton pseudo doit contenir au moins {AUTH_USERNAME_MIN_LENGTH} caracteres.
+            Ton alias réseau doit contenir au moins {AUTH_USERNAME_MIN_LENGTH} caractères.
           </p>
 
           <form
@@ -121,14 +120,14 @@ export default function RegisterPage() {
               className="mb-2 block text-sm font-medium text-text-muted"
               htmlFor="register-username"
             >
-              Pseudo
+              Alias Réseau
             </label>
             <Input
               name="username"
               className="mb-4 w-full"
               id="register-username"
               type="text"
-              placeholder="Ton pseudo"
+              placeholder="Ton alias réseau"
               value={username}
               onChange={(event) => setUsername(event.target.value)}
               disabled={isSubmitting}
@@ -159,7 +158,7 @@ export default function RegisterPage() {
               required
             />
             <p className="mb-6 text-xs text-text-muted">
-              Au moins {AUTH_PASSWORD_MIN_LENGTH} caracteres avec une structure
+              Au moins {AUTH_PASSWORD_MIN_LENGTH} caractères avec une structure
               solide.
             </p>
 
@@ -174,14 +173,14 @@ export default function RegisterPage() {
               disabled={isSubmitting}
               type="submit"
             >
-              {isSubmitting ? "Inscription..." : "Creer mon compte"}
+              {isSubmitting ? "Création..." : "Enregistrer profil"}
             </PrimaryButton>
           </form>
 
           <p className="mt-5 text-center text-sm text-text-muted">
-            Deja inscrit ?{" "}
+            Déjà enregistré ?{" "}
             <Link className="font-semibold underline" to="/login">
-              Se connecter
+              Synchroniser Cyberdeck
             </Link>
           </p>
 
@@ -191,14 +190,14 @@ export default function RegisterPage() {
               className="font-semibold underline underline-offset-4"
               to="/conditions-utilisation"
             >
-              conditions d'utilisation
+              protocoles d'utilisation
             </Link>{" "}
-            et notre{" "}
+            et nos{" "}
             <Link
               className="font-semibold underline underline-offset-4"
               to="/politique-confidentialite"
             >
-              politique de confidentialite
+              directives de confidentialité
             </Link>
             .
           </p>

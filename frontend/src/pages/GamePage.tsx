@@ -123,7 +123,7 @@ export default function GamePage() {
   };
 
   if (!room) {
-    return <div className="p-10 text-center text-text">Chargement de la partie...</div>;
+    return <div className="p-10 text-center text-text">Initialisation du hack...</div>;
   }
 
   return (
@@ -138,15 +138,15 @@ export default function GamePage() {
               
               {!question && !result && room.status === "PLAYING" && (
                 <div className="flex-1 flex flex-col items-center justify-center animate-pulse">
-                  <h2 className="text-3xl text-secondary font-bold">Préparez-vous...</h2>
-                  <p className="text-text-muted mt-4">La première question arrive !</p>
+                  <h2 className="text-3xl text-secondary font-bold">Synchro neuronale...</h2>
+                  <p className="text-text-muted mt-4">Flux de données imminent !</p>
                 </div>
               )}
 
               {room.status === "FINISHED" && (
                 <div className="flex-1 flex flex-col items-center justify-center">
-                  <h2 className="text-4xl text-primary font-bold mb-4">Partie terminée !</h2>
-                  <p className="text-xl text-text">Retour au salon en cours...</p>
+                  <h2 className="text-4xl text-primary font-bold mb-4">Fin de la synchronisation !</h2>
+                  <p className="text-xl text-text">Retour au terminal en cours...</p>
                 </div>
               )}
 
@@ -154,12 +154,12 @@ export default function GamePage() {
                 <>
                   <div className="flex justify-between items-center mb-8">
                     <span className="text-text-muted bg-background/50 px-4 py-2 rounded-full border border-border/30">
-                      Question {question.position} / {question.totalQuestions}
+                      Séquence {question.position} / {question.totalQuestions}
                     </span>
                     <span className={`text-2xl font-bold px-4 py-2 rounded-full border ${
                       timeLeft !== null && timeLeft <= 5 ? 'text-red-400 border-red-500/50 bg-red-900/20 animate-pulse' : 'text-secondary border-secondary/30 bg-secondary/10'
                     }`}>
-                      {timeLeft === null ? "Illimite" : `${timeLeft}s`}
+                      {timeLeft === null ? "Infini" : `${timeLeft}s`}
                     </span>
                   </div>
 
@@ -169,14 +169,14 @@ export default function GamePage() {
 
                   {result && (
                     <div className="mb-6 p-4 rounded-xl text-center font-bold text-lg border bg-background/80 flex flex-col gap-2">
-                      <span className="text-text">Temps écoulé !</span>
-                      <span className="text-primary">La bonne réponse était : {result.correctAnswer}</span>
+                      <span className="text-text">Surcharge de liaison !</span>
+                      <span className="text-primary">Code source correct : {result.correctAnswer}</span>
                       
                       {user && (
                         <span>
                           {result.results.find(r => r.userId === user.id)?.correct 
-                            ? <span className="text-green-400">+ {result.results.find(r => r.userId === user.id)?.points} points !</span>
-                            : <span className="text-red-400">Aïe, mauvaise réponse...</span>
+                            ? <span className="text-green-400">+ {result.results.find(r => r.userId === user.id)?.points} Pts !</span>
+                            : <span className="text-red-400">Signal corrompu / Code incorrect...</span>
                           }
                         </span>
                       )}
@@ -223,7 +223,7 @@ export default function GamePage() {
                         disabled={hasSubmitted || timeLeft === 0}
                         className="px-6 py-3 font-bold bg-primary hover:bg-primary/90 text-background disabled:opacity-50 disabled:cursor-not-allowed rounded"
                       >
-                        {hasSubmitted ? "Reponse envoyee" : "Valider ma reponse"}
+                        {hasSubmitted ? "Code transmis" : "Injecter le code"}
                       </button>
                     </div>
                   )}
@@ -235,7 +235,7 @@ export default function GamePage() {
           {/* Sidebar / Leaderboard */}
           <div className="w-full lg:w-80 flex flex-col gap-6">
             <CyberPanel className="rounded-4xl p-6 h-full border border-border/30 bg-background/50">
-              <h3 className="text-xl font-bold text-text mb-6 pb-2 border-b border-border/50">Classement</h3>
+              <h3 className="text-xl font-bold text-text mb-6 pb-2 border-b border-border/50">Street Cred</h3>
               <div className="flex flex-col gap-4">
                 {room.players
                   ?.map(p => ({

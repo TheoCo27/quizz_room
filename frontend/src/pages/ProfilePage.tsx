@@ -205,9 +205,9 @@ export default function ProfilePage() {
     return (
       <main className="mx-auto flex w-full max-w-6xl flex-1 px-6 py-10 md:px-10">
         <CyberCard className="w-full p-8">
-          <p className="cyber-eyebrow">Profil</p>
+          <p className="cyber-eyebrow">Dossier Neuro</p>
           <h1 className="mt-4 cyber-title text-xl text-text">
-            Chargement du profil...
+            Chargement du dossier neuro...
           </h1>
         </CyberCard>
       </main>
@@ -218,9 +218,9 @@ export default function ProfilePage() {
     return (
       <main className="mx-auto flex w-full max-w-6xl flex-1 px-6 py-10 md:px-10">
         <CyberPanel className="w-full rounded-[2.5rem] p-8">
-          <p className="cyber-eyebrow">Profil</p>
+          <p className="cyber-eyebrow">Dossier Neuro</p>
           <h1 className="mt-4 cyber-title text-3xl text-text">
-            Utilisateur non trouvé
+            Cyber-alias non répertorié
           </h1>
           <p className="mt-4 max-w-2xl text-base leading-7 text-text-muted">
             {targetUserError}
@@ -239,20 +239,19 @@ export default function ProfilePage() {
     return (
       <main className="mx-auto flex w-full max-w-6xl flex-1 px-6 py-10 md:px-10">
         <CyberPanel className="w-full rounded-[2.5rem] p-8">
-          <p className="cyber-eyebrow">Profil</p>
+          <p className="cyber-eyebrow">Dossier Neuro</p>
           <h1 className="mt-4 cyber-title text-3xl text-text">
-            Connexion requise
+            Connexion requise // sub-net
           </h1>
           <p className="mt-4 max-w-2xl text-base leading-7 text-text-muted">
-            Connecte-toi pour accéder à ta page profil et retrouver tes
-            informations de session.
+            Initialise ta connexion pour accéder à ton dossier neurologique et synchroniser ton cyberdeck.
           </p>
           <div className="mt-6 flex flex-col gap-3 sm:flex-row">
             <Link to="/login">
-              <PrimaryButton>Se connecter</PrimaryButton>
+              <PrimaryButton>Synchroniser Cyberdeck</PrimaryButton>
             </Link>
             <Link to="/register">
-              <SecondaryButton>S'inscrire</SecondaryButton>
+              <SecondaryButton>Nouveau Profil</SecondaryButton>
             </Link>
           </div>
         </CyberPanel>
@@ -402,19 +401,19 @@ export default function ProfilePage() {
 
   const profileTabs: Array<{ id: ProfileTabId; label: string }> = isOwnProfile
     ? [
-        { id: "overview", label: "Vue d'ensemble" },
-        { id: "discover_quizzes", label: "Découvrir les quiz" },
-        { id: "quizzes", label: "Mes quizz" },
-        { id: "history", label: "Historique" },
-        { id: "achievements", label: "Succes" },
-        { id: "social", label: "Social" },
-        { id: "security", label: "Securite" },
-        { id: "preferences", label: "Preferences" },
+        { id: "overview", label: "Diagnostic Neuro" },
+        { id: "discover_quizzes", label: "Décoder des éclats" },
+        { id: "quizzes", label: "Mes éclats" },
+        { id: "history", label: "Canal historique" },
+        { id: "achievements", label: "Street Cred" },
+        { id: "social", label: "Contacts & Holocalls" },
+        { id: "security", label: "Pare-feu" },
+        { id: "preferences", label: "Ajustements Neuro" },
       ]
     : [
-        { id: "overview", label: "Vue d'ensemble" },
-        { id: "history", label: "Historique" },
-        { id: "achievements", label: "Succes" },
+        { id: "overview", label: "Diagnostic Neuro" },
+        { id: "history", label: "Canal historique" },
+        { id: "achievements", label: "Street Cred" },
       ];
 
   const tabContent = {
@@ -422,9 +421,9 @@ export default function ProfilePage() {
       <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
         <div className="flex flex-col gap-6">
           <CyberCard className="rounded-4xl p-6">
-            <p className="cyber-eyebrow">Identite</p>
+            <p className="cyber-eyebrow">Lien synaptique</p>
             <h3 className="mt-2 cyber-title text-sm text-text">
-              Avatar et presence
+              Hologramme et présence
             </h3>
             <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-center">
               <CyberAvatar
@@ -436,7 +435,7 @@ export default function ProfilePage() {
               />
               <div className="flex-1">
                 <p className="text-sm leading-7 text-text-muted">
-                  Ajoute une image JPG, PNG ou WEBP jusqu'a 2 Mo.
+                  Transmets une empreinte holographique (JPG, PNG, WEBP, max 2 Mo).
                 </p>
                 <div className="mt-4 flex flex-wrap gap-3">
                   <PrimaryButton
@@ -445,15 +444,15 @@ export default function ProfilePage() {
                     type="button"
                   >
                     {isAvatarSubmitting
-                      ? "Mise a jour..."
-                      : "Changer la photo"}
+                      ? "Chiffrage..."
+                      : "Changer l'hologramme"}
                   </PrimaryButton>
                   <SecondaryButton
                     disabled={isAvatarSubmitting || !user.avatar_url}
                     onClick={() => void handleAvatarRemove()}
                     type="button"
                   >
-                    Supprimer
+                    Désactiver
                   </SecondaryButton>
                 </div>
                 {avatarNotice ? (
@@ -472,23 +471,23 @@ export default function ProfilePage() {
           </CyberCard>
 
           <CyberCard className="rounded-4xl p-6" accent="lime">
-            <p className="cyber-eyebrow">Profil</p>
+            <p className="cyber-eyebrow">Diagnostic Neuro</p>
             <h3 className="mt-2 cyber-title text-sm text-text">
-              Pseudo et statut
+              Alias et statut réseau
             </h3>
             <form
               className="mt-4 space-y-4"
               onSubmit={(event) => void handleProfileSubmit(event)}
             >
               <label className="block">
-                <span className="text-sm font-medium">Pseudo</span>
+                <span className="text-sm font-medium">Alias Réseau</span>
                 <Input
                   className="mt-2 w-full"
                   type="text"
                   maxLength={20}
                   minLength={AUTH_USERNAME_MIN_LENGTH}
                   onChange={(event) => setProfileUsername(event.target.value)}
-                  placeholder="Nouveau pseudo"
+                  placeholder="Nouvel alias"
                   value={profileUsername}
                 />
               </label>
@@ -516,15 +515,15 @@ export default function ProfilePage() {
                   type="submit"
                 >
                   {isProfileSubmitting
-                    ? "Enregistrement..."
-                    : "Enregistrer"}
+                    ? "Chiffrage..."
+                    : "Sauvegarder"}
                 </PrimaryButton>
                 <SecondaryButton
                   disabled={isProfileSubmitting || !hasProfileChanges}
                   onClick={handleProfileReset}
                   type="button"
                 >
-                  Annuler
+                  Réinitialiser
                 </SecondaryButton>
               </div>
 
@@ -544,15 +543,15 @@ export default function ProfilePage() {
         </div>
 
         <CyberCard className="rounded-4xl p-6">
-          <p className="cyber-eyebrow">Compte</p>
-          <h3 className="mt-2 cyber-title text-sm text-text">Identifiants</h3>
+          <p className="cyber-eyebrow">Accréditation</p>
+          <h3 className="mt-2 cyber-title text-sm text-text">Clés d'accès</h3>
           <dl className="mt-4 space-y-4 text-sm text-text-muted">
             <div>
               <dt className="text-xs uppercase tracking-[0.2em] text-text-muted">
-                Type de compte
+                Niveau d'accréditation
               </dt>
-              <dd className="mt-1 text-base text-text">
-                {user.isGuest ? "Invite" : "Classique"}
+              <dd className="mt-1 text-base text-text font-bold">
+                {user.isGuest ? "Accès furtif (Invité)" : "Profil enregistré"}
               </dd>
             </div>
             <div>
@@ -560,12 +559,12 @@ export default function ProfilePage() {
                 Email
               </dt>
               <dd className="mt-1 text-base text-text">
-                {user.isGuest ? "Non renseigne" : user.email}
+                {user.isGuest ? "Non renseigné" : user.email}
               </dd>
             </div>
             <div>
               <dt className="text-xs uppercase tracking-[0.2em] text-text-muted">
-                Membre depuis
+                Première synchronisation
               </dt>
               <dd className="mt-1 text-base text-text">
                 {formatJoinedDate(user.createdAt)}
@@ -575,17 +574,17 @@ export default function ProfilePage() {
 
           <div className="mt-6">
             <p className="text-xs uppercase tracking-[0.2em] text-text-muted">
-              Acces rapide
+              Protocoles réseau
             </p>
             <div className="mt-3 flex flex-col gap-2">
               <Link to="/conditions-utilisation">
                 <SecondaryButton className="w-full">
-                  Conditions d'utilisation
+                  Protocoles d'utilisation
                 </SecondaryButton>
               </Link>
               <Link to="/politique-confidentialite">
                 <SecondaryButton className="w-full">
-                  Politique de confidentialite
+                  Directives de confidentialité
                 </SecondaryButton>
               </Link>
             </div>
@@ -662,20 +661,20 @@ export default function ProfilePage() {
     ),
     quizzes: (
       <CyberCard className="rounded-4xl p-6">
-        <p className="cyber-eyebrow">Mes Quizz</p>
+        <p className="cyber-eyebrow">Mes Éclats</p>
         <div className="flex justify-between items-center mt-2">
-          <h3 className="cyber-title text-sm text-text">Gerer mes creations</h3>
+          <h3 className="cyber-title text-sm text-text">Gérer mes bases de données</h3>
           <Link to="/admin">
-            <PrimaryButton>Nouveau Quiz</PrimaryButton>
+            <PrimaryButton>Encoder un éclat</PrimaryButton>
           </Link>
         </div>
         <p className="mt-2 text-sm text-text-muted">
-          Edite ou supprime les quiz que tu as crees.
+          Modifie ou efface les éclats enregistrés dans ton cyberdeck.
         </p>
         {isQuizzesLoading ? (
-          <p className="mt-5 text-sm text-text-muted">Chargement...</p>
+          <p className="mt-5 text-sm text-text-muted">Décryptage en cours...</p>
         ) : myQuizzes.length === 0 ? (
-          <p className="mt-5 text-sm text-text-muted">Tu n'as pas encore cree de quiz.</p>
+          <p className="mt-5 text-sm text-text-muted">Aucun éclat encodé détecté.</p>
         ) : (
           <ul className="mt-5 space-y-3 text-sm text-text">
             {myQuizzes.map((quiz) => (
@@ -686,12 +685,12 @@ export default function ProfilePage() {
                 <span>{quiz.title} ({quiz.questions.length} questions)</span>
                 <div className="flex items-center gap-2">
                   <Link to={`/admin/${quiz.id}`}>
-                    <SecondaryButton>Editer</SecondaryButton>
+                    <SecondaryButton>Modifier</SecondaryButton>
                   </Link>
                   <SecondaryButton
                     onClick={() => void handleDeleteQuiz(quiz.id)}
                   >
-                    Supprimer
+                    Effacer
                   </SecondaryButton>
                 </div>
               </li>
@@ -702,17 +701,17 @@ export default function ProfilePage() {
     ),
     discover_quizzes: (
       <CyberCard className="rounded-4xl p-6" accent="magenta">
-        <p className="cyber-eyebrow">Découverte</p>
+        <p className="cyber-eyebrow">Réseau d'éclats</p>
         <h3 className="mt-2 cyber-title text-sm text-text">
-          Découvrir les quiz
+          Décoder des éclats publics
         </h3>
         <p className="mt-2 text-sm text-text-muted">
-          Trouve n'importe quel quiz créé par n'importe quel joueur et lance instantanément une partie !
+          Recherche des éclats sur le sous-réseau public et lance une synchronisation réseau.
         </p>
         {isAllQuizzesLoading ? (
-          <p className="mt-5 text-sm text-text-muted">Chargement...</p>
+          <p className="mt-5 text-sm text-text-muted">Décryptage en cours...</p>
         ) : allQuizzes.length === 0 ? (
-          <p className="mt-5 text-sm text-text-muted">Aucun quiz n'est disponible sur le serveur.</p>
+          <p className="mt-5 text-sm text-text-muted">Aucun éclat détecté sur le serveur.</p>
         ) : (
           <ul className="mt-5 space-y-3 text-sm text-text">
             {allQuizzes.map((quiz) => {
@@ -735,17 +734,17 @@ export default function ProfilePage() {
                     <PrimaryButton
                       onClick={() => void handleLaunchQuiz(quiz.id)}
                     >
-                      Lancer
+                      Synchroniser
                     </PrimaryButton>
                     {isOwner && (
                       <>
                         <Link to={`/admin/${quiz.id}`}>
-                          <SecondaryButton>Editer</SecondaryButton>
+                          <SecondaryButton>Modifier</SecondaryButton>
                         </Link>
                         <SecondaryButton
                           onClick={() => void handleDeleteQuiz(quiz.id)}
                         >
-                          Supprimer
+                          Effacer
                         </SecondaryButton>
                       </>
                     )}
@@ -759,22 +758,21 @@ export default function ProfilePage() {
     ),
     history: (
       <CyberCard className="rounded-4xl p-6">
-        <p className="cyber-eyebrow">Historique</p>
+        <p className="cyber-eyebrow">Canal historique</p>
         <h3 className="mt-2 cyber-title text-sm text-text">
-          Dernieres parties
+          Dernières connexions
         </h3>
         <p className="mt-2 text-sm text-text-muted">
-          Les derniers matchs apparaitront ici, avec filtres par mode et par
-          resultat.
+          Les dernières transmissions réseau apparaîtront ici, triées par protocole et état de liaison.
         </p>
         <ul className="mt-5 space-y-3 text-sm text-text">
-          {["Match 01", "Match 02", "Match 03"].map((label) => (
+          {["Trans. 01", "Trans. 02", "Trans. 03"].map((label) => (
             <li
               key={label}
               className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3"
             >
               <span>{label}</span>
-              <CyberBadge variant="info">En attente</CyberBadge>
+              <CyberBadge variant="info">Archivé</CyberBadge>
             </li>
           ))}
         </ul>
@@ -782,71 +780,71 @@ export default function ProfilePage() {
     ),
     achievements: (
       <CyberCard className="rounded-4xl p-6">
-        <p className="cyber-eyebrow">Gamification</p>
+        <p className="cyber-eyebrow">Street Cred</p>
         <h3 className="mt-2 cyber-title text-sm text-text">
-          Succes et badges
+          Succès et distinctions
         </h3>
         <p className="mt-2 text-sm text-text-muted">
-          Ce module accueillera les badges, rangs et classements globaux.
+          Cette matrice affiche tes badges de combat et ton niveau de réputation dans Night City.
         </p>
         <div className="mt-6 flex flex-wrap gap-2">
-          <CyberBadge variant="info">Badge alpha</CyberBadge>
-          <CyberBadge variant="warning">Victoire rapide</CyberBadge>
-          <CyberBadge variant="success">Serie x3</CyberBadge>
-          <CyberBadge variant="danger">Elite saison</CyberBadge>
+          <CyberBadge variant="info">Badge Alpha</CyberBadge>
+          <CyberBadge variant="warning">Hack Éclair</CyberBadge>
+          <CyberBadge variant="success">Série Neurologique x3</CyberBadge>
+          <CyberBadge variant="danger">Élite du Sub-Net</CyberBadge>
         </div>
       </CyberCard>
     ),
     social: (
       <CyberCard className="rounded-4xl p-6">
-        <p className="cyber-eyebrow">Social</p>
+        <p className="cyber-eyebrow">Contacts & Holocalls</p>
         <h3 className="mt-2 cyber-title text-sm text-text">
-          Amis et messages
+          Chooms et transmissions
         </h3>
         <p className="mt-2 text-sm text-text-muted">
-          Retrouve la liste d'amis en ligne et tes conversations privees.
+          Retrouve la liste de tes Chooms actifs et tes flux Holocall sécurisés.
         </p>
         <div className="mt-6 flex flex-wrap gap-3">
           <Link to="/friends">
-            <PrimaryButton>Ouvrir la page amis</PrimaryButton>
+            <PrimaryButton>Ouvrir le réseau de Chooms</PrimaryButton>
           </Link>
           <Link to="/">
-            <SecondaryButton>Retourner a l'accueil</SecondaryButton>
+            <SecondaryButton>Retourner à l'accueil</SecondaryButton>
           </Link>
         </div>
       </CyberCard>
     ),
     security: (
       <CyberCard className="rounded-4xl p-6">
-        <p className="cyber-eyebrow">Securite</p>
+        <p className="cyber-eyebrow">Pare-feu</p>
         <h3 className="mt-2 cyber-title text-sm text-text">
-          Sessions et protection
+          Noyau de sécurité neuronale
         </h3>
         <p className="mt-2 text-sm text-text-muted">
-          Controle tes sessions actives et ajoute une couche 2FA.
+          Supervise tes terminaux actifs et configure le protocole d'authentification double facteur (2FA).
         </p>
         <div className="mt-5 flex flex-wrap gap-3">
-          <CyberBadge variant="warning">2FA inactif</CyberBadge>
-          <CyberBadge variant="info">Sessions: 1</CyberBadge>
+          <CyberBadge variant="warning">2FA désactivé</CyberBadge>
+          <CyberBadge variant="info">Terminaux liés: 1</CyberBadge>
         </div>
         <div className="mt-6 flex flex-wrap gap-3">
-          <SecondaryButton disabled>Configurer 2FA</SecondaryButton>
-          <SecondaryButton disabled>Voir les sessions</SecondaryButton>
+          <SecondaryButton disabled>Activer cryptage 2FA</SecondaryButton>
+          <SecondaryButton disabled>Superviser terminaux</SecondaryButton>
         </div>
       </CyberCard>
     ),
     preferences: (
       <CyberCard className="rounded-4xl p-6">
-        <p className="cyber-eyebrow">Preferences</p>
+        <p className="cyber-eyebrow">Ajustements Neuro</p>
         <h3 className="mt-2 cyber-title text-sm text-text">
-          Accessibilite et langue
+          Interface & Synapses
         </h3>
         <p className="mt-2 text-sm text-text-muted">
-          Les options i18n et acces clavier seront configurees ici.
+          Ajuste les paramètres d'interface neuronale et les protocoles de traduction.
         </p>
         <div className="mt-5 grid gap-4 md:grid-cols-2">
           <label className="block text-sm">
-            <span className="text-text-muted">Langue</span>
+            <span className="text-text-muted">Code Linguistique</span>
             <div className="mt-2">
               <CyberSelect disabled>
                 <option>Francais</option>
@@ -857,12 +855,12 @@ export default function ProfilePage() {
           </label>
           <div>
             <span className="text-sm text-text-muted">
-              Accessibilite
+              Flux sensoriel
             </span>
             <div className="mt-3 flex flex-wrap gap-2">
-              <CyberBadge variant="success">Focus visible</CyberBadge>
-              <CyberBadge variant="info">ARIA actifs</CyberBadge>
-              <CyberBadge variant="warning">Contraste A verifier</CyberBadge>
+              <CyberBadge variant="success">Focus Rétinien</CyberBadge>
+              <CyberBadge variant="info">Assistance Synaptique</CyberBadge>
+              <CyberBadge variant="warning">Contraste Réseau</CyberBadge>
             </div>
           </div>
         </div>
@@ -885,10 +883,10 @@ export default function ProfilePage() {
 
       <section className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
         <CyberPanel className="rounded-4xl p-6">
-          <p className="cyber-eyebrow">Profil joueur</p>
+          <p className="cyber-eyebrow">Dossier Opérateur</p>
           <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-center">
             <CyberAvatar
-              alt={`Photo de profil de ${displayedUser?.username}`}
+              alt={`Hologramme de ${displayedUser?.username}`}
               avatarUrl={displayedUser?.avatar_url}
               size="lg"
               status={displayedUser?.status}
@@ -908,13 +906,13 @@ export default function ProfilePage() {
                   Statut: {displayedUser?.status}
                 </CyberBadge>
                 <CyberBadge variant="info">
-                  {displayedUser?.isGuest ? "Mode invite" : "Compte classique"}
+                  {displayedUser?.isGuest ? "Liaison Furtive (Invité)" : "Accréditation Standard"}
                 </CyberBadge>
                 <CyberBadge variant="success">
-                  Niveau {levelData.level}
+                  Street Cred {levelData.level}
                 </CyberBadge>
                 <CyberBadge variant="warning">
-                  Membre depuis {displayedUser?.createdAt ? formatJoinedDate(displayedUser.createdAt) : ""}
+                  Synchronisé depuis {displayedUser?.createdAt ? formatJoinedDate(displayedUser.createdAt) : ""}
                 </CyberBadge>
               </div>
             </div>
@@ -927,10 +925,10 @@ export default function ProfilePage() {
                   onClick={() => fileInputRef.current?.click()}
                   type="button"
                 >
-                  {isAvatarSubmitting ? "Mise a jour..." : "Changer avatar"}
+                  {isAvatarSubmitting ? "Chiffrage..." : "Changer hologramme"}
                 </PrimaryButton>
                 <Link to="/friends">
-                  <SecondaryButton>Reseau d'amis</SecondaryButton>
+                  <SecondaryButton>Réseau de Chooms</SecondaryButton>
                 </Link>
               </>
             ) : (
@@ -946,46 +944,45 @@ export default function ProfilePage() {
             <div>
               <p className="cyber-eyebrow">Synchronisation</p>
               <h2 className="mt-2 cyber-title text-lg text-text">
-                Noyau joueur
+                Noyau de données
               </h2>
               <p className="mt-2 text-sm text-text-muted">
-                Statistiques et evenements en temps reel pour les sessions
-                actives.
+                Supervision des flux neuronaux et historiques d'accès au réseau.
               </p>
             </div>
-            <CyberBadge variant="info">Temps reel</CyberBadge>
+            <CyberBadge variant="info">Temps Réel</CyberBadge>
           </div>
           <div className="mt-6 grid gap-4 grid-cols-2 md:grid-cols-3">
             <CyberStat
-              label="Victoires totales"
+              label="Contrats Remplis"
               value={winsRankData ? winsRankData.totalWins.toString() : "--"}
-              hint="Leaderboard global"
+              hint="Légendes du Réseau"
             />
             <CyberStat
-              label="Parties jouées"
+              label="Synchronisations"
               value={winsRankData ? winsRankData.gamesPlayed.toString() : "--"}
-              hint="Historique complet"
+              hint="Terminal historique"
             />
             <CyberStat
-              label="Taux de victoire"
+              label="Taux de Réussite"
               value={winsRankData && winsRankData.gamesPlayed > 0 
                 ? `${Math.round((winsRankData.totalWins / winsRankData.gamesPlayed) * 100)}%` 
                 : "--%"
               }
-              hint="Ratio victoires"
+              hint="Ratio de réussite"
             />
             <CyberStat
-              label="Classement"
+              label="Street Cred"
               value={winsRankData ? `#${winsRankData.rank}` : "#--"}
-              hint="Leaderboard"
+              hint="Légendes"
             />
             <CyberStat
               label="Niveau"
-              value={`Niv. ${levelData.level}`}
+              value={`Cred ${levelData.level}`}
               hint={`${levelData.xpInCurrentLevel}/${levelData.xpRequiredForNextLevel} XP`}
             />
           </div>
-          <CyberProgress className="mt-6" label={`Progression Niveau ${levelData.level}`} value={levelData.percentage} />
+          <CyberProgress className="mt-6" label={`Street Cred ${levelData.level}`} value={levelData.percentage} />
         </CyberCard>
       </section>
 

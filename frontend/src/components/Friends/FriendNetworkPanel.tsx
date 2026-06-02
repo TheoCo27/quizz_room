@@ -81,18 +81,18 @@ export default function FriendNetworkPanel({
     <Section>
       {currentUser.isGuest ? (
         <CyberCard className="mt-8 rounded-[1.75rem] p-6" accent="magenta">
-          <p className="cyber-eyebrow">Acces limite</p>
+          <p className="cyber-eyebrow">Accès limité</p>
           <h3 className="mt-2 cyber-title text-lg text-text">
-            Compte invite detecte
+            Liaison d'invité temporaire détectée
           </h3>
           <p className="mt-3 max-w-2xl text-sm leading-7 text-text-muted">
-            Les amis et les messages prives sont reserves aux comptes classiques
-            pour conserver ton reseau d'une session a l'autre.
+            L'accès au réseau de Chooms et aux Holocalls cryptés est réservé aux cyberdecks enregistrés
+            pour conserver ton réseau d'une session à l'autre.
           </p>
           <div className="mt-4 flex flex-wrap items-center gap-3">
-            <CyberBadge variant="warning">Invite</CyberBadge>
+            <CyberBadge variant="warning">Invité</CyberBadge>
             <Link to="/register">
-              <PrimaryButton>Creer un compte classique</PrimaryButton>
+              <PrimaryButton>Créer empreinte synaptique</PrimaryButton>
             </Link>
           </div>
         </CyberCard>
@@ -101,9 +101,9 @@ export default function FriendNetworkPanel({
           <CyberCard className="rounded-3xl p-5" accent="cyan">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <h3 className="cyber-title text-lg text-text">Liste d'amis</h3>
+                <h3 className="cyber-title text-lg text-text">Réseau de Chooms</h3>
                 <p className="mt-2 text-sm leading-7 text-text-muted">
-                  Ouvre une conversation privee ou consulte l'activite recente.
+                  Ouvre un canal crypté ou consulte le statut réseau de tes contacts.
                 </p>
               </div>
               <CyberBadge variant="info">
@@ -120,7 +120,7 @@ export default function FriendNetworkPanel({
 
             {isFriendsLoading && !friendOverview ? (
               <div className="mt-5 rounded-3xl border border-white/10 bg-white/5 px-5 py-5 text-sm text-text-muted">
-                Chargement de ta liste d'amis...
+                Chargement de la matrice de contacts...
               </div>
             ) : null}
 
@@ -128,8 +128,7 @@ export default function FriendNetworkPanel({
               !isFriendsLoading &&
               (friendOverview?.friends.length ?? 0) === 0 ? (
               <EmptyCard className="py-3!">
-                Aucun ami pour l'instant. Commence par rechercher un joueur avec
-                son pseudo.
+                Aucun Choom détecté sur ton sous-réseau. Utilise la recherche de pseudo.
               </EmptyCard>
             ) : null}
 
@@ -208,7 +207,7 @@ export default function FriendNetworkPanel({
                         disabled={isRemoving}
                         onClick={() => void onFriendRemoval(friend.id)}
                       >
-                        {isRemoving ? "Retrait..." : "Retirer"}
+                        {isRemoving ? "Déconnexion..." : "Déconnecter"}
                       </CyberButton>
                     </div>
                   </div>
@@ -222,16 +221,16 @@ export default function FriendNetworkPanel({
               aria-busy={isSendingRequest}
               onSubmit={(event) => void onFriendSubmit(event)}
             >
-              <SectionHeader className="mt-0!">Ajouter un ami</SectionHeader>
+              <SectionHeader className="mt-0!">Lier un Choom</SectionHeader>
               <p className="mt-2 text-sm leading-7 text-text-muted">
-                Saisis un pseudo exact. Si ce joueur t'a déjà envoyé une
+                Saisis son pseudo exact. Si ce joueur t'a déjà envoyé une
                 demande, elle sera acceptée automatiquement.
               </p>
               <label
                 className="mb-2 mt-5 block text-sm font-medium text-text-muted"
                 htmlFor="friend-username"
               >
-                Pseudo du joueur
+                Identifiant synaptique (Pseudo)
               </label>
               <Input
                 className="w-full"
@@ -250,7 +249,7 @@ export default function FriendNetworkPanel({
                 disabled={isSendingRequest || friendUsername.length < 1}
                 type="submit"
               >
-                {isSendingRequest ? "Envoi..." : "Ajouter par pseudo"}
+                {isSendingRequest ? "Liaison..." : "Lier le contact"}
               </PrimaryButton>
               {friendNotice ? (
                 <p
@@ -269,7 +268,7 @@ export default function FriendNetworkPanel({
           <Section className="mt-5">
             <div className="flex items-center justify-between gap-3">
               <SectionLabel className="text-text-muted">
-                Demandes recues
+                Liaisons entrantes
               </SectionLabel>
               {isFriendsLoading ? (
                 <span className="text-xs text-text-muted">Chargement...</span>
@@ -283,7 +282,7 @@ export default function FriendNetworkPanel({
             {!friendsError &&
               !isFriendsLoading &&
               (friendOverview?.receivedRequests.length ?? 0) === 0 ? (
-              <EmptyCard>Aucune demande en attente pour le moment.</EmptyCard>
+              <EmptyCard>Aucun flux de liaison en attente.</EmptyCard>
             ) : null}
 
             <div className="mt-4 space-y-3">
@@ -311,7 +310,7 @@ export default function FriendNetworkPanel({
                       >
                         {pendingActionId === request.id
                           ? "Traitement..."
-                          : "Accepter"}
+                          : "Autoriser"}
                       </PrimaryButton>
                       <SecondaryButton
                         className="px-5 py-2.5"
@@ -320,7 +319,7 @@ export default function FriendNetworkPanel({
                           void onFriendRequestAction(request.id, "declined")
                         }
                       >
-                        Refuser
+                        Rejeter
                       </SecondaryButton>
                     </div>
                   </div>
@@ -331,12 +330,12 @@ export default function FriendNetworkPanel({
 
           <Section className="mt-5">
             <SectionLabel className="text-text-muted">
-              Demandes envoyées
+              Liaisons sortantes
             </SectionLabel>
 
             {!isFriendsLoading &&
               (friendOverview?.sentRequests.length ?? 0) === 0 ? (
-              <EmptyCard>Aucune demande envoyée en attente.</EmptyCard>
+              <EmptyCard>Aucune requête de liaison sortante.</EmptyCard>
             ) : null}
 
             <div className="mt-4 space-y-3">

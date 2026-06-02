@@ -54,136 +54,136 @@ export default function HomePage() {
         <CyberPanel className="rounded-4xl p-8 md:p-10">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-3xl">
-              <p className="cyber-eyebrow">ft_transcendence</p>
+              <p className="cyber-eyebrow">NIGHT_CITY_NET</p>
               <h1 className="mt-3 cyber-title text-3xl text-text">
-                Base operationnelle active
+                Terminaux réseau actifs
               </h1>
               <p className="mt-4 text-sm leading-7 text-text-muted">
-                L'accueil a ete simplifie pour repartir sur une base stable.
-                Les modules amis, messagerie privee et creation de quiz restent
-                disponibles pendant la reconstruction du lobby multijoueur.
+                Terminaux opérationnels. Les modules de communication cryptée (Chooms)
+                et l'enregistrement d'éclats (Shards) restent actifs pendant que
+                NetWatch reconstruit le protocole de l'Afterlife.
               </p>
               <div className="mt-6 flex flex-wrap gap-3">
                 <Link to="/admin">
-                  <PrimaryButton>Creer un quiz</PrimaryButton>
+                  <PrimaryButton>Encoder un éclat (Shard)</PrimaryButton>
                 </Link>
                 <Link to={user ? "/profile" : "/login"}>
                   <SecondaryButton>
                     {isSessionLoading
                       ? "Chargement..."
                       : user
-                        ? "Voir mon profil"
-                        : "Se connecter"}
+                        ? "Dossier Mercenaire"
+                        : "Connexion Cyberdeck"}
                   </SecondaryButton>
                 </Link>
               </div>
             </div>
             <div className="flex flex-wrap gap-2">
-              <CyberBadge variant="info">Temps reel</CyberBadge>
-              <CyberBadge variant="success">Profil actif</CyberBadge>
-              <CyberBadge variant="warning">Lobby en refonte</CyberBadge>
+              <CyberBadge variant="info">Temps réel</CyberBadge>
+              <CyberBadge variant="success">Cyber-empreinte synchro</CyberBadge>
+              <CyberBadge variant="warning">Afterlife hors-ligne</CyberBadge>
             </div>
           </div>
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <CyberStat label="Modules" value="04" hint="Disponibles" />
-            <CyberStat label="Chat" value="Actif" hint="Prive" />
-            <CyberStat label="Quiz" value="Ok" hint="Creation" />
-            <CyberStat label="Serveurs" value="Stable" hint="EU-West" />
+            <CyberStat label="Modules" value="04" hint="Synchro" />
+            <CyberStat label="Holocall" value="Actif" hint="Canal Privé" />
+            <CyberStat label="Éclats" value="Dispo" hint="Compilation" />
+            <CyberStat label="Réseau" value="Stable" hint="Sub-Net EU" />
           </div>
-          <CyberProgress className="mt-6" label="Etat plateforme" value={76} />
+          <CyberProgress className="mt-6" label="Stabilité du Sub-Net" value={76} />
         </CyberPanel>
 
         <section className="grid gap-6 md:grid-cols-2">
           <CyberCard className="rounded-4xl p-6" accent="magenta">
-            <p className="cyber-eyebrow">Jeu</p>
+            <p className="cyber-eyebrow">CONTRATS</p>
             <h2 className="mt-2 cyber-title text-lg text-text">
-              Sessions live
+              L'Afterlife (Lobby)
             </h2>
             <p className="mt-3 text-sm text-text-muted">
-              La couche multijoueur revient bientot. Prepare tes quiz et
-              configure tes regles avant le lancement.
+              Le protocole multijoueur revient bientôt. Enregistre des éclats de données
+              et configure tes règles avant l'ouverture des contrats.
             </p>
             <div className="mt-4 flex flex-wrap gap-2">
               <CyberBadge variant="info">
                 {typeof waitingPlayersCount === "number"
                   ? waitingPlayersCount === 1
-                    ? "1 joueur"
-                    : `${waitingPlayersCount} joueurs`
-                  : "Joueurs en attente"}
+                    ? "1 Choom en attente"
+                    : `${waitingPlayersCount} Chooms en attente`
+                  : "Chooms connectés"}
               </CyberBadge>
-              <CyberBadge variant="warning">Classements</CyberBadge>
+              <CyberBadge variant="warning">Contrats actifs</CyberBadge>
             </div>
             <div className="mt-6 flex flex-wrap gap-3">
               <Link to="/lobby">
-                <PrimaryButton>Créer une partie</PrimaryButton>
+                <PrimaryButton>Lancer un Contrat</PrimaryButton>
               </Link>
               <Link to="/lobby">
-                <SecondaryButton>Rejoindre une partie</SecondaryButton>
+                <SecondaryButton>Rejoindre un Contrat</SecondaryButton>
               </Link>
             </div>
           </CyberCard>
 
           <CyberCard className="rounded-4xl p-6" accent="lime">
-            <p className="cyber-eyebrow">Social</p>
+            <p className="cyber-eyebrow">RÉSEAU</p>
             <h2 className="mt-2 cyber-title text-lg text-text">
-              Amis et chat prive
+              Réseau de Chooms (Amis)
             </h2>
             <p className="mt-3 text-sm text-text-muted">
-              Ajoute des contacts, surveille leur statut et echange en temps
-              reel dans des canaux prives.
+              Ajoute des mercenaires à ta liste de contacts, surveille leur statut réseau
+              et échange en temps réel via Holocall privé.
             </p>
             <div className="mt-4 flex flex-wrap gap-2">
-              <CyberBadge variant="success">En ligne</CyberBadge>
-              <CyberBadge variant="info">Messages directs</CyberBadge>
+              <CyberBadge variant="success">Synchro</CyberBadge>
+              <CyberBadge variant="info">Holocall direct</CyberBadge>
             </div>
             <div className="mt-6 flex flex-wrap gap-3">
               <Link to="/friends">
-                <PrimaryButton>Voir les amis</PrimaryButton>
+                <PrimaryButton>Réseau de Chooms</PrimaryButton>
               </Link>
               <Link to="/profile">
-                <SecondaryButton>Mon profil</SecondaryButton>
+                <SecondaryButton>Dossier Mercenaire</SecondaryButton>
               </Link>
             </div>
           </CyberCard>
 
           <CyberCard className="rounded-4xl p-6" accent="magenta">
-            <p className="cyber-eyebrow">Administration</p>
+            <p className="cyber-eyebrow">SHARDS</p>
             <h2 className="mt-2 cyber-title text-lg text-text">
-              Gestion des quiz
+              Éditeur d'Éclats (Quiz)
             </h2>
             <p className="mt-3 text-sm text-text-muted">
-              Compose des questionnaires, regles et points. Chaque quiz est
-              pret a etre pousse en production.
+              Configure des questionnaires, paramètres de hack et points d'XP.
+              Chaque éclat compilé est prêt à être poussé sur le Net.
             </p>
             <div className="mt-4 flex flex-wrap gap-2">
-              <CyberBadge variant="info">Mode rapide</CyberBadge>
+              <CyberBadge variant="info">Compilateur</CyberBadge>
               <CyberBadge variant="warning">Validation</CyberBadge>
             </div>
             <div className="mt-6 flex flex-wrap gap-3">
               <Link to="/admin">
-                <PrimaryButton>Acceder aux quiz</PrimaryButton>
+                <PrimaryButton>Accéder aux Éclats</PrimaryButton>
               </Link>
               <SecondaryButton disabled>Importer un set</SecondaryButton>
             </div>
           </CyberCard>
 
           <CyberCard className="rounded-4xl p-6" accent="cyan">
-            <p className="cyber-eyebrow">Roadmap</p>
+            <p className="cyber-eyebrow">LÉGENDES</p>
             <h2 className="mt-2 cyber-title text-lg text-text">
-              Modules optionnels
+              Street Cred (Classement)
             </h2>
             <p className="mt-3 text-sm text-text-muted">
-              Statistiques avancees, succes, badges, classements et i18n sont
-              prevus dans cette iteration.
+              Consulte le tableau de chasse des mercenaires les plus respectés
+              du réseau. Réputation, XP et victoires accumulées.
             </p>
             <div className="mt-4 flex flex-wrap gap-2">
-              <CyberBadge variant="info">Dashboard</CyberBadge>
-              <CyberBadge variant="warning">Achievements</CyberBadge>
-              <CyberBadge variant="success">i18n</CyberBadge>
+              <CyberBadge variant="info">Classement</CyberBadge>
+              <CyberBadge variant="warning">Réputation</CyberBadge>
+              <CyberBadge variant="success">Street Cred</CyberBadge>
             </div>
             <div className="mt-6 flex flex-wrap gap-3">
               <Link to="/leaderboard">
-                <PrimaryButton>Voir le classement global</PrimaryButton>
+                <PrimaryButton>Légendes de Night City</PrimaryButton>
               </Link>
             </div>
           </CyberCard>

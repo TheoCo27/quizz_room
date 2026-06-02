@@ -152,7 +152,7 @@ export default function FriendsPage() {
           setFriendsError(
             getUserFacingErrorMessage(
               error,
-              "Impossible de charger la page amis",
+              "Impossible de charger le réseau de Chooms",
             ),
           );
         }
@@ -264,9 +264,9 @@ export default function FriendsPage() {
     return (
       <main className="mx-auto flex w-full max-w-7xl flex-1 px-6 py-10 md:px-10">
         <CyberCard className="w-full p-8">
-          <p className="cyber-eyebrow">Amis</p>
+          <p className="cyber-eyebrow">Chooms</p>
           <h1 className="mt-4 cyber-title text-xl text-text">
-            Chargement de la page amis...
+            Chargement du réseau de Chooms...
           </h1>
         </CyberCard>
       </main>
@@ -277,20 +277,19 @@ export default function FriendsPage() {
     return (
       <main className="mx-auto flex w-full max-w-5xl flex-1 px-6 py-10 md:px-10">
         <CyberPanel className="w-full rounded-[2.5rem] p-8">
-          <p className="cyber-eyebrow">Amis</p>
+          <p className="cyber-eyebrow">Chooms</p>
           <h1 className="mt-4 cyber-title text-3xl text-text">
-            Connexion requise
+            Cyberdeck déconnecté
           </h1>
           <p className="mt-4 max-w-2xl text-base leading-7 text-text-muted">
-            Connecte-toi pour gerer ta liste d'amis et ouvrir des messages
-            prives.
+            Synchronise ton Cyberdeck pour accéder à ton réseau de Chooms et ouvrir un flux Holocall sécurisé.
           </p>
           <div className="mt-6 flex flex-col gap-3 sm:flex-row">
             <Link to="/login">
-              <PrimaryButton>Se connecter</PrimaryButton>
+              <PrimaryButton>Connexion Cyberdeck</PrimaryButton>
             </Link>
             <Link to="/register">
-              <SecondaryButton>S'inscrire</SecondaryButton>
+              <SecondaryButton>Créer empreinte synaptique</SecondaryButton>
             </Link>
           </div>
         </CyberPanel>
@@ -314,7 +313,7 @@ export default function FriendsPage() {
     } catch (error) {
       const message = getUserFacingErrorMessage(
         error,
-        "Impossible d'ajouter cet ami",
+        "Impossible de lier ce contact",
       );
       if (message) {
         setFriendNotice({
@@ -371,7 +370,7 @@ export default function FriendsPage() {
     } catch (error) {
       const message = getUserFacingErrorMessage(
         error,
-        "Impossible de retirer cet ami",
+        "Impossible de déconnecter ce contact",
       );
       if (message) {
         setFriendNotice({
