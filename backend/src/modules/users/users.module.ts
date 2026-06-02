@@ -17,6 +17,6 @@ import { UsersService } from "./users.service";
     PrivateMessageRateLimitService,
     AuthGuard,
   ],
-  exports: [UsersService],
+  exports: [UsersService, PrivateMessageRateLimitService],
 })
 export class UsersModule {}

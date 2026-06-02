@@ -15,6 +15,11 @@ export type Quiz = {
   title: string;
   createdAt: string;
   questionDurationSec: number | null;
+  authorId?: number | null;
+  author?: {
+    id: number;
+    username: string;
+  } | null;
   questions: QuizQuestion[];
 };
 

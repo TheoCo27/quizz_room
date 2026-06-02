@@ -26,10 +26,7 @@ export type PrivateConversationSummary = {
   unreadCount: number;
 };
 
-const PRIVATE_MESSAGE_RATE_LIMITS = [
-  { limit: 5, windowMs: 5_000 },
-  { limit: 20, windowMs: 60_000 },
-] as const;
+
 
 @Injectable()
 export class PrivateMessagesService {
@@ -201,12 +198,13 @@ export class PrivateMessagesService {
     await this.assertMessagingAllowed(senderId, friendId);
     const limitResult = this.rateLimit.consume(
       `private-message:${senderId}`,
-      PRIVATE_MESSAGE_RATE_LIMITS,
+      10,
+      30000,
     );
 
     if (!limitResult.allowed) {
       throw new HttpException(
-        `Vous avez envoye trop de messages. Reessayez dans ${Math.ceil(limitResult.retryAfterMs / 1000)} secondes.`,
+        `Vous devez attendre ${Math.ceil(limitResult.retryAfterMs / 1000)} seconde(s) avant de renvoyer un message.`,
         HttpStatus.TOO_MANY_REQUESTS,
       );
     }

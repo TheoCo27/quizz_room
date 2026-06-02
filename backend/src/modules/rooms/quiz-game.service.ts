@@ -164,6 +164,15 @@ export class QuizGameService {
         const currentScore = game.scores.get(userId) || 0;
         game.scores.set(userId, currentScore + points);
         results.push({ userId, correct: true, points });
+
+        await this.prisma.client.user.update({
+          where: { id: userId },
+          data: {
+            xp: {
+              increment: 100,
+            },
+          },
+        });
       } else {
         results.push({ userId, correct: false, points: 0 });
       }

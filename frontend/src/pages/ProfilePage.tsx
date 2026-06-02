@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import type { SafeUser } from "../services/auth";
 import {
   CyberAvatar,
   CyberBadge,
@@ -17,9 +18,11 @@ import { useAuthSession } from "../hooks/useAuthSession";
 import { getUserFacingErrorMessage } from "../services/api";
 import { AUTH_USERNAME_MIN_LENGTH } from "../services/auth";
 import { getUserWinsRank, type UserWinsRank } from "../services/scores";
-import { updateMyAvatar, updateMyProfile } from "../services/users";
+import { getUserById, updateMyAvatar, updateMyProfile } from "../services/users";
+import { calculateLevelData } from "../utils/level";
 
-import { getMyQuizzes, deleteQuiz, type Quiz } from "../services/quizzes";
+import { getQuizzes, getMyQuizzes, deleteQuiz, type Quiz } from "../services/quizzes";
+import { createRoom } from "../services/rooms";
 
 const MAX_AVATAR_SIZE_BYTES = 2 * 1024 * 1024;
 const SUPPORTED_AVATAR_TYPES = new Set([
@@ -35,7 +38,8 @@ type ProfileTabId =
   | "social"
   | "security"
   | "preferences"
-  | "quizzes";
+  | "quizzes"
+  | "discover_quizzes";
 
 function formatJoinedDate(createdAt: string) {
   try {
@@ -49,12 +53,12 @@ function formatJoinedDate(createdAt: string) {
   }
 }
 
-function formatIdentityLabel(user: { email: string; isGuest: boolean }) {
+function formatIdentityLabel(user: { email?: string; isGuest: boolean }, isOwnProfile = false) {
   if (user.isGuest) {
     return "Compte invite";
   }
 
-  return user.email;
+  return isOwnProfile && user.email ? user.email : "Compte classique";
 }
 
 function readFileAsDataUrl(file: File): Promise<string> {
@@ -79,7 +83,11 @@ function readFileAsDataUrl(file: File): Promise<string> {
 }
 
 export default function ProfilePage() {
+  const { userId } = useParams<{ userId?: string }>();
+  const isOwnProfile = !userId;
+
   const { user, isLoading, refreshSession } = useAuthSession();
+  const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [isAvatarSubmitting, setIsAvatarSubmitting] = useState(false);
   const [profileUsername, setProfileUsername] = useState("");
@@ -98,20 +106,61 @@ export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState<ProfileTabId>("overview");
   const [myQuizzes, setMyQuizzes] = useState<Quiz[]>([]);
   const [isQuizzesLoading, setIsQuizzesLoading] = useState(false);
+  const [allQuizzes, setAllQuizzes] = useState<Quiz[]>([]);
+  const [isAllQuizzesLoading, setIsAllQuizzesLoading] = useState(false);
   const [winsRankData, setWinsRankData] = useState<UserWinsRank | null>(null);
 
+  // States for target user (when viewing another player's profile)
+  const [targetUser, setTargetUser] = useState<SafeUser | null>(null);
+  const [isTargetUserLoading, setIsTargetUserLoading] = useState(false);
+  const [targetUserError, setTargetUserError] = useState<string | null>(null);
+
+  const displayedUser = isOwnProfile ? user : targetUser;
+  const isProfileLoading = isOwnProfile ? isLoading : isTargetUserLoading;
+
+  const levelData = calculateLevelData(displayedUser?.xp ?? 0);
+
+  // Fetch target user if not own profile
   useEffect(() => {
-    if (!user) {
+    if (isOwnProfile) {
+      setTargetUser(null);
+      setTargetUserError(null);
       return;
     }
 
-    setProfileUsername(user.username);
-    setProfileStatus(user.status);
+    setIsTargetUserLoading(true);
+    setTargetUserError(null);
+    getUserById(Number(userId))
+      .then((data) => {
+        setTargetUser(data);
+      })
+      .catch((err) => {
+        setTargetUserError("Impossible de charger le profil de cet utilisateur.");
+        console.error(err);
+      })
+      .finally(() => {
+        setIsTargetUserLoading(false);
+      });
+  }, [userId, isOwnProfile]);
 
-    getUserWinsRank(user.id)
+  useEffect(() => {
+    if (isOwnProfile && user) {
+      setProfileUsername(user.username);
+      setProfileStatus(user.status);
+    }
+  }, [user, isOwnProfile]);
+
+  useEffect(() => {
+    const activeUserId = isOwnProfile ? user?.id : Number(userId);
+    if (!activeUserId) {
+      setWinsRankData(null);
+      return;
+    }
+
+    getUserWinsRank(activeUserId)
       .then(setWinsRankData)
       .catch(() => setWinsRankData(null));
-  }, [user]);
+  }, [user?.id, userId, isOwnProfile]);
 
   useEffect(() => {
     if (activeTab === "quizzes") {
@@ -120,8 +169,27 @@ export default function ProfilePage() {
         .then(setMyQuizzes)
         .catch(console.error)
         .finally(() => setIsQuizzesLoading(false));
+    } else if (activeTab === "discover_quizzes") {
+      setIsAllQuizzesLoading(true);
+      getQuizzes()
+        .then(setAllQuizzes)
+        .catch(console.error)
+        .finally(() => setIsAllQuizzesLoading(false));
     }
   }, [activeTab]);
+
+  const handleLaunchQuiz = async (quizId: number) => {
+    try {
+      const room = await createRoom({
+        gameType: "QUIZ",
+        maxPlayers: 5,
+        quizId,
+      });
+      navigate(`/room/${room.id}`);
+    } catch (error) {
+      alert(getUserFacingErrorMessage(error, "Impossible de lancer la partie."));
+    }
+  };
 
   const handleDeleteQuiz = async (quizId: number) => {
     if (!window.confirm("Voulez-vous vraiment supprimer ce quiz ?")) return;
@@ -133,7 +201,7 @@ export default function ProfilePage() {
     }
   };
 
-  if (isLoading) {
+  if (isProfileLoading) {
     return (
       <main className="mx-auto flex w-full max-w-6xl flex-1 px-6 py-10 md:px-10">
         <CyberCard className="w-full p-8">
@@ -146,7 +214,28 @@ export default function ProfilePage() {
     );
   }
 
-  if (!user) {
+  if (targetUserError) {
+    return (
+      <main className="mx-auto flex w-full max-w-6xl flex-1 px-6 py-10 md:px-10">
+        <CyberPanel className="w-full rounded-[2.5rem] p-8">
+          <p className="cyber-eyebrow">Profil</p>
+          <h1 className="mt-4 cyber-title text-3xl text-text">
+            Utilisateur non trouvé
+          </h1>
+          <p className="mt-4 max-w-2xl text-base leading-7 text-text-muted">
+            {targetUserError}
+          </p>
+          <div className="mt-6">
+            <SecondaryButton onClick={() => navigate(-1)}>
+              Retour
+            </SecondaryButton>
+          </div>
+        </CyberPanel>
+      </main>
+    );
+  }
+
+  if (!displayedUser) {
     return (
       <main className="mx-auto flex w-full max-w-6xl flex-1 px-6 py-10 md:px-10">
         <CyberPanel className="w-full rounded-[2.5rem] p-8">
@@ -309,20 +398,27 @@ export default function ProfilePage() {
   };
 
   const hasProfileChanges =
-    profileUsername.trim() !== user.username || profileStatus !== user.status;
+    user && (profileUsername.trim() !== user.username || profileStatus !== user.status);
 
-  const profileTabs: Array<{ id: ProfileTabId; label: string }> = [
-    { id: "overview", label: "Vue d'ensemble" },
-    { id: "quizzes", label: "Mes quizz" },
-    { id: "history", label: "Historique" },
-    { id: "achievements", label: "Succes" },
-    { id: "social", label: "Social" },
-    { id: "security", label: "Securite" },
-    { id: "preferences", label: "Preferences" },
-  ];
+  const profileTabs: Array<{ id: ProfileTabId; label: string }> = isOwnProfile
+    ? [
+        { id: "overview", label: "Vue d'ensemble" },
+        { id: "discover_quizzes", label: "Découvrir les quiz" },
+        { id: "quizzes", label: "Mes quizz" },
+        { id: "history", label: "Historique" },
+        { id: "achievements", label: "Succes" },
+        { id: "social", label: "Social" },
+        { id: "security", label: "Securite" },
+        { id: "preferences", label: "Preferences" },
+      ]
+    : [
+        { id: "overview", label: "Vue d'ensemble" },
+        { id: "history", label: "Historique" },
+        { id: "achievements", label: "Succes" },
+      ];
 
   const tabContent = {
-    overview: (
+    overview: isOwnProfile && user ? (
       <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
         <div className="flex flex-col gap-6">
           <CyberCard className="rounded-4xl p-6">
@@ -496,6 +592,73 @@ export default function ProfilePage() {
           </div>
         </CyberCard>
       </div>
+    ) : (
+      <div className="grid gap-6 lg:grid-cols-2">
+        <CyberCard className="rounded-4xl p-6">
+          <p className="cyber-eyebrow">Identité</p>
+          <h3 className="mt-2 cyber-title text-sm text-text">Informations de compte</h3>
+          <dl className="mt-4 space-y-4 text-sm text-text-muted">
+            <div>
+              <dt className="text-xs uppercase tracking-[0.2em] text-text-muted">
+                Type de compte
+              </dt>
+              <dd className="mt-1 text-base text-text font-bold">
+                {displayedUser?.isGuest ? "Invitée" : "Classique"}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs uppercase tracking-[0.2em] text-text-muted">
+                Statut actuel
+              </dt>
+              <dd className="mt-1 text-base text-text capitalize">
+                <span className="inline-flex items-center gap-2">
+                  <span className={`h-2.5 w-2.5 rounded-full ${displayedUser?.status === "online" ? "bg-success animate-pulse" : "bg-neutral-500"}`} />
+                  {displayedUser?.status || "offline"}
+                </span>
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs uppercase tracking-[0.2em] text-text-muted">
+                Membre depuis
+              </dt>
+              <dd className="mt-1 text-base text-text">
+                {displayedUser?.createdAt ? formatJoinedDate(displayedUser.createdAt) : "--"}
+              </dd>
+            </div>
+          </dl>
+        </CyberCard>
+
+        <CyberCard className="rounded-4xl p-6" accent="lime">
+          <p className="cyber-eyebrow">Progression</p>
+          <h3 className="mt-2 cyber-title text-sm text-text">Expérience et Niveau</h3>
+          <dl className="mt-4 space-y-4 text-sm text-text-muted">
+            <div>
+              <dt className="text-xs uppercase tracking-[0.2em] text-text-muted">
+                Niveau actuel
+              </dt>
+              <dd className="mt-1 text-base text-text font-bold text-lime">
+                Niveau {levelData.level}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs uppercase tracking-[0.2em] text-text-muted">
+                XP Cumulé
+              </dt>
+              <dd className="mt-1 text-base text-text font-medium">
+                {displayedUser?.xp ?? 0} XP
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs uppercase tracking-[0.2em] text-text-muted">
+                Progression niveau
+              </dt>
+              <dd className="mt-1 text-base text-text">
+                {levelData.xpInCurrentLevel} / {levelData.xpRequiredForNextLevel} XP ({levelData.percentage}%)
+              </dd>
+            </div>
+          </dl>
+        </CyberCard>
+      </div>
     ),
     quizzes: (
       <CyberCard className="rounded-4xl p-6">
@@ -533,6 +696,63 @@ export default function ProfilePage() {
                 </div>
               </li>
             ))}
+          </ul>
+        )}
+      </CyberCard>
+    ),
+    discover_quizzes: (
+      <CyberCard className="rounded-4xl p-6" accent="magenta">
+        <p className="cyber-eyebrow">Découverte</p>
+        <h3 className="mt-2 cyber-title text-sm text-text">
+          Découvrir les quiz
+        </h3>
+        <p className="mt-2 text-sm text-text-muted">
+          Trouve n'importe quel quiz créé par n'importe quel joueur et lance instantanément une partie !
+        </p>
+        {isAllQuizzesLoading ? (
+          <p className="mt-5 text-sm text-text-muted">Chargement...</p>
+        ) : allQuizzes.length === 0 ? (
+          <p className="mt-5 text-sm text-text-muted">Aucun quiz n'est disponible sur le serveur.</p>
+        ) : (
+          <ul className="mt-5 space-y-3 text-sm text-text">
+            {allQuizzes.map((quiz) => {
+              const isOwner = quiz.authorId === user?.id;
+              return (
+                <li
+                  key={quiz.id}
+                  className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3"
+                >
+                  <div className="flex flex-col">
+                    <span className="font-bold text-text">{quiz.title}</span>
+                    <span className="text-xs text-text-muted">
+                      {quiz.questions.length} question{quiz.questions.length > 1 ? "s" : ""} | Créé par :{" "}
+                      <span className="text-secondary font-bold">
+                        {quiz.author?.username || "Système"}
+                      </span>
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <PrimaryButton
+                      onClick={() => void handleLaunchQuiz(quiz.id)}
+                    >
+                      Lancer
+                    </PrimaryButton>
+                    {isOwner && (
+                      <>
+                        <Link to={`/admin/${quiz.id}`}>
+                          <SecondaryButton>Editer</SecondaryButton>
+                        </Link>
+                        <SecondaryButton
+                          onClick={() => void handleDeleteQuiz(quiz.id)}
+                        >
+                          Supprimer
+                        </SecondaryButton>
+                      </>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         )}
       </CyberCard>
@@ -652,59 +872,72 @@ export default function ProfilePage() {
 
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-8 px-6 py-10 md:px-10">
-      <input
-        ref={fileInputRef}
-        accept="image/jpeg,image/png,image/webp"
-        className="hidden"
-        id="profile-avatar-upload"
-        onChange={(event) => void handleAvatarFileChange(event)}
-        type="file"
-      />
+      {isOwnProfile && (
+        <input
+          ref={fileInputRef}
+          accept="image/jpeg,image/png,image/webp"
+          className="hidden"
+          id="profile-avatar-upload"
+          onChange={(event) => void handleAvatarFileChange(event)}
+          type="file"
+        />
+      )}
 
       <section className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
         <CyberPanel className="rounded-4xl p-6">
           <p className="cyber-eyebrow">Profil joueur</p>
           <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-center">
             <CyberAvatar
-              alt={`Photo de profil de ${user.username}`}
-              avatarUrl={user.avatar_url}
+              alt={`Photo de profil de ${displayedUser?.username}`}
+              avatarUrl={displayedUser?.avatar_url}
               size="lg"
-              status={user.status}
-              username={user.username}
+              status={displayedUser?.status}
+              username={displayedUser?.username || ""}
             />
             <div>
               <h1 className="cyber-title text-2xl text-text">
-                {user.username}
+                {displayedUser?.username}
               </h1>
               <p className="mt-2 text-sm text-text-muted">
-                {formatIdentityLabel(user)}
+                {displayedUser ? formatIdentityLabel(displayedUser, isOwnProfile) : ""}
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
                 <CyberBadge
-                  variant={user.status === "online" ? "success" : "neutral"}
+                  variant={displayedUser?.status === "online" ? "success" : "neutral"}
                 >
-                  Statut: {user.status}
+                  Statut: {displayedUser?.status}
                 </CyberBadge>
                 <CyberBadge variant="info">
-                  {user.isGuest ? "Mode invite" : "Compte classique"}
+                  {displayedUser?.isGuest ? "Mode invite" : "Compte classique"}
+                </CyberBadge>
+                <CyberBadge variant="success">
+                  Niveau {levelData.level}
                 </CyberBadge>
                 <CyberBadge variant="warning">
-                  Membre depuis {formatJoinedDate(user.createdAt)}
+                  Membre depuis {displayedUser?.createdAt ? formatJoinedDate(displayedUser.createdAt) : ""}
                 </CyberBadge>
               </div>
             </div>
           </div>
           <div className="mt-6 flex flex-wrap gap-3">
-            <PrimaryButton
-              disabled={isAvatarSubmitting}
-              onClick={() => fileInputRef.current?.click()}
-              type="button"
-            >
-              {isAvatarSubmitting ? "Mise a jour..." : "Changer avatar"}
-            </PrimaryButton>
-            <Link to="/friends">
-              <SecondaryButton>Reseau d'amis</SecondaryButton>
-            </Link>
+            {isOwnProfile ? (
+              <>
+                <PrimaryButton
+                  disabled={isAvatarSubmitting}
+                  onClick={() => fileInputRef.current?.click()}
+                  type="button"
+                >
+                  {isAvatarSubmitting ? "Mise a jour..." : "Changer avatar"}
+                </PrimaryButton>
+                <Link to="/friends">
+                  <SecondaryButton>Reseau d'amis</SecondaryButton>
+                </Link>
+              </>
+            ) : (
+              <SecondaryButton onClick={() => navigate(-1)}>
+                Retour
+              </SecondaryButton>
+            )}
           </div>
         </CyberPanel>
 
@@ -747,12 +980,12 @@ export default function ProfilePage() {
               hint="Leaderboard"
             />
             <CyberStat
-              label="XP"
-              value="64/100"
-              hint="Progression"
+              label="Niveau"
+              value={`Niv. ${levelData.level}`}
+              hint={`${levelData.xpInCurrentLevel}/${levelData.xpRequiredForNextLevel} XP`}
             />
           </div>
-          <CyberProgress className="mt-6" label="Experience" value={64} />
+          <CyberProgress className="mt-6" label={`Progression Niveau ${levelData.level}`} value={levelData.percentage} />
         </CyberCard>
       </section>
 

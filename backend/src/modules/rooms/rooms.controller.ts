@@ -18,6 +18,10 @@ class CreateRoomDto {
   @Min(2)
   @Max(10)
   maxPlayers?: number;
+
+  @IsOptional()
+  @IsInt()
+  quizId?: number;
 }
 
 @Controller("rooms")
@@ -38,7 +42,13 @@ export class RoomsController {
   ): Promise<ApiResponse<any>> {
     const user = (req as any).user;
     const maxPlayers = dto.maxPlayers ?? 5;
-    const room = await this.roomsService.createRoom(user.sub, dto.gameType, maxPlayers, dto.name);
+    const room = await this.roomsService.createRoom(
+      user.sub,
+      dto.gameType,
+      maxPlayers,
+      dto.name,
+      dto.quizId,
+    );
     return ok(room);
   }
 }

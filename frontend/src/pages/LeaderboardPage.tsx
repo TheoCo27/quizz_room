@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { CyberCard, CyberPanel } from "../components/cyber";
 import { getWinsLeaderboard, type WinsLeaderboardEntry } from "../services/scores";
 
@@ -62,7 +63,14 @@ export default function LeaderboardPage() {
                     className="border-b border-white/5 transition-colors hover:bg-white/5"
                   >
                     <td className="px-4 py-4 font-bold text-magenta">#{index + 1}</td>
-                    <td className="px-4 py-4">{entry.username}</td>
+                    <td className="px-4 py-4">
+                      <Link
+                        to={`/profile/${entry.userId}`}
+                        className="hover:text-cyan-400 hover:underline transition-colors font-medium"
+                      >
+                        {entry.username}
+                      </Link>
+                    </td>
                     <td className="px-4 py-4 text-right text-lime font-medium">
                       {entry.totalWins}
                     </td>

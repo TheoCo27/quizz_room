@@ -29,6 +29,10 @@ export default function RoomPage() {
   const [chatInput, setChatInput] = useState("");
   const chatListRef = React.useRef<HTMLDivElement | null>(null);
   const shouldAutoScrollRef = React.useRef(true);
+  const chatRateLimitRef = React.useRef({
+    tokens: 10,
+    lastRefill: Date.now(),
+  });
 
   useEffect(() => {
     getQuizzes().then(setQuizzes).catch(console.error);
@@ -99,6 +103,9 @@ export default function RoomPage() {
 
     const onError = (data: { message: string }) => {
       setError(data.message);
+      setTimeout(() => {
+        setError((prev) => (prev === data.message ? null : prev));
+      }, 4000);
     };
 
     const onRoomMessage = (message: RoomChatMessage) => {
@@ -196,6 +203,32 @@ export default function RoomPage() {
     if (!roomId) return;
     const content = chatInput.trim();
     if (!content) return;
+
+    const now = Date.now();
+    const capacity = 10;
+    const windowMs = 30000;
+    const replenishRate = capacity / windowMs;
+
+    const elapsedMs = now - chatRateLimitRef.current.lastRefill;
+    const addedTokens = elapsedMs * replenishRate;
+
+    chatRateLimitRef.current.tokens = Math.min(capacity, chatRateLimitRef.current.tokens + addedTokens);
+    chatRateLimitRef.current.lastRefill = now;
+
+    if (chatRateLimitRef.current.tokens >= 1) {
+      chatRateLimitRef.current.tokens -= 1;
+    } else {
+      const neededTokens = 1 - chatRateLimitRef.current.tokens;
+      const retryAfterMs = neededTokens / replenishRate;
+      const rateLimitMsg = `Vous devez attendre ${Math.ceil(retryAfterMs / 1000)} seconde(s) avant de renvoyer un message.`;
+      
+      setError(rateLimitMsg);
+      setTimeout(() => {
+        setError((prev) => (prev === rateLimitMsg ? null : prev));
+      }, 4000);
+      return;
+    }
+
     const socket = getSocket();
     socket.emit("room_message", { roomId, content });
     setChatInput("");
@@ -247,54 +280,56 @@ export default function RoomPage() {
           )}
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2">
-              <h2 className="text-xl font-bold text-text mb-4">Joueurs ({room?.players?.length || 0}/{room?.maxPlayers || 0})</h2>
-              <div className="space-y-4">
-                {[...(room?.players || [])].sort((a, b) => b.score - a.score).map((player, index) => (
-                  <div key={player.id} className="flex items-center justify-between p-4 bg-background/50 rounded-xl border border-border/30">
-                    <div className="flex items-center gap-4">
-                      {player.user?.avatar_url ? (
-                        <img
-                          src={player.user.avatar_url}
-                          alt={player.user.username || "Avatar"}
-                          className="w-10 h-10 rounded-full object-cover border border-secondary/20"
-                          loading="lazy"
-                          referrerPolicy="no-referrer"
-                        />
-                      ) : (
-                        <div className="w-10 h-10 rounded-full bg-secondary/20 flex items-center justify-center text-secondary font-bold">
-                          {player.user?.username?.charAt(0).toUpperCase() || "?"}
+            <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+              <div className="flex flex-col">
+                <h2 className="text-xl font-bold text-text mb-4">Joueurs ({room?.players?.length || 0}/{room?.maxPlayers || 0})</h2>
+                <div className="space-y-4 max-h-[30rem] overflow-y-auto pr-2">
+                  {[...(room?.players || [])].sort((a, b) => b.score - a.score).map((player, index) => (
+                    <div key={player.id} className="flex items-center justify-between p-4 bg-background/50 rounded-xl border border-border/30">
+                      <div className="flex items-center gap-4">
+                        {player.user?.avatar_url ? (
+                          <img
+                            src={player.user.avatar_url}
+                            alt={player.user.username || "Avatar"}
+                            className="w-10 h-10 rounded-full object-cover border border-secondary/20"
+                            loading="lazy"
+                            referrerPolicy="no-referrer"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 rounded-full bg-secondary/20 flex items-center justify-center text-secondary font-bold">
+                            {player.user?.username?.charAt(0).toUpperCase() || "?"}
+                          </div>
+                        )}
+                        <div className="flex flex-col">
+                          <span className="font-bold text-text">
+                            {player.user?.username || `Joueur ${player.userId}`}
+                            {player.userId === room?.hostId && " 👑"}
+                          </span>
+                          <span className="text-sm text-text-muted">
+                            Rang #{index + 1} - {player.score} pts
+                          </span>
                         </div>
-                      )}
-                      <div className="flex flex-col">
-                        <span className="font-bold text-text">
-                          {player.user?.username || `Joueur ${player.userId}`}
-                          {player.userId === room?.hostId && " 👑"}
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <span className={`px-3 py-1 rounded text-sm ${player.isReady ? 'bg-green-500/20 text-green-400 border border-green-500/50' : 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/50'}`}>
+                          {player.isReady ? "Prêt" : "En attente"}
                         </span>
-                        <span className="text-sm text-text-muted">
-                          Rang #{index + 1} - {player.score} pts
-                        </span>
+                        {isHost && player.userId !== user.id && (
+                          <button
+                            onClick={() => handleKickPlayer(player.userId)}
+                            className="px-2 py-1 bg-red-900/50 text-red-400 border border-red-500/50 rounded hover:bg-red-800/50"
+                            title="Expulser"
+                          >
+                            X
+                          </button>
+                        )}
                       </div>
                     </div>
-                    <div className="flex items-center gap-4">
-                      <span className={`px-3 py-1 rounded text-sm ${player.isReady ? 'bg-green-500/20 text-green-400 border border-green-500/50' : 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/50'}`}>
-                        {player.isReady ? "Prêt" : "En attente"}
-                      </span>
-                      {isHost && player.userId !== user.id && (
-                        <button
-                          onClick={() => handleKickPlayer(player.userId)}
-                          className="px-2 py-1 bg-red-900/50 text-red-400 border border-red-500/50 rounded hover:bg-red-800/50"
-                          title="Expulser"
-                        >
-                          X
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
 
-              <div className="mt-6 p-6 bg-background/50 rounded-xl border border-border/30 flex flex-col h-80">
+              <div className="p-6 bg-background/50 rounded-xl border border-border/30 flex flex-col h-[30rem]">
                 <h3 className="font-bold text-lg text-text">Chat de la salle</h3>
                 <div
                   ref={chatListRef}

@@ -14,6 +14,7 @@ import { AuthService } from "../auth/auth.service";
 import { RoomsService } from "./rooms.service";
 import { JwtService } from "@nestjs/jwt";
 import { QuizGameService } from "./quiz-game.service";
+import { PrivateMessageRateLimitService } from "../users/private-message-rate-limit.service";
 
 @WebSocketGateway({ cors: true, namespace: "/rooms" })
 export class RoomsGateway
@@ -29,6 +30,7 @@ export class RoomsGateway
     private readonly authService: AuthService,
     private readonly jwtService: JwtService,
     private readonly quizGameService: QuizGameService,
+    private readonly rateLimitService: PrivateMessageRateLimitService,
   ) {}
 
   afterInit(server: Server) {
@@ -263,6 +265,20 @@ export class RoomsGateway
       }
 
       await this.roomsService.ensurePlayerInRoom(roomId, user.id);
+
+      // Enforce rate limit of 10 messages every 30 seconds
+      const limitResult = this.rateLimitService.consume(
+        `room-message:${user.id}`,
+        10,
+        30000,
+      );
+
+      if (!limitResult.allowed) {
+        client.emit("error", {
+          message: `Vous devez attendre ${Math.ceil(limitResult.retryAfterMs / 1000)} seconde(s) avant de renvoyer un message.`,
+        });
+        return;
+      }
 
       this.server.to(roomId).emit("room_message", {
         id: `${Date.now()}-${user.id}-${Math.floor(Math.random() * 10000)}`,
