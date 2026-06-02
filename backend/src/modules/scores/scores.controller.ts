@@ -38,7 +38,7 @@ export class ScoresController {
   @Get("users/:userId/wins-rank")
   async getUserWinsRank(
     @Param("userId", ParseIntPipe) userId: number,
-  ): Promise<ApiResponse<{ userId: number; totalWins: number; rank: number }>> {
+  ): Promise<ApiResponse<{ userId: number; totalWins: number; gamesPlayed: number; rank: number }>> {
     return ok(await this.scoresService.getUserWinsRank(userId));
   }
 

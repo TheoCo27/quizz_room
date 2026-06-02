@@ -17,6 +17,7 @@ export type WinsLeaderboardEntry = {
 export type UserWinsRank = {
   userId: number;
   totalWins: number;
+  gamesPlayed: number;
   rank: number;
 };
 

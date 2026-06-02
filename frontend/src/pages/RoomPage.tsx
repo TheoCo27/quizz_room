@@ -250,7 +250,7 @@ export default function RoomPage() {
             <div className="lg:col-span-2">
               <h2 className="text-xl font-bold text-text mb-4">Joueurs ({room?.players?.length || 0}/{room?.maxPlayers || 0})</h2>
               <div className="space-y-4">
-                {room?.players?.map((player) => (
+                {[...(room?.players || [])].sort((a, b) => b.score - a.score).map((player, index) => (
                   <div key={player.id} className="flex items-center justify-between p-4 bg-background/50 rounded-xl border border-border/30">
                     <div className="flex items-center gap-4">
                       {player.user?.avatar_url ? (
@@ -266,10 +266,15 @@ export default function RoomPage() {
                           {player.user?.username?.charAt(0).toUpperCase() || "?"}
                         </div>
                       )}
-                      <span className="font-bold text-text">
-                        {player.user?.username || `Joueur ${player.userId}`}
-                        {player.userId === room.hostId && " 👑"}
-                      </span>
+                      <div className="flex flex-col">
+                        <span className="font-bold text-text">
+                          {player.user?.username || `Joueur ${player.userId}`}
+                          {player.userId === room?.hostId && " 👑"}
+                        </span>
+                        <span className="text-sm text-text-muted">
+                          Rang #{index + 1} - {player.score} pts
+                        </span>
+                      </div>
                     </div>
                     <div className="flex items-center gap-4">
                       <span className={`px-3 py-1 rounded text-sm ${player.isReady ? 'bg-green-500/20 text-green-400 border border-green-500/50' : 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/50'}`}>

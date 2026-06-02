@@ -169,45 +169,50 @@ export class ScoresService {
 
   // Retourne le classement base sur le nombre total de victoires.
   async getWinsLeaderboard(limit = 10): Promise<{ userId: number; username: string; totalWins: number }[]> {
-    const wins = await this.prisma.client.matchHistoryPlayer.groupBy({
-      by: ["userId"],
-      _count: {
+    const users = await this.prisma.client.user.findMany({
+      select: {
         id: true,
-      },
-      where: {
-        isWinner: true,
-      },
-      orderBy: {
+        username: true,
         _count: {
-          id: "desc",
+          select: {
+            matchHistoryEntries: {
+              where: {
+                isWinner: true,
+              },
+            },
+          },
         },
       },
-      take: limit,
     });
 
-    const leaderboard = await Promise.all(
-      wins.map(async (entry) => {
-        const user = await this.usersService.findUser({ id: entry.userId });
-        if (!user) {
-          return null;
-        }
-        return {
-          userId: entry.userId,
-          username: user.username,
-          totalWins: entry._count.id,
-        };
-      })
-    );
+    const leaderboard = users.map((user) => ({
+      userId: user.id,
+      username: user.username,
+      totalWins: user._count.matchHistoryEntries,
+    }));
 
-    return leaderboard.filter((entry): entry is NonNullable<typeof entry> => entry !== null);
+    leaderboard.sort((a, b) => {
+      if (b.totalWins !== a.totalWins) {
+        return b.totalWins - a.totalWins;
+      }
+      return a.username.localeCompare(b.username);
+    });
+
+    return leaderboard.slice(0, limit);
   }
 
   // Retourne les statistiques de victoire et le rang d'un utilisateur.
-  async getUserWinsRank(userId: number): Promise<{ userId: number; totalWins: number; rank: number }> {
+  async getUserWinsRank(userId: number): Promise<{ userId: number; totalWins: number; gamesPlayed: number; rank: number }> {
     const totalWins = await this.prisma.client.matchHistoryPlayer.count({
       where: {
         userId,
         isWinner: true,
+      },
+    });
+
+    const gamesPlayed = await this.prisma.client.matchHistoryPlayer.count({
+      where: {
+        userId,
       },
     });
 
@@ -226,6 +231,7 @@ export class ScoresService {
     return {
       userId,
       totalWins,
+      gamesPlayed,
       rank: higherRankCount + 1,
     };
   }

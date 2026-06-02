@@ -722,16 +722,24 @@ export default function ProfilePage() {
             </div>
             <CyberBadge variant="info">Temps reel</CyberBadge>
           </div>
-          <div className="mt-6 grid gap-4 sm:grid-cols-2">
+          <div className="mt-6 grid gap-4 grid-cols-2 md:grid-cols-3">
             <CyberStat
               label="Victoires totales"
               value={winsRankData ? winsRankData.totalWins.toString() : "--"}
               hint="Leaderboard global"
             />
             <CyberStat
+              label="Parties jouées"
+              value={winsRankData ? winsRankData.gamesPlayed.toString() : "--"}
+              hint="Historique complet"
+            />
+            <CyberStat
               label="Taux de victoire"
-              value="--%"
-              hint="Module historique"
+              value={winsRankData && winsRankData.gamesPlayed > 0 
+                ? `${Math.round((winsRankData.totalWins / winsRankData.gamesPlayed) * 100)}%` 
+                : "--%"
+              }
+              hint="Ratio victoires"
             />
             <CyberStat
               label="Classement"

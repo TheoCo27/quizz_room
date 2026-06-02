@@ -207,4 +207,30 @@ export class QuizGameService {
     server.to(roomId).emit("room_state_updated", updatedRoom);
     server.to(roomId).emit("game_ended", updatedRoom);
   }
+
+  getActiveGameQuestion(roomId: string, userId: number) {
+    const game = this.activeGames.get(roomId);
+    if (!game) return null;
+
+    if (game.currentQuestionIndex >= game.questions.length) {
+      return null;
+    }
+
+    const question = game.questions[game.currentQuestionIndex];
+    const durationSec = game.questionDurationSec;
+    const timeLeft = game.questionEndTime ? Math.max(0, Math.round((game.questionEndTime - Date.now()) / 1000)) : null;
+
+    const submittedAnswer = game.answers.get(userId) ?? null;
+
+    return {
+      id: question.id,
+      questionText: question.questionText,
+      answers: question.answers,
+      position: question.position,
+      durationSec: durationSec ?? null,
+      timeLeft,
+      totalQuestions: game.questions.length,
+      submittedAnswer,
+    };
+  }
 }

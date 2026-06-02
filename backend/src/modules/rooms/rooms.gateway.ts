@@ -112,6 +112,13 @@ export class RoomsGateway
       
       client.join(data.roomId);
       this.server.to(data.roomId).emit("room_state_updated", updatedRoom);
+
+      if (updatedRoom.status === "PLAYING") {
+        const currentQuestion = this.quizGameService.getActiveGameQuestion(data.roomId, userId);
+        if (currentQuestion) {
+          client.emit("question", currentQuestion);
+        }
+      }
     } catch (error: any) {
       this.logger.error(`Error in join_room: ${error.message}`);
       client.emit("error", { message: error.message });

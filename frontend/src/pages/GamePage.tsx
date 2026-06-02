@@ -12,6 +12,8 @@ type QuestionPayload = {
   position: number;
   durationSec: number | null;
   totalQuestions: number;
+  timeLeft?: number | null;
+  submittedAnswer?: string | null;
 };
 
 type QuestionResultPayload = {
@@ -47,9 +49,9 @@ export default function GamePage() {
 
     const onQuestion = (data: QuestionPayload) => {
       setQuestion(data);
-      setTimeLeft(data.durationSec ?? null);
-      setSelectedAnswer(null);
-      setHasSubmitted(false);
+      setTimeLeft(data.timeLeft !== undefined && data.timeLeft !== null ? data.timeLeft : (data.durationSec ?? null));
+      setSelectedAnswer(data.submittedAnswer ?? null);
+      setHasSubmitted(!!data.submittedAnswer);
       setResult(null);
     };
 
