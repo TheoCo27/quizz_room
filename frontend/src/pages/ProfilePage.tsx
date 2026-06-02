@@ -98,6 +98,7 @@ export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState<ProfileTabId>("overview");
   const [myQuizzes, setMyQuizzes] = useState<Quiz[]>([]);
   const [isQuizzesLoading, setIsQuizzesLoading] = useState(false);
+  const [winsRankData, setWinsRankData] = useState<UserWinsRank | null>(null);
 
   useEffect(() => {
     if (!user) {
