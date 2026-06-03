@@ -99,13 +99,12 @@ export default function LoginPage() {
     <main className="flex flex-1 px-6 py-10">
       <div className="mx-auto grid w-full max-w-6xl gap-6 lg:grid-cols-[1.05fr_0.95fr]">
         <CyberPanel className="rounded-4xl p-8">
-          <p className="cyber-eyebrow">ft_transcendence</p>
+          <p className="cyber-eyebrow">ft_transcendence // sub-net</p>
           <h1 className="mt-3 cyber-title text-3xl text-text">
-            Acces au reseau
+            Portail de liaison réseau
           </h1>
           <p className="mt-4 text-sm leading-7 text-text-muted">
-            Connecte-toi pour acceder aux parties en temps reel, a la messagerie
-            privee et aux outils de creation de quiz.
+            Connecte ton cyberdeck pour accéder aux synchronisations réseau, aux Holocalls cryptés et aux outils d'encodage d'éclats.
           </p>
           <div className="mt-6 flex flex-wrap gap-2">
             <CyberBadge variant="info">Temps reel</CyberBadge>
@@ -122,13 +121,12 @@ export default function LoginPage() {
         </CyberPanel>
 
         <CyberCard className="rounded-4xl p-8" accent="magenta">
-          <p className="cyber-eyebrow">Acces</p>
+          <p className="cyber-eyebrow">Accès Cyberdeck</p>
           <h2 className="mt-3 cyber-title text-2xl text-text">
-            Se connecter
+            Synchroniser Cyberdeck
           </h2>
           <p className="mt-3 text-sm text-text-muted">
-            Utilise ton compte principal ou entre en mode invite avec un pseudo
-            unique.
+            Initialise ton profil enregistré ou lance une liaison furtive d'invité.
           </p>
 
           {oauthError ? (
@@ -193,7 +191,7 @@ export default function LoginPage() {
               disabled={isSubmitting}
               type="submit"
             >
-              {isSubmitting ? "Connexion..." : "Se connecter"}
+              {isSubmitting ? "Liaison..." : "Lancer la connexion"}
             </PrimaryButton>
           </form>
 
@@ -204,7 +202,7 @@ export default function LoginPage() {
             variant="ghost"
             onClick={() => (window.location.href = googleAuthUrl)}
           >
-            Continuer avec Google
+            Liaison via Google
           </CyberButton>
 
           <div className="my-6 flex items-center gap-4">
@@ -224,14 +222,14 @@ export default function LoginPage() {
               className="mb-2 block text-sm font-medium text-text-muted"
               htmlFor="guest-username"
             >
-              Entrer comme invite
+              Accès furtif d'invité
             </label>
             <Input
               className="mb-4 w-full"
               id="guest-username"
               name="guest_username"
               type="text"
-              placeholder="Pseudo unique"
+              placeholder="Alias réseau unique"
               value={guestUsername}
               onChange={(event) => setGuestUsername(event.target.value)}
               disabled={isGuestSubmitting}
@@ -247,15 +245,15 @@ export default function LoginPage() {
               type="submit"
             >
               {isGuestSubmitting
-                ? "Connexion invite..."
-                : "Continuer en invite"}
+                ? "Liaison furtive..."
+                : "Établir accès furtif"}
             </SecondaryButton>
           </form>
 
           <p className="mt-5 text-center text-sm text-text-muted">
-            Pas de compte ?{" "}
+            Nouvelle empreinte ?{" "}
             <Link className="font-semibold underline" to="/register">
-              S'inscrire
+              Créer un profil
             </Link>
           </p>
 
@@ -266,14 +264,14 @@ export default function LoginPage() {
               className="font-semibold underline underline-offset-4"
               to="/conditions-utilisation"
             >
-              conditions d'utilisation
+              protocoles d'utilisation
             </Link>{" "}
-            et notre{" "}
+            et nos{" "}
             <Link
               className="font-semibold underline underline-offset-4"
               to="/politique-confidentialite"
             >
-              politique de confidentialite
+              directives de confidentialité
             </Link>
             .
           </p>

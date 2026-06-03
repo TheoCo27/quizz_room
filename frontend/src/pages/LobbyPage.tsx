@@ -60,15 +60,15 @@ export default function LobbyPage() {
       <main className="flex flex-1 px-6 py-10">
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-8">
           <CyberPanel className="rounded-4xl p-8 md:p-10 text-center">
-            <h1 className="cyber-title text-3xl text-text">Accès refusé</h1>
+            <h1 className="cyber-title text-3xl text-text">Connexion refusée</h1>
             <p className="mt-4 text-sm leading-7 text-text-muted">
-              Vous devez être connecté pour accéder au lobby.
+              Liaison neuronale requise. Veuillez synchroniser votre Cyberdeck.
             </p>
             <button
               onClick={() => navigate("/login")}
               className="mt-6 cyber-button px-6 py-2"
             >
-              Se connecter
+              Synchroniser Cyberdeck
             </button>
           </CyberPanel>
         </div>
@@ -82,15 +82,15 @@ export default function LobbyPage() {
         <CyberPanel className="rounded-4xl p-8 md:p-10">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div>
-              <h1 className="cyber-title text-3xl text-text">Lobby</h1>
+              <h1 className="cyber-title text-3xl text-text">Afterlife (Lobby)</h1>
               <p className="mt-4 text-sm leading-7 text-text-muted">
-                Rejoignez une salle ou créez la vôtre pour jouer avec vos amis.
+                Initialise un nouveau canal crypté ou rejoins un contrat disponible pour jouer en groupe.
               </p>
             </div>
             <div className="flex items-center gap-2">
               <input
                 type="text"
-                placeholder="Nom de la salle (optionnel)"
+                placeholder="Nom du canal (optionnel)"
                 value={roomName}
                 onChange={(e) => setRoomName(e.target.value)}
                 className="bg-background border border-border/50 text-text px-4 py-3 rounded"
@@ -100,7 +100,7 @@ export default function LobbyPage() {
                 disabled={isCreating}
                 className="cyber-button px-6 py-3 font-bold"
               >
-                {isCreating ? "Création..." : "Créer"}
+                {isCreating ? "Initialisation..." : "Initialiser"}
               </button>
             </div>
           </div>
@@ -112,16 +112,16 @@ export default function LobbyPage() {
           )}
 
           <div className="mt-8">
-            <h2 className="text-xl font-bold text-text mb-4">Salles disponibles</h2>
+            <h2 className="text-xl font-bold text-text mb-4">Terminaux actifs</h2>
             {rooms.length === 0 ? (
-              <p className="text-text-muted italic">Aucune salle en attente pour le moment.</p>
+              <p className="text-text-muted italic">Aucun terminal en attente de mercenaires.</p>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {rooms.map((room) => (
                   <div key={room.id} className="border border-border/30 rounded-xl p-4 bg-background/50 hover:bg-background/80 transition-colors">
                     <div className="flex justify-between items-start mb-2">
                       <h3 className="font-bold text-lg text-primary">
-                        {room.name ? room.name : `Salle de ${room.host?.username || "Joueur"}`}
+                        {room.name ? room.name : `Terminal de ${room.host?.username || "Mercenaire"}`}
                       </h3>
                       <span className="text-xs px-2 py-1 rounded bg-secondary/20 text-secondary border border-secondary/30">
                         {room.gameType}
@@ -129,14 +129,14 @@ export default function LobbyPage() {
                     </div>
                     <div className="flex justify-between items-center mt-4">
                       <span className="text-sm text-text-muted">
-                        Joueurs: {room._count?.players || 0} / {room.maxPlayers}
+                        Mercenaires: {room._count?.players || 0} / {room.maxPlayers}
                       </span>
                       <button
                         onClick={() => handleJoinRoom(room.id)}
                         disabled={room._count?.players ? room._count.players >= room.maxPlayers : false}
                         className="cyber-button px-4 py-1 text-sm disabled:opacity-50"
                       >
-                        Rejoindre
+                        Se connecter
                       </button>
                     </div>
                   </div>

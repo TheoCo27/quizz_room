@@ -58,13 +58,13 @@ export default function PrivateMessagesPanel({
   return (
     <CyberCard className="flex flex-col rounded-4xl p-6 h-[38rem]" accent="magenta">
       <div className="border-b border-white/10 pb-5">
-        <p className="cyber-eyebrow">Messages prives</p>
+        <p className="cyber-eyebrow">Holocalls cryptés (Chat)</p>
         <div className="mt-3 flex flex-wrap items-center gap-3">
           <h2 className="cyber-title text-2xl text-text">
-            {selectedFriend ? selectedFriend.username : "Choisis un ami"}
+            {selectedFriend ? selectedFriend.username : "Sélectionne un Choom"}
           </h2>
           {selectedFriend ? (
-            <CyberBadge variant="info">Canal prive</CyberBadge>
+            <CyberBadge variant="info">Canal sécurisé</CyberBadge>
           ) : null}
         </div>
       </div>
@@ -77,14 +77,14 @@ export default function PrivateMessagesPanel({
           >
             {isConversationLoading ? (
               <div className="rounded-[1.25rem] border border-white/10 bg-white/8 px-4 py-4 text-sm text-text-muted">
-                Chargement de la conversation...
+                Décryptage du flux de communication...
               </div>
             ) : null}
 
             {!isConversationLoading &&
               messages.length === 0 ? (
               <div className="rounded-[1.25rem] border border-white/10 bg-white/8 px-4 py-4 text-sm leading-7 text-text-muted">
-                Aucun message pour l'instant. Lance la conversation avec{" "}
+                Aucune transmission enregistrée. Initialise le flux avec{" "}
                 {selectedFriend.username}.
               </div>
             ) : null}
@@ -115,7 +115,7 @@ export default function PrivateMessagesPanel({
                       <span>{formatTimestamp(message.createdAt)}</span>
                       {isOwnMessage && (
                         <span className="text-[10px] opacity-70">
-                          ({message.readAt ? "Lu" : "Envoye"})
+                          ({message.readAt ? "Décrypté" : "Transmis"})
                         </span>
                       )}
                     </div>
@@ -139,13 +139,13 @@ export default function PrivateMessagesPanel({
               className="mb-2 block text-sm font-medium text-text-muted"
               htmlFor="private-message"
             >
-              Ecrire a {selectedFriend.username}
+              Transmission vers {selectedFriend.username}
             </label>
             <div className="flex items-center gap-2">
               <Input
                 className="flex-1"
                 id="private-message"
-                placeholder="Ecris un message privé..."
+                placeholder="Saisis ta transmission..."
                 value={messageInput}
                 onChange={(event) => onMessageInputChange(event.target.value)}
                 maxLength={PRIVATE_MESSAGE_MAX_LENGTH}
@@ -155,21 +155,21 @@ export default function PrivateMessagesPanel({
                 disabled={isSendingMessage || messageInput.length < 1}
                 type="submit"
               >
-                {isSendingMessage ? "Envoi..." : "Envoyer"}
+                {isSendingMessage ? "Transmission..." : "Transmettre"}
               </PrimaryButton>
             </div>
             {hasReachedMessageLimit ? (
               <p className="mt-3 rounded-[1.25rem] border border-warning/40 bg-warning/10 px-4 py-3 text-sm text-warning">
-                Attention : le message a ete tronque. Maximum{" "}
-                {PRIVATE_MESSAGE_MAX_LENGTH} caracteres.
+                Attention : la transmission a été tronquée. Maximum{" "}
+                {PRIVATE_MESSAGE_MAX_LENGTH} caractères.
               </p>
             ) : null}
           </form>
         </>
       ) : (
         <div className="mt-5 rounded-[1.75rem] border border-white/10 bg-white/5 px-5 py-5 text-sm leading-7 text-text-muted">
-          Ton reseau apparait a gauche. Clique sur un ami pour afficher le fil
-          prive et commencer a discuter.
+          Ton réseau de contacts apparaît à gauche. Connecte-toi à un Choom pour
+          décrypter son flux Holocall privé.
         </div>
       )}
     </CyberCard>
