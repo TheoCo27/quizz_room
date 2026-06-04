@@ -146,7 +146,7 @@ logs-studio: compose-check
 	$(COMPOSE) logs -f prisma-studio
 
 studio:
-	bash scripts/open-url.sh "http://127.0.0.1:$${PRISMA_STUDIO_PORT:-5555}"
+	bash scripts/open-url.sh "http://127.0.0.1:$${PRISMA_STUDIO_PORT:-5555}" Firefox
 
 page:
 	bash scripts/open-url.sh "https://localhost:$${FRONTEND_PORT:-3000}" Firefox
