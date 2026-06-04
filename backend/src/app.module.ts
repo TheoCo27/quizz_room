@@ -10,6 +10,7 @@ import { ScoresModule } from "./modules/scores/scores.module";
 import { UsersModule } from "./modules/users/users.module";
 import { PrismaModule } from "./prisma/prisma.module";
 import { RoomsModule } from './modules/rooms/rooms.module';
+import { MetricsModule } from './modules/metrics/metrics.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { RoomsModule } from './modules/rooms/rooms.module';
     QuizzesModule,
     ScoresModule,
     RoomsModule,
+    MetricsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
