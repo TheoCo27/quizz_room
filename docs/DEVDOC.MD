@@ -4,6 +4,18 @@
 
 Ce document remplace l'ancien `DEVDOC` et s'aligne sur le code reel present dans le depot au moment de l'ecriture.
 
+## Concept du projet
+
+Le projet est une application web de quiz multijoueur. Un utilisateur peut creer un compte classique, se connecter en invite ou via Google, rejoindre un espace social, gerer son profil, ajouter des amis, discuter, creer des quiz puis lancer des parties en room avec plusieurs joueurs.
+
+Concretement, l'application sert a:
+
+- centraliser l'authentification et la gestion des profils
+- proposer une couche sociale avec amis, messages prives et chat de room
+- permettre la creation et l'administration de quiz depuis le web
+- orchestrer des parties de quiz en temps reel entre plusieurs joueurs
+- conserver des statistiques comme les wins, l'XP et l'historique de match
+
 Le projet implemente aujourd'hui:
 
 - un frontend React 18 en TypeScript
@@ -18,6 +30,19 @@ Important:
 
 - plusieurs sections se recouvrent volontairement, car elles repondent a des modules differents du sujet
 - ce document decrit le code reel, meme quand cela met en lumiere un point partiellement cable ou perfectible
+
+## Technologies utilisees et pourquoi
+
+- `React 18` pour construire une interface web dynamique en composants, avec un rendu reactif adapte a une SPA.
+- `TypeScript` pour partager des types entre couches, limiter les erreurs et rendre le code plus maintenable.
+- `NestJS` pour structurer le backend en modules, controllers et services avec injection de dependances.
+- `PostgreSQL` pour stocker les donnees relationnelles du projet de maniere robuste.
+- `Prisma` pour manipuler PostgreSQL avec un ORM type, des migrations et un schema centralise.
+- `Socket.IO` pour synchroniser en temps reel les rooms, le chat et les parties de quiz.
+- `JWT + cookies HTTP-only` pour garder une authentification persistante cote navigateur sans exposer le token au JavaScript client.
+- `Google OAuth 2.0 / OIDC` pour proposer une connexion federée en plus du login local.
+- `Docker Compose` pour lancer facilement toute la stack de dev avec des services isoles et reproductibles.
+- `Webpack Dev Server` pour servir le frontend en developpement avec proxy HTTPS vers le backend.
 
 ## Vue rapide de l'architecture
 
@@ -73,13 +98,43 @@ Browser
 ### Bibliotheques et fonctions externes utilisees
 
 - Frontend:
-  `react`, `react-dom`, `react-router-dom`, `socket.io-client`, `fetch`
+  - `react`
+    sert a construire l'interface en composants et a gerer les mises a jour d'etat.
+  - `react-dom`
+    sert a monter l'application React dans le DOM du navigateur.
+  - `react-router-dom`
+    sert a gerer la navigation SPA entre login, lobby, profil, room et jeu.
+  - `socket.io-client`
+    sert a ouvrir la connexion temps reel entre le navigateur et la gateway backend.
+  - `fetch`
+    sert a appeler les endpoints HTTP du backend depuis les services frontend.
 - Backend:
-  `@nestjs/common`, `@nestjs/core`, `@nestjs/platform-express`, `@nestjs/swagger`, `@nestjs/jwt`, `@nestjs/throttler`, `cookie-parser`, `express`
+  - `@nestjs/common`
+    fournit les briques de base NestJS: decorators, exceptions, guards et providers.
+  - `@nestjs/core`
+    sert au bootstrap de l'application et au moteur d'injection de dependances.
+  - `@nestjs/platform-express`
+    branche NestJS sur le serveur HTTP Express utilise dans le projet.
+  - `@nestjs/swagger`
+    sert a generer la documentation Swagger/OpenAPI a partir des controllers et DTO.
+  - `@nestjs/jwt`
+    sert a signer et verifier les JWT utilises pour la session.
+  - `@nestjs/throttler`
+    sert a poser des mecanismes de limitation de debit cote backend.
+  - `cookie-parser`
+    sert a lire les cookies HTTP recus par Express/NestJS.
+  - `express`
+    est la couche HTTP sous-jacente sur laquelle NestJS s'appuie ici.
 - Persistence:
-  `@prisma/client`, `@prisma/adapter-pg`
+  - `@prisma/client`
+    fournit le client ORM type utilise par les services backend pour interroger PostgreSQL.
+  - `@prisma/adapter-pg`
+    sert a connecter Prisma au driver PostgreSQL retenu par le projet.
 - Validation:
-  `class-validator`, `class-transformer`
+  - `class-validator`
+    sert a declarer et executer les regles de validation sur les DTO entrants.
+  - `class-transformer`
+    sert a convertir les payloads bruts en instances de classes DTO.
 
 ### Fonctions importantes
 
@@ -142,11 +197,24 @@ Browser
 ### Bibliotheques et fonctions externes utilisees
 
 - `react`
+  sert a declarer les pages, composants et hooks qui composent l'interface.
 - `react-dom/client`
+  sert a initialiser la racine React 18 avec `createRoot`.
 - `react-router-dom`
+  sert a piloter la navigation cote client sans rechargement complet de page.
 - `socket.io-client`
+  sert a relier les pages lobby/room/game aux evenements temps reel du backend.
 - API navigateur:
-  `fetch`, `FileReader`, `window.addEventListener`, `setInterval`, `setTimeout`
+  - `fetch`
+    sert a faire les appels HTTP vers les routes REST.
+  - `FileReader`
+    sert a lire un fichier local pour l'avatar et le convertir en data URL.
+  - `window.addEventListener`
+    sert a reagir aux evenements globaux du navigateur.
+  - `setInterval`
+    sert aux rafraichissements periodiques ou aux pollings UI.
+  - `setTimeout`
+    sert a temporiser certaines transitions ou actions cote client.
 
 ### Fonctions importantes
 
@@ -230,15 +298,25 @@ Browser
 ### Bibliotheques et fonctions externes utilisees
 
 - `@nestjs/common`
+  sert a definir controllers, services, guards, pipes et exceptions.
 - `@nestjs/core`
+  sert a demarrer l'application et a orchestrer le conteneur d'injection Nest.
 - `@nestjs/platform-express`
+  sert d'adaptateur entre NestJS et Express pour les routes HTTP.
 - `@nestjs/swagger`
+  sert a exposer une documentation interactive des routes backend.
 - `@nestjs/jwt`
+  sert a gerer la signature et la verification des tokens de session.
 - `@nestjs/throttler`
+  sert a introduire des limites de debit sur certaines actions sensibles.
 - `class-validator`
+  sert a verifier les contraintes des DTO avant d'entrer dans la logique metier.
 - `class-transformer`
+  sert a transformer les corps de requete en objets DTO exploitables.
 - `cookie-parser`
+  sert a parser les cookies pour les guards et la restauration de session.
 - `express`
+  sert de moteur HTTP concret sous l'application NestJS.
 
 ### Fonctions importantes
 
@@ -296,11 +374,17 @@ Browser
 ### Bibliotheques et fonctions externes utilisees
 
 - `@nestjs/websockets`
+  sert a declarer la gateway et les handlers d'evenements temps reel cote backend.
 - `socket.io`
+  sert au transport temps reel, a la gestion des rooms et au broadcast serveur.
 - `socket.io-client`
+  sert a connecter le navigateur aux evenements de room, chat et partie.
 - `JwtService.verifyAsync()`
+  sert a authentifier chaque socket a partir du token de session.
 - Prisma `findUnique`, `findMany`, `create`, `update`, `delete`
+  servent a persister et relire rooms, joueurs et etats de partie dans PostgreSQL.
 - `setTimeout`, `setInterval`
+  servent a piloter la temporalite du quiz: countdown, duree des questions et enchainement.
 
 ### Fonctions importantes
 
@@ -375,10 +459,15 @@ Browser
 ### Bibliotheques et fonctions externes utilisees
 
 - Prisma `findMany`, `findFirst`, `create`, `update`, `updateMany`, `deleteMany`
+  servent a manipuler amities, demandes, messages prives et profil utilisateur.
 - `fetch`
+  sert a consommer les endpoints REST des amis, conversations et profil.
 - `socket.io-client`
+  sert a recevoir et envoyer les messages de chat en room en temps reel.
 - `FileReader`
+  sert a charger un avatar local avant envoi vers le backend.
 - `toLocaleDateString`, `toLocaleString`, `toLocaleTimeString`
+  servent a afficher les dates et heures des messages dans un format lisible pour l'utilisateur.
 
 ### Fonctions importantes
 
@@ -450,9 +539,24 @@ Browser
 ### Bibliotheques et fonctions externes utilisees
 
 - `@prisma/client`
+  fournit le client ORM type, les enums et les types utilises dans le backend.
 - `@prisma/adapter-pg`
+  sert a faire communiquer Prisma avec PostgreSQL via l'adaptateur choisi.
 - Prisma Client:
-  `findUnique`, `findMany`, `findFirst`, `create`, `update`, `updateMany`, `delete`, `deleteMany`, `count`, `upsert`, `$transaction`, `$queryRaw`, `$connect`, `$disconnect`
+  - `findUnique`, `findMany`, `findFirst`
+    servent a lire les enregistrements et relations depuis la base.
+  - `create`, `update`, `updateMany`, `delete`, `deleteMany`
+    servent a modifier les donnees applicatives.
+  - `count`
+    sert a calculer des totaux utiles pour stats et validations.
+  - `upsert`
+    sert a creer ou mettre a jour une ligne en une seule operation.
+  - `$transaction`
+    sert a garantir la coherence quand plusieurs ecritures doivent reussir ensemble.
+  - `$queryRaw`
+    sert pour quelques requetes SQL plus specifiques non couvertes directement par l'ORM.
+  - `$connect`, `$disconnect`
+    servent a gerer explicitement le cycle de vie de la connexion base.
 
 ### Fonctions importantes
 
@@ -509,12 +613,31 @@ Browser
 ### Bibliotheques et fonctions externes utilisees
 
 - `react`
+  sert a produire une UI basee sur des APIs largement supportees par les navigateurs modernes.
 - `react-router-dom`
+  sert a naviguer cote client via l'History API standard.
 - `socket.io-client`
+  sert a abstraire les differences de transport temps reel entre navigateurs.
 - APIs navigateur standard:
-  `fetch`, `FileReader`, `History API`, cookies, `WebSocket` via Socket.IO, `toLocaleDateString`, `toLocaleTimeString`
+  - `fetch`
+    sert aux appels HTTP sans dependre d'une librairie proprietaire.
+  - `FileReader`
+    sert a lire les fichiers locaux de maniere standardisee.
+  - `History API`
+    sert au routage SPA sans rechargement complet.
+  - cookies
+    servent a conserver la session de facon compatible entre navigateurs modernes.
+  - `WebSocket` via Socket.IO
+    sert a la communication temps reel avec fallback gere par Socket.IO si necessaire.
+  - `toLocaleDateString`, `toLocaleTimeString`
+    servent au formatage natif et compatible des dates/heures.
 - Selecteurs/fallbacks CSS:
-  `::-webkit-scrollbar`, `::-webkit-progress-value`, `::-moz-progress-bar`
+  - `::-webkit-scrollbar`
+    sert a styliser les scrollbars sur les moteurs WebKit/Blink.
+  - `::-webkit-progress-value`
+    sert a styliser la valeur affichee dans les barres de progression WebKit/Blink.
+  - `::-moz-progress-bar`
+    sert a styliser les barres de progression cote Firefox.
 
 ### Fonctions importantes
 
@@ -580,10 +703,15 @@ Le depot montre une volonte de compatibilite multi-navigateurs via APIs standard
 ### Bibliotheques et fonctions externes utilisees
 
 - `bcrypt.hash()`, `bcrypt.compare()`
+  servent a stocker les mots de passe de facon hachee puis a verifier un login sans conserver le secret brut.
 - `JwtService.signAsync()`, `JwtService.verifyAsync()`
+  servent a creer et relire les tokens JWT de session.
 - `Response.cookie()`, `Response.clearCookie()`
+  servent a poser et supprimer le cookie HTTP-only d'authentification.
 - `fetch`
+  sert aux formulaires frontend d'inscription, connexion et recuperation de session.
 - `FileReader`
+  sert a preparer l'image d'avatar avant envoi au backend.
 
 ### Fonctions importantes
 
@@ -645,8 +773,11 @@ Le depot montre une volonte de compatibilite multi-navigateurs via APIs standard
 ### Bibliotheques et fonctions externes utilisees
 
 - Prisma `count`, `findMany`, `upsert`, `updateMany`, `$queryRaw`
+  servent a calculer classements, rangs, wins, XP et historique depuis PostgreSQL.
 - `Math.max`
+  sert a borner certains calculs de score ou de progression.
 - APIs de date et de rendu React
+  servent a presenter les historiques, classements et niveaux dans l'interface.
 
 ### Fonctions importantes
 
@@ -710,10 +841,15 @@ La methode `ScoresService.recordGameResult()` prepare aussi un `QuizLeaderboard`
 ### Bibliotheques et fonctions externes utilisees
 
 - Google OIDC endpoints via `fetch`
+  servent a demarrer le login Google, recuperer les tokens et charger la configuration OIDC/JWK.
 - `createPublicKey()` et `verify()` de `crypto`
+  servent a verifier localement la signature du `id_token` Google.
 - `randomBytes()` de `crypto`
+  sert a generer un `state` OAuth aleatoire pour se proteger du CSRF.
 - `JwtService.signAsync()`, `JwtService.verifyAsync()`
+  servent a convertir l'identite Google validee en session JWT interne au projet.
 - `Response.redirect()`, cookies
+  servent a renvoyer l'utilisateur vers Google puis a restaurer sa session applicative.
 
 ### Fonctions importantes
 
@@ -782,10 +918,15 @@ La methode `ScoresService.recordGameResult()` prepare aussi un `QuizLeaderboard`
 ### Bibliotheques et fonctions externes utilisees
 
 - `socket.io`, `socket.io-client`
+  servent a synchroniser en temps reel les joueurs, la room, les questions et les resultats.
 - Prisma
+  sert a persister quiz, rooms, joueurs et historique relies au jeu.
 - React hooks
+  servent a piloter l'etat local des pages lobby, room et partie.
 - `fetch`
+  sert a creer les rooms, charger les quiz et appeler les endpoints metier du jeu.
 - `setTimeout`, `setInterval`
+  servent a gerer countdowns, timers de question et rafraichissements de l'UI.
 
 ### Fonctions importantes
 
@@ -847,10 +988,15 @@ La methode `ScoresService.recordGameResult()` prepare aussi un `QuizLeaderboard`
 ### Bibliotheques et fonctions externes utilisees
 
 - `socket.io`
+  sert a faire transiter les evenements temps reel entre plusieurs navigateurs distants.
 - `socket.io-client`
+  sert a reconnecter automatiquement le client et a ecouter l'etat serveur.
 - `JwtService.verifyAsync()`
+  sert a confirmer qu'un joueur distant est bien authentifie avant l'entree en room.
 - cookies HTTP-only
+  servent a partager la session entre HTTP et WebSocket sans exposer le token au frontend.
 - WebSocket proxy `ws: true` dans Webpack Dev Server
+  sert a relayer proprement la connexion temps reel du frontend de dev vers le backend.
 
 ### Fonctions importantes
 
@@ -907,9 +1053,13 @@ Le code supporte bien des joueurs sur des machines distinctes, car toute la sync
 ### Bibliotheques et fonctions externes utilisees
 
 - Prisma
+  sert a conserver en base l'etat des rooms, participants et scores associes.
 - `socket.io`
+  sert a diffuser les mises a jour de jeu a tous les joueurs de la room.
 - `socket.io-client`
+  sert a recevoir ces mises a jour cote navigateur pour chaque participant.
 - `Map<number, number>` et `Map<number, string>` dans la boucle de jeu
+  servent a suivre efficacement les scores et reponses de plusieurs joueurs en memoire.
 
 ### Fonctions importantes
 
