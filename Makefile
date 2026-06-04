@@ -33,6 +33,7 @@ help:
 	@echo "  make logs-studio         -> Follow Prisma Studio logs"
 	@echo "  make studio              -> Open Prisma Studio in the browser"
 	@echo "  make page                -> Open the frontend in Firefox"
+	@echo "  make swagger             -> Open Swagger in Firefox"
 	@echo "  make ps                  -> Show running containers"
 	@echo "  make test-stack          -> Check frontend, backend and database status quickly"
 	@echo "  make test_http           -> Curl all local HTTP endpoints exposed by the stack"
@@ -149,6 +150,9 @@ studio:
 
 page:
 	bash scripts/open-url.sh "https://localhost:$${FRONTEND_PORT:-3000}" Firefox
+
+swagger:
+	bash scripts/open-url.sh "https://localhost:$${BACKEND_PORT:-4000}/docs" Firefox
 
 ps: compose-check
 	$(COMPOSE) ps
