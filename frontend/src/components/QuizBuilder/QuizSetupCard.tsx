@@ -2,6 +2,7 @@ import Section from "../section";
 import SectionHeader from "../section-header";
 import SectionLabel from "../section-label";
 import Input from "../ui/input";
+import { QUIZ_TITLE_MAX_LENGTH } from "../../utils/input-validation";
 
 type QuizSetupCardProps = {
   title: string;
@@ -29,6 +30,9 @@ export default function QuizSetupCard({
           placeholder="Ex: Histoire du jeu video"
           value={title}
           onChange={(event) => onTitleChange(event.target.value)}
+          minLength={2}
+          maxLength={QUIZ_TITLE_MAX_LENGTH}
+          required
         />
       </label>
     </Section>

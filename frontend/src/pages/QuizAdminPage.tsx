@@ -8,6 +8,13 @@ import PrimaryButton from "../components/ui/PrimaryButton";
 import { useAuthSession } from "../hooks/useAuthSession";
 import { getUserFacingErrorMessage } from "../services/api";
 import { createQuiz, getQuizById, updateQuiz } from "../services/quizzes";
+import {
+  QUIZ_ANSWER_MAX_LENGTH,
+  QUIZ_QUESTION_MAX_LENGTH,
+  QUIZ_TITLE_MAX_LENGTH,
+  normalizeInput,
+  validateSafeText,
+} from "../utils/input-validation";
 
 type DraftQuestion = {
   questionText: string;
@@ -60,17 +67,25 @@ export default function QuizAdminPage() {
   }, [id, isEditing]);
 
   const validateDraftQuestion = () => {
-    if (draftQuestion.questionText.trim().length < 6) {
-      return "La question doit contenir au moins 6 caractères.";
-    }
+    const questionError = validateSafeText(draftQuestion.questionText, {
+      label: "La question",
+      minLength: 6,
+      maxLength: QUIZ_QUESTION_MAX_LENGTH,
+    });
+    if (questionError) return questionError;
 
-    if (draftQuestion.options.some((option) => option.trim().length < 1)) {
-      return "Les 4 options de réponse sont obligatoires.";
+    for (const option of draftQuestion.options) {
+      const optionError = validateSafeText(option, {
+        label: "Chaque réponse",
+        minLength: 1,
+        maxLength: QUIZ_ANSWER_MAX_LENGTH,
+      });
+      if (optionError) return optionError;
     }
 
     // Check for duplicate options
     const normalizedOptions = draftQuestion.options.map((option) =>
-      option.trim().toLowerCase(),
+      normalizeInput(option).toLowerCase(),
     );
     const uniqueOptions = new Set(normalizedOptions);
     if (uniqueOptions.size < 4) {
@@ -122,8 +137,14 @@ export default function QuizAdminPage() {
       return;
     }
 
-    if (title.trim().length < 2) {
-      setSubmitError("Le nom du quiz doit contenir au moins 2 caractères.");
+    const titleError = validateSafeText(title, {
+      label: "Le nom du quiz",
+      minLength: 2,
+      maxLength: QUIZ_TITLE_MAX_LENGTH,
+    });
+
+    if (titleError) {
+      setSubmitError(titleError);
       return;
     }
 
@@ -132,10 +153,36 @@ export default function QuizAdminPage() {
       return;
     }
 
+    for (const question of questions) {
+      const questionError = validateSafeText(question.questionText, {
+        label: "La question",
+        minLength: 6,
+        maxLength: QUIZ_QUESTION_MAX_LENGTH,
+      });
+
+      if (questionError) {
+        setSubmitError(questionError);
+        return;
+      }
+
+      for (const option of question.options) {
+        const optionError = validateSafeText(option, {
+          label: "Chaque réponse",
+          minLength: 1,
+          maxLength: QUIZ_ANSWER_MAX_LENGTH,
+        });
+
+        if (optionError) {
+          setSubmitError(optionError);
+          return;
+        }
+      }
+    }
+
     setIsSubmitting(true);
     try {
       const payload = {
-        title: title.trim(),
+        title: normalizeInput(title),
         questionDurationSec: (rule === "unlimited" ? 0 : rule) as 0 | 10 | 30 | null,
         questions: questions.map((question) => ({
           questionText: question.questionText,

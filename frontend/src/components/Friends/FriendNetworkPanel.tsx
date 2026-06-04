@@ -13,6 +13,10 @@ import PrimaryButton from "../ui/PrimaryButton";
 import SecondaryButton from "../ui/SecondaryButton";
 import EmptyCard from "../ui/empty-card";
 import Input from "../ui/input";
+import {
+  AUTH_USERNAME_MAX_LENGTH,
+  normalizeInput,
+} from "../../utils/input-validation";
 
 export type FriendNotice = {
   kind: "success" | "error";
@@ -241,12 +245,16 @@ export default function FriendNetworkPanel({
                 onChange={(event) => onFriendUsernameChange(event.target.value)}
                 disabled={isSendingRequest}
                 minLength={usernameMinLength}
+                maxLength={AUTH_USERNAME_MAX_LENGTH}
                 autoComplete="friend-username"
                 required
               />
               <PrimaryButton
                 className="mt-4 w-full justify-center"
-                disabled={isSendingRequest || friendUsername.length < 1}
+                disabled={
+                  isSendingRequest ||
+                  normalizeInput(friendUsername).length < usernameMinLength
+                }
                 type="submit"
               >
                 {isSendingRequest ? "Liaison..." : "Lier le contact"}

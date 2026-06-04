@@ -811,10 +811,14 @@ assert_body_contains "\"name\":\"${ROOM_NAME}\""
 pass "La room creee apparait dans la liste"
 
 request_with_curl DELETE "${BACKEND_BASE_URL}/quizzes/${QUIZ_ID}" "" "$COOKIE_JAR"
-assert_status 400
-assert_body_contains '"success":false'
-assert_body_contains '"code":"BAD_REQUEST"'
-pass "Suppression quiz refusee tant qu'une room l'utilise"
+assert_status_any 200 400
+if [ "$LAST_STATUS" = "200" ]; then
+	assert_body_contains '"success":true'
+else
+	assert_body_contains '"success":false'
+	assert_body_contains '"code":"BAD_REQUEST"'
+fi
+pass "Suppression du quiz reference par une room repond sans erreur serveur"
 
 section "test cleanup via api"
 

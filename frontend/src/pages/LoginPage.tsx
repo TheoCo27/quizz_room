@@ -15,10 +15,18 @@ import { useToast } from "../components/ui/toast";
 import { useAuthSession } from "../hooks/useAuthSession";
 import { getUserFacingErrorMessage } from "../services/api";
 import {
+  AUTH_PASSWORD_MAX_LENGTH,
+  AUTH_PASSWORD_MIN_LENGTH,
   AUTH_USERNAME_MIN_LENGTH,
   login,
   loginAsGuest,
 } from "../services/auth";
+import {
+  normalizeInput,
+  validateEmail,
+  validatePassword,
+  validateUsername,
+} from "../utils/input-validation";
 import { oauthErrorMsg } from "../utils/err-msg";
 
 export default function LoginPage() {
@@ -57,8 +65,17 @@ export default function LoginPage() {
     setIsSubmitting(true);
 
     try {
+      const normalizedEmail = normalizeInput(email).toLowerCase();
+      const emailError = validateEmail(normalizedEmail);
+      const passwordError = validatePassword(password);
+
+      if (emailError || passwordError) {
+        setError(emailError || passwordError);
+        return;
+      }
+
       await login({
-        email: email.trim(),
+        email: normalizedEmail,
         password,
       });
       toast.success("Connecté avec succès.");
@@ -78,8 +95,16 @@ export default function LoginPage() {
     setIsGuestSubmitting(true);
 
     try {
+      const normalizedGuestUsername = normalizeInput(guestUsername);
+      const guestUsernameError = validateUsername(normalizedGuestUsername);
+
+      if (guestUsernameError) {
+        setError(guestUsernameError);
+        return;
+      }
+
       await loginAsGuest({
-        username: guestUsername.trim(),
+        username: normalizedGuestUsername,
       });
       toast.success("Connexion invité réussie.");
       navigateAfterAuth();
@@ -157,6 +182,7 @@ export default function LoginPage() {
               onChange={(event) => setEmail(event.target.value)}
               disabled={isSubmitting}
               autoComplete="email"
+              maxLength={255}
               required
             />
 
@@ -176,6 +202,8 @@ export default function LoginPage() {
               onChange={(event) => setPassword(event.target.value)}
               aria-invalid={error ? "true" : "false"}
               disabled={isSubmitting}
+              minLength={AUTH_PASSWORD_MIN_LENGTH}
+              maxLength={AUTH_PASSWORD_MAX_LENGTH}
               autoComplete="current-password"
               required
             />

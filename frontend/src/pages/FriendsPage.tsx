@@ -22,6 +22,12 @@ import {
   type PrivateConversationSummary,
   type PrivateMessage,
 } from "../services/users";
+import {
+  PRIVATE_MESSAGE_MAX_LENGTH,
+  normalizeInput,
+  validateSafeText,
+  validateUsername,
+} from "../utils/input-validation";
 
 const FRIENDS_POLL_INTERVAL_MS = 2000;
 const CONVERSATION_POLL_INTERVAL_MS = 500;
@@ -303,7 +309,18 @@ export default function FriendsPage() {
     setIsSendingRequest(true);
 
     try {
-      const result = await sendFriendRequest(friendUsername.trim());
+      const normalizedUsername = normalizeInput(friendUsername);
+      const usernameError = validateUsername(normalizedUsername);
+
+      if (usernameError) {
+        setFriendNotice({
+          kind: "error",
+          message: usernameError,
+        });
+        return;
+      }
+
+      const result = await sendFriendRequest(normalizedUsername);
       setFriendUsername("");
       setFriendNotice({
         kind: "success",
@@ -386,7 +403,19 @@ export default function FriendsPage() {
   const handleMessageSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (selectedFriendId === null || messageInput.trim().length === 0) {
+    if (selectedFriendId === null) {
+      return;
+    }
+
+    const normalizedMessage = normalizeInput(messageInput);
+    const messageError = validateSafeText(normalizedMessage, {
+      label: "Le message",
+      minLength: 1,
+      maxLength: PRIVATE_MESSAGE_MAX_LENGTH,
+    });
+
+    if (messageError) {
+      setConversationError(messageError);
       return;
     }
 
@@ -408,7 +437,7 @@ export default function FriendsPage() {
     setIsSendingMessage(true);
 
     try {
-      await sendPrivateMessage(selectedFriendId, messageInput.trim());
+      await sendPrivateMessage(selectedFriendId, normalizedMessage);
       setMessageInput("");
       setConversationError(null);
       await Promise.all([

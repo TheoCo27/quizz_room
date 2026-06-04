@@ -1,4 +1,5 @@
 // Ce DTO decrit la mise a jour de l'avatar d'un utilisateur.
+import { Trim } from "@/common/validation/input-safety";
 import { ApiPropertyOptional } from "@nestjs/swagger";
 import { IsOptional, IsString, MaxLength } from "class-validator";
 
@@ -10,6 +11,7 @@ export class UpdateAvatarDto {
     nullable: true,
   })
   @IsOptional()
+  @Trim()
   @IsString()
   @MaxLength(4_000_000)
   avatarDataUrl: string | null;

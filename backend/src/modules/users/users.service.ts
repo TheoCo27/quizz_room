@@ -1,4 +1,10 @@
 // Ce fichier contient la logique metier du profil utilisateur et du systeme d'amis.
+import {
+  assertSafeTextInput,
+  AUTH_USERNAME_MAX_LENGTH,
+  AUTH_USERNAME_MIN_LENGTH,
+  USERNAME_PATTERN,
+} from "@/common/validation/input-safety";
 import { PrismaService } from "@/prisma/prisma.service";
 import {
   FriendshipStatus,
@@ -56,7 +62,17 @@ export class UsersService {
 
   // Recherche un utilisateur par email exact.
   async findUserByEmail(email: string): Promise<User | null> {
-    return this.findUser({ email });
+    return this.prisma.client.user.findFirst({
+      where: {
+        email: {
+          equals: email,
+          mode: "insensitive",
+        },
+      },
+      orderBy: {
+        id: "asc",
+      },
+    });
   }
 
   // Recherche un utilisateur par pseudo exact.
@@ -541,9 +557,25 @@ export class UsersService {
   private normalizeUsername(rawUsername: string): string {
     const username = rawUsername.trim();
 
-    if (username.length < 2) {
-      throw new BadRequestException("Le nom d'utilisateur doit contenir au moins 2 caractères");
+    if (username.length < AUTH_USERNAME_MIN_LENGTH) {
+      throw new BadRequestException(
+        `Le nom d'utilisateur doit contenir au moins ${AUTH_USERNAME_MIN_LENGTH} caractères`,
+      );
     }
+
+    if (username.length > AUTH_USERNAME_MAX_LENGTH) {
+      throw new BadRequestException(
+        `Le nom d'utilisateur doit contenir au maximum ${AUTH_USERNAME_MAX_LENGTH} caractères`,
+      );
+    }
+
+    if (!USERNAME_PATTERN.test(username)) {
+      throw new BadRequestException(
+        "Le nom d'utilisateur ne peut contenir que des lettres, chiffres, points, tirets et underscores",
+      );
+    }
+
+    assertSafeTextInput(username, "Le nom d'utilisateur");
 
     return username;
   }

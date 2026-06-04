@@ -12,10 +12,18 @@ import PrimaryButton from "../components/ui/PrimaryButton";
 import { getUserFacingErrorMessage } from "../services/api";
 import { useAuthSession } from "../hooks/useAuthSession";
 import {
+  AUTH_PASSWORD_MAX_LENGTH,
   AUTH_PASSWORD_MIN_LENGTH,
+  AUTH_USERNAME_MAX_LENGTH,
   AUTH_USERNAME_MIN_LENGTH,
   register,
 } from "../services/auth";
+import {
+  normalizeInput,
+  validateEmail,
+  validatePassword,
+  validateUsername,
+} from "../utils/input-validation";
 
 export default function RegisterPage() {
   const navigate = useNavigate();
@@ -39,8 +47,16 @@ export default function RegisterPage() {
     setIsSubmitting(true);
 
     try {
-      const trimmedEmail = email.trim();
-      const trimmedUsername = username.trim();
+      const trimmedEmail = normalizeInput(email).toLowerCase();
+      const trimmedUsername = normalizeInput(username);
+      const emailError = validateEmail(trimmedEmail);
+      const usernameError = validateUsername(trimmedUsername);
+      const passwordError = validatePassword(password);
+
+      if (emailError || usernameError || passwordError) {
+        setError(emailError || usernameError || passwordError);
+        return;
+      }
 
       await register({
         email: trimmedEmail,
@@ -113,6 +129,7 @@ export default function RegisterPage() {
               onChange={(event) => setEmail(event.target.value)}
               disabled={isSubmitting}
               autoComplete="email"
+              maxLength={255}
               required
             />
 
@@ -132,7 +149,7 @@ export default function RegisterPage() {
               onChange={(event) => setUsername(event.target.value)}
               disabled={isSubmitting}
               minLength={AUTH_USERNAME_MIN_LENGTH}
-              maxLength={20}
+              maxLength={AUTH_USERNAME_MAX_LENGTH}
               autoComplete="username"
               required
             />
@@ -154,6 +171,7 @@ export default function RegisterPage() {
               aria-invalid={error ? "true" : "false"}
               disabled={isSubmitting}
               minLength={AUTH_PASSWORD_MIN_LENGTH}
+              maxLength={AUTH_PASSWORD_MAX_LENGTH}
               autoComplete="new-password"
               required
             />

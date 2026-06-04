@@ -16,9 +16,16 @@ import PrimaryButton from "../components/ui/PrimaryButton";
 import SecondaryButton from "../components/ui/SecondaryButton";
 import { useAuthSession } from "../hooks/useAuthSession";
 import { getUserFacingErrorMessage } from "../services/api";
-import { AUTH_USERNAME_MIN_LENGTH } from "../services/auth";
+import {
+  AUTH_USERNAME_MAX_LENGTH,
+  AUTH_USERNAME_MIN_LENGTH,
+} from "../services/auth";
 import { getUserWinsRank, type UserWinsRank } from "../services/scores";
 import { getUserById, updateMyAvatar, updateMyProfile } from "../services/users";
+import {
+  normalizeInput,
+  validateUsername,
+} from "../utils/input-validation";
 import { calculateLevelData } from "../utils/level";
 
 import { getQuizzes, getMyQuizzes, deleteQuiz, type Quiz } from "../services/quizzes";
@@ -347,13 +354,15 @@ export default function ProfilePage() {
   ) => {
     event.preventDefault();
 
-    const trimmedUsername = profileUsername.trim();
+    const trimmedUsername = normalizeInput(profileUsername);
     setProfileNotice(null);
 
-    if (trimmedUsername.length < AUTH_USERNAME_MIN_LENGTH) {
+    const usernameError = validateUsername(trimmedUsername);
+
+    if (usernameError) {
       setProfileNotice({
         kind: "error",
-        message: `Le pseudo doit contenir au moins ${AUTH_USERNAME_MIN_LENGTH} caracteres.`,
+        message: usernameError,
       });
       return;
     }
@@ -484,7 +493,7 @@ export default function ProfilePage() {
                 <Input
                   className="mt-2 w-full"
                   type="text"
-                  maxLength={20}
+                  maxLength={AUTH_USERNAME_MAX_LENGTH}
                   minLength={AUTH_USERNAME_MIN_LENGTH}
                   onChange={(event) => setProfileUsername(event.target.value)}
                   placeholder="Nouvel alias"

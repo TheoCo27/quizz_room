@@ -1,4 +1,10 @@
 // Ce fichier contient la logique metier de creation et lecture des quiz.
+import {
+  assertSafeTextInput,
+  QUIZ_ANSWER_MAX_LENGTH,
+  QUIZ_QUESTION_MAX_LENGTH,
+  QUIZ_TITLE_MAX_LENGTH,
+} from "@/common/validation/input-safety";
 import { PrismaService } from "@/prisma/prisma.service";
 import { Prisma } from "@generated/prisma/client";
 import {
@@ -229,12 +235,57 @@ export class QuizzesService {
 
   // Verifie la coherence des bonnes reponses declarees.
   private assertValidQuestions(dto: CreateQuizDto): void {
+    const normalizedTitle = dto.title.trim();
+
+    if (normalizedTitle.length < 2 || normalizedTitle.length > QUIZ_TITLE_MAX_LENGTH) {
+      throw new BadRequestException("Le titre du quiz a un format invalide");
+    }
+
+    assertSafeTextInput(normalizedTitle, "Le titre du quiz");
+
     dto.questions.forEach((question, index) => {
+      const normalizedQuestionText = question.questionText.trim();
+
+      if (
+        normalizedQuestionText.length < 1 ||
+        normalizedQuestionText.length > QUIZ_QUESTION_MAX_LENGTH
+      ) {
+        throw new BadRequestException(
+          `La question ${index + 1} a un format invalide`,
+        );
+      }
+
+      assertSafeTextInput(normalizedQuestionText, `La question ${index + 1}`);
+
       if (question.correctAnswerIndex >= question.answers.length) {
         throw new BadRequestException(
           `Question ${index + 1} has an invalid correctAnswerIndex`,
         );
       }
+
+      const normalizedAnswers = question.answers.map((answer) => answer.trim());
+      const uniqueAnswers = new Set(
+        normalizedAnswers.map((answer) => answer.toLocaleLowerCase("fr-FR")),
+      );
+
+      if (uniqueAnswers.size !== normalizedAnswers.length) {
+        throw new BadRequestException(
+          `Les reponses de la question ${index + 1} doivent etre uniques`,
+        );
+      }
+
+      normalizedAnswers.forEach((answer, answerIndex) => {
+        if (answer.length < 1 || answer.length > QUIZ_ANSWER_MAX_LENGTH) {
+          throw new BadRequestException(
+            `La reponse ${answerIndex + 1} de la question ${index + 1} a un format invalide`,
+          );
+        }
+
+        assertSafeTextInput(
+          answer,
+          `La reponse ${answerIndex + 1} de la question ${index + 1}`,
+        );
+      });
     });
   }
 

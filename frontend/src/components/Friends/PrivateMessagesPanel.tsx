@@ -4,8 +4,10 @@ import type { FriendUserSummary, PrivateMessage } from "../../services/users";
 import { CyberBadge, CyberCard } from "../cyber";
 import PrimaryButton from "../ui/PrimaryButton";
 import Input from "../ui/input";
-
-const PRIVATE_MESSAGE_MAX_LENGTH = 1000;
+import {
+  PRIVATE_MESSAGE_MAX_LENGTH,
+  normalizeInput,
+} from "../../utils/input-validation";
 
 type PrivateMessagesPanelProps = {
   currentUser: SafeUser;
@@ -152,7 +154,9 @@ export default function PrivateMessagesPanel({
                 required
               />
               <PrimaryButton
-                disabled={isSendingMessage || messageInput.length < 1}
+                disabled={
+                  isSendingMessage || normalizeInput(messageInput).length < 1
+                }
                 type="submit"
               >
                 {isSendingMessage ? "Transmission..." : "Transmettre"}

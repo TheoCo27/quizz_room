@@ -5,6 +5,11 @@ import { getSocket, connectSocket, disconnectSocket } from "../services/socket";
 import { useAuthSession } from "../hooks/useAuthSession";
 import { Room } from "../services/rooms";
 import { getQuizzes, Quiz } from "../services/quizzes";
+import {
+  ROOM_MESSAGE_MAX_LENGTH,
+  normalizeInput,
+  validateSafeText,
+} from "../utils/input-validation";
 
 type RoomChatMessage = {
   id: string;
@@ -180,8 +185,13 @@ export default function RoomPage() {
   };
 
   const handleQuizChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const quizId = parseInt(e.target.value, 10);
+    if (Number.isNaN(quizId)) {
+      return;
+    }
+
     const socket = getSocket();
-    socket.emit("update_config", { roomId, config: { quizId: parseInt(e.target.value, 10) } });
+    socket.emit("update_config", { roomId, config: { quizId } });
   };
 
   const handleKickPlayer = (targetUserId: number) => {
@@ -201,8 +211,20 @@ export default function RoomPage() {
   const handleSendMessage = (event: React.FormEvent) => {
     event.preventDefault();
     if (!roomId) return;
-    const content = chatInput.trim();
-    if (!content) return;
+    const content = normalizeInput(chatInput);
+    const contentError = validateSafeText(content, {
+      label: "Le message",
+      minLength: 1,
+      maxLength: ROOM_MESSAGE_MAX_LENGTH,
+    });
+
+    if (contentError) {
+      setError(contentError);
+      setTimeout(() => {
+        setError((prev) => (prev === contentError ? null : prev));
+      }, 4000);
+      return;
+    }
 
     const now = Date.now();
     const capacity = 10;
@@ -376,12 +398,12 @@ export default function RoomPage() {
                     value={chatInput}
                     onChange={(e) => setChatInput(e.target.value)}
                     placeholder="Saisir message..."
-                    maxLength={500}
+                    maxLength={ROOM_MESSAGE_MAX_LENGTH}
                     className="flex-1 bg-background border border-border/50 text-text px-3 py-2 rounded"
                   />
                   <button
                     type="submit"
-                    disabled={!chatInput.trim()}
+                    disabled={!normalizeInput(chatInput)}
                     className="px-4 py-2 font-bold bg-primary hover:bg-primary/90 text-background disabled:opacity-50 disabled:cursor-not-allowed rounded"
                   >
                     Transmettre

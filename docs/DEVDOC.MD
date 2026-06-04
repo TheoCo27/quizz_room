@@ -59,6 +59,109 @@ Browser
   -> PostgreSQL
 ```
 
+## Validation et securite des formulaires
+
+Le projet valide maintenant les saisies utilisateur sur les deux couches:
+
+- cote frontend, avant l'envoi HTTP/WebSocket
+- cote backend, au moment de l'entree dans les DTO REST et les payloads Socket.IO
+
+### Champs couverts
+
+Les controles concernent les formulaires et champs suivants:
+
+- inscription classique: email, pseudo, mot de passe
+- connexion classique et connexion invite
+- mise a jour du profil: pseudo, statut, avatar
+- ajout d'ami
+- messages prives
+- creation et edition de quiz: titre, questions, reponses
+- creation de room et chat de room
+- evenements WebSocket de room: `join_room`, `leave_room`, `close_room`, `toggle_ready`, `start_game`, `submit_answer`, `update_config`, `room_message`, `kick_player`
+
+### Validation frontend
+
+Le frontend bloque desormais les erreurs les plus courantes avant l'envoi:
+
+- champs vides ou remplis uniquement avec des espaces
+- longueurs minimales et maximales
+- format d'email invalide
+- pseudo invalide
+  seuls les lettres, chiffres, points, tirets et underscores sont acceptes
+- contenu HTML/script evident dans les zones texte affichees ensuite dans l'UI
+
+Fichiers principaux:
+
+- `frontend/src/utils/input-validation.ts`
+- `frontend/src/pages/LoginPage.tsx`
+- `frontend/src/pages/RegisterPage.tsx`
+- `frontend/src/pages/ProfilePage.tsx`
+- `frontend/src/pages/FriendsPage.tsx`
+- `frontend/src/pages/LobbyPage.tsx`
+- `frontend/src/pages/RoomPage.tsx`
+- `frontend/src/pages/QuizAdminPage.tsx`
+- `frontend/src/components/Friends/*`
+- `frontend/src/components/QuizBuilder/*`
+
+### Validation backend
+
+Le backend applique une validation systematique via:
+
+- `ValidationPipe` globale NestJS dans `backend/src/main.ts`
+- DTO REST renforces dans `backend/src/modules/users/dto/*`, `backend/src/modules/quizzes/dto/*`, `backend/src/modules/rooms/dto/*`
+- validation des evenements Socket.IO dans `backend/src/modules/rooms/rooms.gateway.ts`
+- helpers communs dans `backend/src/common/validation/input-safety.ts`
+
+Les regles backend couvrent:
+
+- trim et normalisation des chaines
+- rejection des champs vides apres trim
+- verification des formats et bornes de longueur
+- rejection des pseudo invalides
+- rejection des contenus contenant des balises HTML, handlers inline (`on...=`) ou protocoles dangereux (`javascript:`, `data:text/html`, `vbscript:`)
+- verification supplementaire des quiz
+  unicite des reponses, bornes sur les titres/questions/reponses
+- verification supplementaire des rooms
+  nom optionnel mais valide, `maxPlayers` coherent avec le nombre de joueurs presents
+
+### Champs vides et mauvais formats
+
+La protection se fait a deux niveaux:
+
+- le frontend affiche l'erreur tout de suite pour les cas simples
+- le backend reste l'autorite finale et refuse toute charge utile invalide meme si le client est contourne
+
+Concretement, une chaine comme `"   "` n'est plus acceptee pour un pseudo, un message, un titre de quiz, une question, une reponse ou un nom de room.
+
+### Tentatives XSS
+
+Deux protections se cumulent:
+
+- les entrees utilisateur visibles dans l'interface sont filtrees en amont pour refuser les payloads HTML/script evidents
+- l'interface React affiche ces valeurs comme du texte normal et non via `dangerouslySetInnerHTML`
+
+Cela limite a la fois:
+
+- l'injection persistante de balises `<script>`, `<img onerror=...>`, etc.
+- les payloads utilisant `javascript:` ou des attributs inline de type `onclick=`
+
+### Tentatives SQL injection
+
+Le runtime applicatif passe par Prisma pour les acces base:
+
+- `UsersService`
+- `AuthService`
+- `QuizzesService`
+- `RoomsService`
+- `PrivateMessagesService`
+- `ScoresService`
+
+Les donnees utilisateur ne sont donc pas concatenees dans des requetes SQL dynamiques exposees par l'application web. En pratique, cela reduit fortement le risque de SQL injection sur les flux applicatifs courants.
+
+Note importante:
+
+- des scripts de maintenance/tests dans `scripts/*.sh` utilisent bien du SQL brut, mais ils ne sont pas exposes aux formulaires ni aux routes runtime de l'application
+
 ---
 
 ## 1. [Major] Use a framework for both frontend and backend

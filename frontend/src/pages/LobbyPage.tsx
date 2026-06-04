@@ -3,6 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { CyberPanel } from "../components/cyber";
 import { getRooms, createRoom, type Room } from "../services/rooms";
 import { useAuthSession } from "../hooks/useAuthSession";
+import {
+  ROOM_NAME_MAX_LENGTH,
+  normalizeInput,
+  validateOptionalRoomName,
+} from "../utils/input-validation";
 
 export default function LobbyPage() {
   const { user, isLoading } = useAuthSession();
@@ -34,9 +39,17 @@ export default function LobbyPage() {
     setIsCreating(true);
     setError(null);
     try {
+      const normalizedRoomName = normalizeInput(roomName);
+      const roomNameError = validateOptionalRoomName(normalizedRoomName);
+
+      if (roomNameError) {
+        setError(roomNameError);
+        return;
+      }
+
       const payload: { gameType: string; maxPlayers: number; name?: string } = { gameType: "QUIZ", maxPlayers: 5 };
-      if (roomName.trim()) {
-        payload.name = roomName.trim();
+      if (normalizedRoomName) {
+        payload.name = normalizedRoomName;
       }
       const room = await createRoom(payload);
       navigate(`/room/${room.id}`);
@@ -93,6 +106,7 @@ export default function LobbyPage() {
                 placeholder="Nom du canal (optionnel)"
                 value={roomName}
                 onChange={(e) => setRoomName(e.target.value)}
+                maxLength={ROOM_NAME_MAX_LENGTH}
                 className="bg-background border border-border/50 text-text px-4 py-3 rounded"
               />
               <button
