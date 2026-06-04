@@ -57,7 +57,7 @@ export default function Navbar() {
           </span>
         </Link>
         <div className="hidden items-center gap-6 text-sm font-medium md:flex">
-          <Link to="/admin">Encoder un éclat</Link>
+          <Link to="/admin">Créer un quiz</Link>
         </div>
 
         <div className="flex items-center gap-3">
@@ -92,7 +92,7 @@ export default function Navbar() {
                       }}
                     >
                       <UserRound className="size-5" />
-                      Dossier
+                      Profil
                     </Link>
                     <Link
                       className="mt-1 flex items-center gap-2 rounded px-3 py-2 text-sm font-medium text-text transition hover:bg-white/10"
@@ -103,7 +103,7 @@ export default function Navbar() {
                       }}
                     >
                       <UsersRound className="size-5" />
-                      Chooms
+                      Amis
                     </Link>
                     <button
                       className="mt-1 flex w-full items-center gap-2 rounded px-3 py-2 text-left text-sm! font-semibold text-rose-300 transition hover:bg-rose-500/12 hover:text-rose-200"
@@ -114,7 +114,7 @@ export default function Navbar() {
                       }}
                     >
                       <LogOut className="size-5 text-rose-300" />
-                      Déconnecter Cyberdeck
+                      Se déconnecter
                     </button>
                   </div>
                 ) : null}
@@ -123,7 +123,7 @@ export default function Navbar() {
           ) : (
             <div className="flex items-center gap-2 md:gap-4 w-full">
               <Link className="text-sm font-medium text-text-muted" to="/login">
-                Connexion Réseau
+                Se connecter
               </Link>
               <PrimaryButton
                 className="px-2 py-1 md:px-4 md:py-2 text-sm! md:text-base!"
@@ -131,7 +131,7 @@ export default function Navbar() {
                   navigate("/register");
                 }}
               >
-                Nouveau Profil
+                Créer un compte
               </PrimaryButton>
             </div>
           )}

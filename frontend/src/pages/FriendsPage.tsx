@@ -292,10 +292,10 @@ export default function FriendsPage() {
           </p>
           <div className="mt-6 flex flex-col gap-3 sm:flex-row">
             <Link to="/login">
-              <PrimaryButton>Connexion Cyberdeck</PrimaryButton>
+              <PrimaryButton>Se connecter</PrimaryButton>
             </Link>
             <Link to="/register">
-              <SecondaryButton>Créer empreinte synaptique</SecondaryButton>
+              <SecondaryButton>Créer un compte</SecondaryButton>
             </Link>
           </div>
         </CyberPanel>

@@ -32,9 +32,9 @@ export default function LeaderboardPage() {
   return (
     <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-6 py-10 md:px-10">
       <CyberPanel className="rounded-4xl p-6">
-        <p className="cyber-eyebrow">Registre des Légendes de Night City</p>
+        <p className="cyber-eyebrow">Classement</p>
         <h1 className="mt-2 cyber-title text-2xl text-text">
-          Opérateurs les plus Actifs // Contrats
+          Joueurs les mieux classés
         </h1>
         <p className="mt-3 text-sm text-text-muted">
           Consulte les dossiers des mercenaires du réseau classés par contrats réussis.

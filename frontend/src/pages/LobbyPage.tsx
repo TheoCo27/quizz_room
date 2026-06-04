@@ -81,7 +81,7 @@ export default function LobbyPage() {
               onClick={() => navigate("/login")}
               className="mt-6 cyber-button px-6 py-2"
             >
-              Synchroniser Cyberdeck
+              Se connecter
             </button>
           </CyberPanel>
         </div>
@@ -95,15 +95,15 @@ export default function LobbyPage() {
         <CyberPanel className="rounded-4xl p-8 md:p-10">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div>
-              <h1 className="cyber-title text-3xl text-text">Afterlife (Lobby)</h1>
+              <h1 className="cyber-title text-3xl text-text">Liste des rooms</h1>
               <p className="mt-4 text-sm leading-7 text-text-muted">
-                Initialise un nouveau canal crypté ou rejoins un contrat disponible pour jouer en groupe.
+                Crée une room ou rejoins une partie disponible pour jouer en groupe.
               </p>
             </div>
             <div className="flex items-center gap-2">
               <input
                 type="text"
-                placeholder="Nom du canal (optionnel)"
+                placeholder="Nom de la room (optionnel)"
                 value={roomName}
                 onChange={(e) => setRoomName(e.target.value)}
                 maxLength={ROOM_NAME_MAX_LENGTH}
@@ -114,7 +114,7 @@ export default function LobbyPage() {
                 disabled={isCreating}
                 className="cyber-button px-6 py-3 font-bold"
               >
-                {isCreating ? "Initialisation..." : "Initialiser"}
+                {isCreating ? "Création..." : "Créer une room"}
               </button>
             </div>
           </div>
@@ -126,9 +126,9 @@ export default function LobbyPage() {
           )}
 
           <div className="mt-8">
-            <h2 className="text-xl font-bold text-text mb-4">Terminaux actifs</h2>
+            <h2 className="text-xl font-bold text-text mb-4">Rooms disponibles</h2>
             {rooms.length === 0 ? (
-              <p className="text-text-muted italic">Aucun terminal en attente de mercenaires.</p>
+              <p className="text-text-muted italic">Aucune room disponible pour le moment.</p>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {rooms.map((room) => (
@@ -150,7 +150,7 @@ export default function LobbyPage() {
                         disabled={room._count?.players ? room._count.players >= room.maxPlayers : false}
                         className="cyber-button px-4 py-1 text-sm disabled:opacity-50"
                       >
-                        Se connecter
+                        Rejoindre
                       </button>
                     </div>
                   </div>

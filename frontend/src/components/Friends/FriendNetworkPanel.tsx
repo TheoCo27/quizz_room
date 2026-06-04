@@ -96,7 +96,7 @@ export default function FriendNetworkPanel({
           <div className="mt-4 flex flex-wrap items-center gap-3">
             <CyberBadge variant="warning">Invité</CyberBadge>
             <Link to="/register">
-              <PrimaryButton>Créer empreinte synaptique</PrimaryButton>
+              <PrimaryButton>Créer un compte</PrimaryButton>
             </Link>
           </div>
         </CyberCard>
@@ -105,7 +105,7 @@ export default function FriendNetworkPanel({
           <CyberCard className="rounded-3xl p-5" accent="cyan">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <h3 className="cyber-title text-lg text-text">Réseau de Chooms</h3>
+                <h3 className="cyber-title text-lg text-text">Liste d'amis</h3>
                 <p className="mt-2 text-sm leading-7 text-text-muted">
                   Ouvre un canal crypté ou consulte le statut réseau de tes contacts.
                 </p>
@@ -132,7 +132,7 @@ export default function FriendNetworkPanel({
               !isFriendsLoading &&
               (friendOverview?.friends.length ?? 0) === 0 ? (
               <EmptyCard className="py-3!">
-                Aucun Choom détecté sur ton sous-réseau. Utilise la recherche de pseudo.
+                Aucun ami pour le moment. Utilise la recherche de pseudo.
               </EmptyCard>
             ) : null}
 
@@ -225,7 +225,7 @@ export default function FriendNetworkPanel({
               aria-busy={isSendingRequest}
               onSubmit={(event) => void onFriendSubmit(event)}
             >
-              <SectionHeader className="mt-0!">Lier un Choom</SectionHeader>
+              <SectionHeader className="mt-0!">Ajouter un ami</SectionHeader>
               <p className="mt-2 text-sm leading-7 text-text-muted">
                 Saisis son pseudo exact. Si ce joueur t'a déjà envoyé une
                 demande, elle sera acceptée automatiquement.
@@ -257,7 +257,7 @@ export default function FriendNetworkPanel({
                 }
                 type="submit"
               >
-                {isSendingRequest ? "Liaison..." : "Lier le contact"}
+                {isSendingRequest ? "Envoi..." : "Envoyer la demande"}
               </PrimaryButton>
               {friendNotice ? (
                 <p
@@ -318,7 +318,7 @@ export default function FriendNetworkPanel({
                       >
                         {pendingActionId === request.id
                           ? "Traitement..."
-                          : "Autoriser"}
+                          : "Accepter"}
                       </PrimaryButton>
                       <SecondaryButton
                         className="px-5 py-2.5"
@@ -327,7 +327,7 @@ export default function FriendNetworkPanel({
                           void onFriendRequestAction(request.id, "declined")
                         }
                       >
-                        Rejeter
+                        Refuser
                       </SecondaryButton>
                     </div>
                   </div>

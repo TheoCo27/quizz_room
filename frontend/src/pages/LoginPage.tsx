@@ -148,7 +148,7 @@ export default function LoginPage() {
         <CyberCard className="rounded-4xl p-8" accent="magenta">
           <p className="cyber-eyebrow">Accès Cyberdeck</p>
           <h2 className="mt-3 cyber-title text-2xl text-text">
-            Synchroniser Cyberdeck
+            Se connecter
           </h2>
           <p className="mt-3 text-sm text-text-muted">
             Initialise ton profil enregistré ou lance une liaison furtive d'invité.
@@ -219,7 +219,7 @@ export default function LoginPage() {
               disabled={isSubmitting}
               type="submit"
             >
-              {isSubmitting ? "Liaison..." : "Lancer la connexion"}
+              {isSubmitting ? "Connexion..." : "Se connecter"}
             </PrimaryButton>
           </form>
 
@@ -230,7 +230,7 @@ export default function LoginPage() {
             variant="ghost"
             onClick={() => (window.location.href = googleAuthUrl)}
           >
-            Liaison via Google
+            Continuer avec Google
           </CyberButton>
 
           <div className="my-6 flex items-center gap-4">
@@ -273,8 +273,8 @@ export default function LoginPage() {
               type="submit"
             >
               {isGuestSubmitting
-                ? "Liaison furtive..."
-                : "Établir accès furtif"}
+                ? "Connexion invité..."
+                : "Continuer en invité"}
             </SecondaryButton>
           </form>
 

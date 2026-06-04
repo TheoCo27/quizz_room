@@ -255,10 +255,10 @@ export default function ProfilePage() {
           </p>
           <div className="mt-6 flex flex-col gap-3 sm:flex-row">
             <Link to="/login">
-              <PrimaryButton>Synchroniser Cyberdeck</PrimaryButton>
+              <PrimaryButton>Se connecter</PrimaryButton>
             </Link>
             <Link to="/register">
-              <SecondaryButton>Nouveau Profil</SecondaryButton>
+              <SecondaryButton>Créer un compte</SecondaryButton>
             </Link>
           </div>
         </CyberPanel>
@@ -410,19 +410,19 @@ export default function ProfilePage() {
 
   const profileTabs: Array<{ id: ProfileTabId; label: string }> = isOwnProfile
     ? [
-        { id: "overview", label: "Diagnostic Neuro" },
-        { id: "discover_quizzes", label: "Décoder des éclats" },
-        { id: "quizzes", label: "Mes éclats" },
-        { id: "history", label: "Canal historique" },
-        { id: "achievements", label: "Street Cred" },
-        { id: "social", label: "Contacts & Holocalls" },
-        { id: "security", label: "Pare-feu" },
-        { id: "preferences", label: "Ajustements Neuro" },
+        { id: "overview", label: "Profil" },
+        { id: "discover_quizzes", label: "Découvrir des quiz" },
+        { id: "quizzes", label: "Mes quiz" },
+        { id: "history", label: "Historique" },
+        { id: "achievements", label: "Succès" },
+        { id: "social", label: "Amis" },
+        { id: "security", label: "Sécurité" },
+        { id: "preferences", label: "Préférences" },
       ]
     : [
-        { id: "overview", label: "Diagnostic Neuro" },
-        { id: "history", label: "Canal historique" },
-        { id: "achievements", label: "Street Cred" },
+        { id: "overview", label: "Profil" },
+        { id: "history", label: "Historique" },
+        { id: "achievements", label: "Succès" },
       ];
 
   const tabContent = {
@@ -454,14 +454,14 @@ export default function ProfilePage() {
                   >
                     {isAvatarSubmitting
                       ? "Chiffrage..."
-                      : "Changer l'hologramme"}
+                      : "Changer la photo"}
                   </PrimaryButton>
                   <SecondaryButton
                     disabled={isAvatarSubmitting || !user.avatar_url}
                     onClick={() => void handleAvatarRemove()}
                     type="button"
                   >
-                    Désactiver
+                    Supprimer la photo
                   </SecondaryButton>
                 </div>
                 {avatarNotice ? (
@@ -670,11 +670,11 @@ export default function ProfilePage() {
     ),
     quizzes: (
       <CyberCard className="rounded-4xl p-6">
-        <p className="cyber-eyebrow">Mes Éclats</p>
+        <p className="cyber-eyebrow">Mes quiz</p>
         <div className="flex justify-between items-center mt-2">
-          <h3 className="cyber-title text-sm text-text">Gérer mes bases de données</h3>
+          <h3 className="cyber-title text-sm text-text">Gérer mes quiz</h3>
           <Link to="/admin">
-            <PrimaryButton>Encoder un éclat</PrimaryButton>
+            <PrimaryButton>Créer un quiz</PrimaryButton>
           </Link>
         </div>
         <p className="mt-2 text-sm text-text-muted">
@@ -712,7 +712,7 @@ export default function ProfilePage() {
       <CyberCard className="rounded-4xl p-6" accent="magenta">
         <p className="cyber-eyebrow">Réseau d'éclats</p>
         <h3 className="mt-2 cyber-title text-sm text-text">
-          Décoder des éclats publics
+          Quiz disponibles
         </h3>
         <p className="mt-2 text-sm text-text-muted">
           Recherche des éclats sur le sous-réseau public et lance une synchronisation réseau.
@@ -743,7 +743,7 @@ export default function ProfilePage() {
                     <PrimaryButton
                       onClick={() => void handleLaunchQuiz(quiz.id)}
                     >
-                      Synchroniser
+                      Jouer ce quiz
                     </PrimaryButton>
                     {isOwner && (
                       <>
@@ -767,7 +767,7 @@ export default function ProfilePage() {
     ),
     history: (
       <CyberCard className="rounded-4xl p-6">
-        <p className="cyber-eyebrow">Canal historique</p>
+        <p className="cyber-eyebrow">Historique</p>
         <h3 className="mt-2 cyber-title text-sm text-text">
           Dernières connexions
         </h3>
@@ -789,7 +789,7 @@ export default function ProfilePage() {
     ),
     achievements: (
       <CyberCard className="rounded-4xl p-6">
-        <p className="cyber-eyebrow">Street Cred</p>
+        <p className="cyber-eyebrow">Succès</p>
         <h3 className="mt-2 cyber-title text-sm text-text">
           Succès et distinctions
         </h3>
@@ -806,16 +806,16 @@ export default function ProfilePage() {
     ),
     social: (
       <CyberCard className="rounded-4xl p-6">
-        <p className="cyber-eyebrow">Contacts & Holocalls</p>
+        <p className="cyber-eyebrow">Amis</p>
         <h3 className="mt-2 cyber-title text-sm text-text">
-          Chooms et transmissions
+          Amis et messages
         </h3>
         <p className="mt-2 text-sm text-text-muted">
           Retrouve la liste de tes Chooms actifs et tes flux Holocall sécurisés.
         </p>
         <div className="mt-6 flex flex-wrap gap-3">
           <Link to="/friends">
-            <PrimaryButton>Ouvrir le réseau de Chooms</PrimaryButton>
+            <PrimaryButton>Voir mes amis</PrimaryButton>
           </Link>
           <Link to="/">
             <SecondaryButton>Retourner à l'accueil</SecondaryButton>
@@ -825,7 +825,7 @@ export default function ProfilePage() {
     ),
     security: (
       <CyberCard className="rounded-4xl p-6">
-        <p className="cyber-eyebrow">Pare-feu</p>
+        <p className="cyber-eyebrow">Sécurité</p>
         <h3 className="mt-2 cyber-title text-sm text-text">
           Noyau de sécurité neuronale
         </h3>
@@ -844,7 +844,7 @@ export default function ProfilePage() {
     ),
     preferences: (
       <CyberCard className="rounded-4xl p-6">
-        <p className="cyber-eyebrow">Ajustements Neuro</p>
+        <p className="cyber-eyebrow">Préférences</p>
         <h3 className="mt-2 cyber-title text-sm text-text">
           Interface & Synapses
         </h3>
@@ -934,10 +934,10 @@ export default function ProfilePage() {
                   onClick={() => fileInputRef.current?.click()}
                   type="button"
                 >
-                  {isAvatarSubmitting ? "Chiffrage..." : "Changer hologramme"}
+                  {isAvatarSubmitting ? "Chiffrage..." : "Changer la photo"}
                 </PrimaryButton>
                 <Link to="/friends">
-                  <SecondaryButton>Réseau de Chooms</SecondaryButton>
+                  <SecondaryButton>Amis</SecondaryButton>
                 </Link>
               </>
             ) : (
