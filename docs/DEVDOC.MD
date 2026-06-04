@@ -713,6 +713,17 @@ Le depot montre une volonte de compatibilite multi-navigateurs via APIs standard
 - `FileReader`
   sert a preparer l'image d'avatar avant envoi au backend.
 
+### Securite des mots de passe
+
+- A l'inscription classique, `AuthService.register()` appelle `bcrypt.hash(dto.password, 10)`.
+- Le `10` correspond au cost factor de bcrypt: l'algorithme reexecute plusieurs tours pour rendre un cassage par brute force plus couteux.
+- Le salt est genere automatiquement par bcrypt pour chaque mot de passe au moment du hash. Il n'est donc pas gere manuellement dans le code.
+- Avec bcrypt, le salt fait partie de la valeur hachee stockee en base. Le backend sauvegarde donc une chaine deja hachee qui embarque aussi les informations necessaires a la verification.
+- A la connexion, `AuthService.validateUser()` n'essaie jamais de dechiffrer un mot de passe: il utilise `bcrypt.compare(dto.password, user.password)` pour comparer le mot de passe saisi avec le hash stocke.
+- Le mot de passe brut n'est ni persiste en base ni renvoye au frontend. Le type `SafeUser` retire explicitement `password` et `googleId` avant tout retour API.
+- Les comptes invites et les comptes crees via Google recoivent eux aussi un mot de passe aleatoire genere par `randomBytes(...)`, puis immediatement hache avec `bcrypt.hash(..., 10)` avant stockage.
+- Les contraintes d'entree sont imposees des le DTO `RegisterDto`: mot de passe requis, longueur minimale de 12 caracteres et maximale de 40 caracteres.
+
 ### Fonctions importantes
 
 - `validateUser()`

@@ -651,8 +651,10 @@ pass "Ami visible dans le reseau du user principal"
 request_with_curl GET "${BACKEND_BASE_URL}/users/me/friends/conversations" "" "$COOKIE_JAR"
 assert_status 200
 assert_body_contains '"success":true'
-assert_body_contains '"data":[]'
-pass "Liste de conversations vide avant message"
+assert_body_contains "\"friendId\":${PEER_USER_ID}"
+assert_body_contains '"lastMessagePreview":null'
+assert_body_contains '"unreadCount":0'
+pass "Conversation sans message visible avant premier envoi"
 
 request_with_curl POST "${BACKEND_BASE_URL}/users/me/friends/messages/${PEER_USER_ID}" '{"content":"Salut smoke peer"}' "$COOKIE_JAR"
 assert_status 201
