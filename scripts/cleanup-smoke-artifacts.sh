@@ -10,7 +10,8 @@ SCOPE="${1:---scope=all}"
 
 case "$SCOPE" in
 	--scope=all)
-		SMOKE_USER_WHERE="email LIKE 'smoke-api-%@test.com'"
+		# Nettoie les comptes classiques du smoke test ainsi que ses comptes invites.
+		SMOKE_USER_WHERE="email LIKE 'smoke-api-%@test.com' OR username LIKE 'gsapi%' OR username LIKE 'smoke-guest-%'"
 		;;
 	*)
 		printf '[KO] Scope de cleanup inconnu: %s\n' "$SCOPE" >&2

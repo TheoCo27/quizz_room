@@ -40,6 +40,7 @@ print_test_catalog() {
 	printf ' - test quizzes\n'
 	printf ' - test scores\n'
 	printf ' - test rooms\n'
+	printf ' - test websocket\n'
 	printf ' - test front end\n'
 }
 
@@ -296,7 +297,7 @@ cleanup_user_by_id() {
 }
 
 cleanup_smoke_users() {
-	run_database_query "DELETE FROM \\\"User\\\" WHERE email LIKE 'smoke-api-%@test.com';" \
+	run_database_query "DELETE FROM \\\"User\\\" WHERE email LIKE 'smoke-api-%@test.com' OR username LIKE 'gsapi%' OR username LIKE 'smoke-guest-%';" \
 		>/dev/null 2>&1 || true
 }
 
@@ -388,7 +389,7 @@ GHOST_EMAIL="smoke-api-ghost-${SMOKE_RUN_ID}@test.com"
 GHOST_PASSWORD="longsecuredpassword123!"
 GHOST_COOKIE_JAR="${TMP_DIR}/ghost-cookies.txt"
 PEER_COOKIE_JAR="${TMP_DIR}/peer-cookies.txt"
-GUEST_USERNAME="gsapi${SMOKE_RUN_ID}"
+GUEST_USERNAME="smoke-guest-${SMOKE_RUN_ID}"
 GUEST_COOKIE_JAR="${TMP_DIR}/guest-cookies.txt"
 QUIZ_TITLE="Smoke API Quiz ${SMOKE_RUN_ID}"
 UPDATED_QUIZ_TITLE="Smoke API Quiz Updated ${SMOKE_RUN_ID}"
@@ -819,6 +820,12 @@ else
 	assert_body_contains '"code":"BAD_REQUEST"'
 fi
 pass "Suppression du quiz reference par une room repond sans erreur serveur"
+
+section "test websocket"
+run_container_engine exec quiz_frontend node /app/scripts/ws-smoke-test.mjs \
+	--base-url "https://localhost:${FRONTEND_PORT}" \
+	--ca-file "/certs/dev-localhost-ca.pem"
+pass "Smoke test WebSocket OK"
 
 section "test cleanup via api"
 

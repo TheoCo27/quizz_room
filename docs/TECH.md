@@ -191,6 +191,7 @@ Ce test verifie:
 - l'acces frontend `/` et `/health`
 - le flux auth `register -> session -> /users/me -> logout`
 - le login classique et invite
+- les evenements WebSocket des rooms (`ping`, `join_room`, `leave_room`, `close_room`, `toggle_ready`, `start_game`, `submit_answer`, `update_config`, `room_message`, `kick_player`)
 - quelques validations et erreurs API attendues
 
 ### Nettoyage
