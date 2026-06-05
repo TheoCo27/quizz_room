@@ -240,6 +240,16 @@ assert_not_empty() {
 	[ -n "$value" ] || fail "Valeur vide inattendue pour $label"
 }
 
+build_smoke_username() {
+	prefix="$1"
+	max_length=20
+	suffix_budget=$((max_length - ${#prefix}))
+	suffix="$(printf '%s' "$SMOKE_RUN_ID" | tr -cd '[:alnum:]' | tail -c "$suffix_budget")"
+
+	[ -n "$suffix" ] || suffix="$SMOKE_RUN_ID"
+	printf '%s%s' "$prefix" "$suffix"
+}
+
 query_scalar() {
 	query="$1"
 
@@ -379,16 +389,17 @@ section "test authentication"
 SMOKE_RUN_ID="$(date +%s)"
 TEST_EMAIL="smoke-api-${SMOKE_RUN_ID}@test.com"
 TEST_PASSWORD="longsecuredpassword123!"
-TEST_USERNAME="sapia${SMOKE_RUN_ID}"
-UPDATED_USERNAME="sapib${SMOKE_RUN_ID}"
+TEST_USERNAME="$(build_smoke_username "sapia")"
+UPDATED_USERNAME="$(build_smoke_username "sapib")"
 PEER_EMAIL="smoke-api-peer-${SMOKE_RUN_ID}@test.com"
 PEER_PASSWORD="longsecuredpassword123!"
-PEER_USERNAME="sapic${SMOKE_RUN_ID}"
+PEER_USERNAME="$(build_smoke_username "sapic")"
 GHOST_EMAIL="smoke-api-ghost-${SMOKE_RUN_ID}@test.com"
 GHOST_PASSWORD="longsecuredpassword123!"
+GHOST_USERNAME="$(build_smoke_username "sapid")"
 GHOST_COOKIE_JAR="${TMP_DIR}/ghost-cookies.txt"
 PEER_COOKIE_JAR="${TMP_DIR}/peer-cookies.txt"
-GUEST_USERNAME="gsapi${SMOKE_RUN_ID}"
+GUEST_USERNAME="$(build_smoke_username "gsapi")"
 GUEST_COOKIE_JAR="${TMP_DIR}/guest-cookies.txt"
 QUIZ_TITLE="Smoke API Quiz ${SMOKE_RUN_ID}"
 UPDATED_QUIZ_TITLE="Smoke API Quiz Updated ${SMOKE_RUN_ID}"
@@ -404,7 +415,7 @@ INVALID_LOGIN_PAYLOAD='{"email":"not-an-email","password":"short"}'
 WRONG_PASSWORD_PAYLOAD=$(printf '{"email":"%s","password":"wrongpassword123!"}' "$TEST_EMAIL")
 PEER_REGISTER_PAYLOAD=$(printf '{"email":"%s","password":"%s","username":"%s"}' "$PEER_EMAIL" "$PEER_PASSWORD" "$PEER_USERNAME")
 PEER_LOGIN_PAYLOAD=$(printf '{"email":"%s","password":"%s"}' "$PEER_EMAIL" "$PEER_PASSWORD")
-GHOST_REGISTER_PAYLOAD=$(printf '{"email":"%s","password":"%s","username":"sapid%s"}' "$GHOST_EMAIL" "$GHOST_PASSWORD" "$SMOKE_RUN_ID")
+GHOST_REGISTER_PAYLOAD=$(printf '{"email":"%s","password":"%s","username":"%s"}' "$GHOST_EMAIL" "$GHOST_PASSWORD" "$GHOST_USERNAME")
 GHOST_LOGIN_PAYLOAD=$(printf '{"email":"%s","password":"%s"}' "$GHOST_EMAIL" "$GHOST_PASSWORD")
 GUEST_LOGIN_PAYLOAD=$(printf '{"username":"%s"}' "$GUEST_USERNAME")
 PROFILE_UPDATE_PAYLOAD=$(printf '{"username":"%s","status":"offline"}' "$UPDATED_USERNAME")
