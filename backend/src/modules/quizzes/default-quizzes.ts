@@ -163,6 +163,73 @@ export const DEFAULT_QUIZZES: DefaultQuiz[] = [
       },
     ],
   },
+  {
+    id: 1004,
+    title: "Cyberpunk 2077",
+    questionDurationSec: 10,
+    questions: [
+      {
+        questionText: "Qui a conçu le pistolet fétiche de Johnny Silverhand, le modèle '3516' ?",
+        answers: ["Malorian Arms", "Arasaka", "Militech", "Constitutional Arms"],
+        correctAnswer: "Malorian Arms",
+        points: 100,
+      },
+      {
+        questionText: "Pour quelle corporation travaillait Alt Cunningham lorsqu'elle a créé la première version de Soulkiller ?",
+        answers: ["ITS", "Arasaka", "Militech", "Microtech"],
+        correctAnswer: "ITS",
+        points: 100,
+      },
+      {
+        questionText: "Quel est le nom de l'agent de NetWatch stationné dans le Grand Imperial Mall à Pacifica que V rencontre dans la mission 'I Walk the Line' ?",
+        answers: ["Bryce Mosley", "Dennis Cranmer", "Kurt Hansen", "NetWatch Prime"],
+        correctAnswer: "Bryce Mosley",
+        points: 100,
+      },
+      {
+        questionText: "Quel véhicule V possède-t-il/elle au début de son parcours de Nomade, et qu'il/elle peut récupérer plus tard via une quête secondaire ?",
+        answers: ["Thorton Galena 'Rattler'", "Archer Hella EC-D I360", "Quadra Turbo-R V-Tech", "Mizutani Shion 'Coyote'"],
+        correctAnswer: "Thorton Galena 'Rattler'",
+        points: 100,
+      },
+      {
+        questionText: "Quel maire de Night City décède mystérieusement au début du jeu, déclenchant l'enquête de Jefferson Peralez ?",
+        answers: ["Lucius Rhyne", "Weldon Holt", "Mitch Anderson", "Richard Night"],
+        correctAnswer: "Lucius Rhyne",
+        points: 100,
+      },
+      {
+        questionText: "Quel est le nom complet du garde du corps personnel de Hanako Arasaka, expert en lames Mantis, que l'on affronte en boss ?",
+        answers: ["Sandayu Oda", "Goro Takemura", "Adam Smasher", "Arthur Jenkins"],
+        correctAnswer: "Sandayu Oda",
+        points: 100,
+      },
+      {
+        questionText: "Dans la quête 'Sinnerman', quel condamné à mort V doit-il/elle accompagner dans son projet de crucifixion médiatisée ?",
+        answers: ["Joshua Stephenson", "Bill Jablonsky", "Rachel Kasich", "Vasquez"],
+        correctAnswer: "Joshua Stephenson",
+        points: 100,
+      },
+      {
+        questionText: "À quel Fixeur célèbre de Night City appartenait originellement le pistolet intelligent doté d'une IA parlante nommé 'Skippy' ?",
+        answers: ["Regina Jones", "Padre (Sebastian Ibarra)", "Rogue Amendiares", "Dakota Smith"],
+        correctAnswer: "Regina Jones",
+        points: 100,
+      },
+      {
+        questionText: "Quel mercenaire de légende, rival historique d'Adam Smasher, est connu sous le nom de 'l'homme au bras noir' ?",
+        answers: ["Morgan Blackhand", "Spider Murphy", "Andrew Weyland", "Santiago Aldecaldo"],
+        correctAnswer: "Morgan Blackhand",
+        points: 100,
+      },
+      {
+        questionText: "Dans l'extension Phantom Liberty, quel est le véritable nom complet de la netrunneuse d'élite de la FIA connue sous le pseudonyme de 'Songbird' ?",
+        answers: ["So Mi Song", "Hanako Arasaka", "Alt Cunningham", "Rosalind Myers"],
+        correctAnswer: "So Mi Song",
+        points: 100,
+      },
+    ],
+  },
 ];
 
 export async function upsertDefaultQuizzes(prisma: PrismaClient): Promise<void> {

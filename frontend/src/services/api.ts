@@ -174,6 +174,13 @@ async function performApiRequest<T>(
     },
   });
 
+  if (response.status === 401 && !path.startsWith("/auth/")) {
+    window.dispatchEvent(new Event("auth-changed"));
+    if (window.location.pathname !== "/login") {
+      window.location.href = "/login";
+    }
+  }
+
   let json: ApiResponse<T> | null = null;
   try {
     json = (await response.json()) as ApiResponse<T>;

@@ -25,7 +25,7 @@ export class RoomsService {
         gameType,
         status: RoomStatus.WAITING,
         maxPlayers,
-        quizId,
+        quizId: quizId ?? 1004,
         players: {
           create: {
             userId: hostId,
