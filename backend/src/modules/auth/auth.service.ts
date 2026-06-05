@@ -278,7 +278,7 @@ export class AuthService {
 
   // Cree un compte classique puis ouvre sa session.
   async register(dto: RegisterDto, res: Response): Promise<SafeUser> {
-    const email = dto.email.trim();
+    const email = dto.email.trim().toLowerCase();
     const username = dto.username.trim();
     const existingEmail = await this.usersService.findUserByEmail(email);
 
@@ -707,6 +707,7 @@ export class AuthService {
   private async findOrCreateGoogleUser(
     googleUser: VerifiedGoogleIdTokenPayload,
   ): Promise<User> {
+    const normalizedGoogleEmail = googleUser.email.trim().toLowerCase();
     const normalizedAvatarUrl = await this.normalizeGoogleAvatarUrl(
       googleUser.picture,
     );
@@ -717,9 +718,9 @@ export class AuthService {
 
     if (existingGoogleUser) {
       const nextEmail =
-        existingGoogleUser.email === googleUser.email
+        existingGoogleUser.email === normalizedGoogleEmail
           ? existingGoogleUser.email
-          : googleUser.email;
+          : normalizedGoogleEmail;
       const emailOwner =
         nextEmail === existingGoogleUser.email
           ? null
@@ -739,7 +740,9 @@ export class AuthService {
       });
     }
 
-    const existingEmailUser = await this.usersService.findUserByEmail(googleUser.email);
+    const existingEmailUser = await this.usersService.findUserByEmail(
+      normalizedGoogleEmail,
+    );
 
     if (existingEmailUser) {
       return this.usersService.updateUser({
@@ -755,13 +758,13 @@ export class AuthService {
     const hashedPassword = await bcrypt.hash(generatedPassword, 10);
     const username = await this.generateAvailableUsername(
       googleUser.name,
-      googleUser.email,
+      normalizedGoogleEmail,
     );
 
     return this.usersService.createUser({
       avatar_url: normalizedAvatarUrl,
       createdAt: new Date(),
-      email: googleUser.email,
+      email: normalizedGoogleEmail,
       googleId: googleUser.sub,
       password: hashedPassword,
       username,

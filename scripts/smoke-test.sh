@@ -36,6 +36,10 @@ print_test_catalog() {
 	printf ' - test dev op\n'
 	printf ' - test db\n'
 	printf ' - test authentication\n'
+	printf ' - test users\n'
+	printf ' - test quizzes\n'
+	printf ' - test scores\n'
+	printf ' - test rooms\n'
 	printf ' - test front end\n'
 }
 
@@ -145,7 +149,7 @@ request_with_curl() {
 		curl_args+=(-H "$extra_header")
 	fi
 
-	if [ "$method" = "POST" ]; then
+	if [ -n "$data" ]; then
 		curl_args+=(-H "Content-Type: application/json" -d "$data")
 	fi
 
@@ -199,6 +203,21 @@ assert_headers_contains() {
 		|| fail "Headers inattendus. Fragment manquant: $expected. Headers: $LAST_HEADERS"
 }
 
+assert_headers_contains_any() {
+	expected_a="$1"
+	expected_b="$2"
+
+	if printf '%s' "$LAST_HEADERS" | grep -F -q "$expected_a"; then
+		return 0
+	fi
+
+	if printf '%s' "$LAST_HEADERS" | grep -F -q "$expected_b"; then
+		return 0
+	fi
+
+	fail "Headers inattendus. Fragments absents: $expected_a / $expected_b. Headers: $LAST_HEADERS"
+}
+
 assert_cookie_jar_has_cookie() {
 	cookie_jar="$1"
 	cookie_name="$2"
@@ -221,18 +240,45 @@ assert_not_empty() {
 	[ -n "$value" ] || fail "Valeur vide inattendue pour $label"
 }
 
+query_scalar() {
+	query="$1"
+
+	run_database_query "$query" | tr -d '\r' | head -n 1
+}
+
 get_user_field() {
 	email="$1"
 	field="$2"
 
-	run_database_query "SELECT \\\"${field}\\\" FROM \\\"User\\\" WHERE email = '${email}';" | tr -d '\r'
+	query_scalar "SELECT \\\"${field}\\\" FROM \\\"User\\\" WHERE email = '${email}';"
 }
 
 get_user_field_by_username() {
 	username="$1"
 	field="$2"
 
-	run_database_query "SELECT \\\"${field}\\\" FROM \\\"User\\\" WHERE username = '${username}';" | tr -d '\r'
+	query_scalar "SELECT \\\"${field}\\\" FROM \\\"User\\\" WHERE username = '${username}';"
+}
+
+get_friend_request_id() {
+	sender_id="$1"
+	receiver_id="$2"
+
+	query_scalar "SELECT id FROM \\\"FriendRequests\\\" WHERE \\\"senderId\\\" = ${sender_id} AND \\\"receiverId\\\" = ${receiver_id} ORDER BY id DESC LIMIT 1;"
+}
+
+get_quiz_field_by_title() {
+	title="$1"
+	field="$2"
+
+	query_scalar "SELECT \\\"${field}\\\" FROM \\\"Quiz\\\" WHERE title = '${title}' ORDER BY id DESC LIMIT 1;"
+}
+
+get_room_field_by_name() {
+	name="$1"
+	field="$2"
+
+	query_scalar "SELECT \\\"${field}\\\" FROM \\\"Room\\\" WHERE name = '${name}' ORDER BY \\\"createdAt\\\" DESC LIMIT 1;"
 }
 
 cleanup_user() {
@@ -250,7 +296,7 @@ cleanup_user_by_id() {
 }
 
 cleanup_smoke_users() {
-	run_database_query "DELETE FROM \\\"User\\\" WHERE email LIKE 'smoke-%@test.com' OR username LIKE 'guest-smoke-%';" \
+	run_database_query "DELETE FROM \\\"User\\\" WHERE email LIKE 'smoke-api-%@test.com';" \
 		>/dev/null 2>&1 || true
 }
 
@@ -301,6 +347,20 @@ section "test db"
 check_database_query "Connexion PostgreSQL OK" "SELECT 1;" "1"
 check_database_query "Table User presente" "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'User';" "1"
 
+request_with_curl GET "${BACKEND_BASE_URL}/api"
+assert_status_any 200 404
+if [ "$LAST_STATUS" = "200" ]; then
+	assert_body_contains '"name":"ft_transcendence"'
+fi
+pass "/api repond comme attendu selon l'environnement"
+
+request_with_curl GET "${BACKEND_BASE_URL}/docs"
+assert_status_any 200 404
+if [ "$LAST_STATUS" = "200" ]; then
+	assert_body_contains 'Swagger UI'
+fi
+pass "/docs repond comme attendu selon l'environnement"
+
 section "test front end"
 if check_http_with_curl "${FRONTEND_BASE_URL}" '<title>ft_transcendence</title>'; then
 	:
@@ -316,25 +376,47 @@ fi
 
 section "test authentication"
 
-TEST_EMAIL="smoke-$(date +%s)@test.com"
+SMOKE_RUN_ID="$(date +%s)"
+TEST_EMAIL="smoke-api-${SMOKE_RUN_ID}@test.com"
 TEST_PASSWORD="longsecuredpassword123!"
-GHOST_EMAIL="smoke-ghost-$(date +%s)@test.com"
+TEST_USERNAME="sapia${SMOKE_RUN_ID}"
+UPDATED_USERNAME="sapib${SMOKE_RUN_ID}"
+PEER_EMAIL="smoke-api-peer-${SMOKE_RUN_ID}@test.com"
+PEER_PASSWORD="longsecuredpassword123!"
+PEER_USERNAME="sapic${SMOKE_RUN_ID}"
+GHOST_EMAIL="smoke-api-ghost-${SMOKE_RUN_ID}@test.com"
 GHOST_PASSWORD="longsecuredpassword123!"
 GHOST_COOKIE_JAR="${TMP_DIR}/ghost-cookies.txt"
-GUEST_USERNAME="guest-$(date +%s)"
+PEER_COOKIE_JAR="${TMP_DIR}/peer-cookies.txt"
+GUEST_USERNAME="gsapi${SMOKE_RUN_ID}"
 GUEST_COOKIE_JAR="${TMP_DIR}/guest-cookies.txt"
+QUIZ_TITLE="Smoke API Quiz ${SMOKE_RUN_ID}"
+UPDATED_QUIZ_TITLE="Smoke API Quiz Updated ${SMOKE_RUN_ID}"
+DELETABLE_QUIZ_TITLE="Smoke API Quiz Delete ${SMOKE_RUN_ID}"
+ROOM_NAME="Smoke API Room ${SMOKE_RUN_ID}"
+AVATAR_DATA_URL='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+pF9sAAAAASUVORK5CYII='
 
-REGISTER_PAYLOAD=$(printf '{"email":"%s","password":"%s","username":"smoke"}' "$TEST_EMAIL" "$TEST_PASSWORD")
+REGISTER_PAYLOAD=$(printf '{"email":"%s","password":"%s","username":"%s"}' "$TEST_EMAIL" "$TEST_PASSWORD" "$TEST_USERNAME")
 LOGIN_PAYLOAD=$(printf '{"email":"%s","password":"%s"}' "$TEST_EMAIL" "$TEST_PASSWORD")
 INVALID_REGISTER_PAYLOAD='{"email":"not-an-email","password":"short","username":"x"}'
 DUPLICATE_REGISTER_PAYLOAD="$REGISTER_PAYLOAD"
 INVALID_LOGIN_PAYLOAD='{"email":"not-an-email","password":"short"}'
 WRONG_PASSWORD_PAYLOAD=$(printf '{"email":"%s","password":"wrongpassword123!"}' "$TEST_EMAIL")
-GHOST_REGISTER_PAYLOAD=$(printf '{"email":"%s","password":"%s","username":"ghost"}' "$GHOST_EMAIL" "$GHOST_PASSWORD")
+PEER_REGISTER_PAYLOAD=$(printf '{"email":"%s","password":"%s","username":"%s"}' "$PEER_EMAIL" "$PEER_PASSWORD" "$PEER_USERNAME")
+PEER_LOGIN_PAYLOAD=$(printf '{"email":"%s","password":"%s"}' "$PEER_EMAIL" "$PEER_PASSWORD")
+GHOST_REGISTER_PAYLOAD=$(printf '{"email":"%s","password":"%s","username":"sapid%s"}' "$GHOST_EMAIL" "$GHOST_PASSWORD" "$SMOKE_RUN_ID")
 GHOST_LOGIN_PAYLOAD=$(printf '{"email":"%s","password":"%s"}' "$GHOST_EMAIL" "$GHOST_PASSWORD")
 GUEST_LOGIN_PAYLOAD=$(printf '{"username":"%s"}' "$GUEST_USERNAME")
+PROFILE_UPDATE_PAYLOAD=$(printf '{"username":"%s","status":"offline"}' "$UPDATED_USERNAME")
+AVATAR_UPDATE_PAYLOAD=$(printf '{"avatarDataUrl":"%s"}' "$AVATAR_DATA_URL")
+AVATAR_REMOVE_PAYLOAD='{"avatarDataUrl":null}'
+QUIZ_CREATE_PAYLOAD=$(printf '{"title":"%s","questionDurationSec":10,"questions":[{"questionText":"Question smoke 1 ?","answers":["A","B","C","D"],"correctAnswerIndex":1,"points":120},{"questionText":"Question smoke 2 ?","answers":["Oui","Non"],"correctAnswerIndex":0,"points":80}]}' "$QUIZ_TITLE")
+QUIZ_UPDATE_PAYLOAD=$(printf '{"title":"%s","questionDurationSec":30,"questions":[{"questionText":"Question smoke updatee ?","answers":["Rouge","Bleu","Vert"],"correctAnswerIndex":2,"points":150}]}' "$UPDATED_QUIZ_TITLE")
+DELETABLE_QUIZ_PAYLOAD=$(printf '{"title":"%s","questionDurationSec":0,"questions":[{"questionText":"Question supprimable ?","answers":["Oui","Non"],"correctAnswerIndex":0,"points":50}]}' "$DELETABLE_QUIZ_TITLE")
+ROOM_CREATE_PAYLOAD_TEMPLATE='{"gameType":"QUIZ","maxPlayers":4,"name":"%s","quizId":%s}'
 
 cleanup_user "$TEST_EMAIL"
+cleanup_user "$PEER_EMAIL"
 cleanup_user "$GHOST_EMAIL"
 cleanup_smoke_users
 bash scripts/cleanup-smoke-artifacts.sh --scope=all >/dev/null 2>&1 || true
@@ -371,7 +453,7 @@ request_with_curl POST "${BACKEND_BASE_URL}/auth/register" "$REGISTER_PAYLOAD" "
 assert_status 201
 assert_body_contains '"success":true'
 assert_body_contains "\"email\":\"${TEST_EMAIL}\""
-assert_body_contains '"username":"smoke"'
+assert_body_contains "\"username\":\"${TEST_USERNAME}\""
 assert_body_contains '"status":"online"'
 assert_body_not_contains '"password"'
 assert_headers_contains 'Set-Cookie: access_token='
@@ -426,6 +508,18 @@ assert_body_contains '"code":"CONFLICT"'
 assert_body_contains '"message":"Cet email est déjà utilisé"'
 pass "Register en doublon refuse"
 
+request_with_curl GET "${BACKEND_BASE_URL}/auth/google/start"
+assert_status 302
+assert_headers_contains 'Location:'
+assert_headers_contains_any 'accounts.google.com' 'oauthError=google_not_configured'
+pass "Demarrage OAuth Google repond par redirection"
+
+request_with_curl GET "${BACKEND_BASE_URL}/auth/google/callback"
+assert_status 302
+assert_headers_contains 'Location:'
+assert_headers_contains 'oauthError=google_state_mismatch'
+pass "Callback OAuth Google invalide redirige proprement"
+
 request_with_curl POST "${BACKEND_BASE_URL}/auth/login" "$INVALID_LOGIN_PAYLOAD"
 assert_status 400
 assert_body_contains '"success":false'
@@ -443,7 +537,7 @@ request_with_curl POST "${BACKEND_BASE_URL}/auth/login" "$LOGIN_PAYLOAD" "$COOKI
 assert_status_any 200 201
 assert_body_contains '"success":true'
 assert_body_contains "\"email\":\"${TEST_EMAIL}\""
-assert_body_contains '"username":"smoke"'
+assert_body_contains "\"username\":\"${TEST_USERNAME}\""
 assert_body_contains '"status":"online"'
 assert_body_not_contains '"password"'
 assert_headers_contains 'Set-Cookie: access_token='
@@ -471,6 +565,271 @@ assert_body_contains "\"id\":${TEST_USER_ID}"
 assert_body_contains '"status":"online"'
 assert_body_not_contains '"password"'
 pass "/users/me OK"
+
+request_with_curl GET "${BACKEND_BASE_URL}/users/${TEST_USER_ID}"
+assert_status 200
+assert_body_contains '"success":true'
+assert_body_contains "\"email\":\"${TEST_EMAIL}\""
+assert_body_contains "\"id\":${TEST_USER_ID}"
+pass "/users/:id OK"
+
+request_with_curl PATCH "${BACKEND_BASE_URL}/users/me/avatar" "$AVATAR_UPDATE_PAYLOAD" "$COOKIE_JAR"
+assert_status 200
+assert_body_contains '"success":true'
+assert_body_contains '"avatar_url":"data:image/png;base64,'
+pass "Mise a jour avatar OK"
+
+request_with_curl PATCH "${BACKEND_BASE_URL}/users/me/avatar" "$AVATAR_REMOVE_PAYLOAD" "$COOKIE_JAR"
+assert_status 200
+assert_body_contains '"success":true'
+assert_body_contains '"avatar_url":null'
+pass "Suppression avatar OK"
+
+request_with_curl PATCH "${BACKEND_BASE_URL}/users/me/profile" "$PROFILE_UPDATE_PAYLOAD" "$COOKIE_JAR"
+assert_status 200
+assert_body_contains '"success":true'
+assert_body_contains "\"username\":\"${UPDATED_USERNAME}\""
+assert_body_contains '"status":"offline"'
+pass "Mise a jour profil OK"
+
+request_with_curl GET "${BACKEND_BASE_URL}/auth/session" "" "$COOKIE_JAR"
+assert_status 200
+assert_body_contains "\"username\":\"${UPDATED_USERNAME}\""
+assert_body_contains '"status":"offline"'
+pass "Session mise a jour apres modification profil"
+
+request_with_curl POST "${BACKEND_BASE_URL}/auth/register" "$PEER_REGISTER_PAYLOAD" "$PEER_COOKIE_JAR"
+assert_status 201
+assert_body_contains "\"email\":\"${PEER_EMAIL}\""
+assert_body_contains "\"username\":\"${PEER_USERNAME}\""
+pass "Creation utilisateur pair OK"
+
+PEER_USER_ID="$(get_user_field "$PEER_EMAIL" id)"
+assert_not_empty "$PEER_USER_ID" "peer user id"
+
+section "test users"
+
+request_with_curl GET "${BACKEND_BASE_URL}/users/me/friends" "" "$COOKIE_JAR"
+assert_status 200
+assert_body_contains '"success":true'
+assert_body_contains '"friends":[]'
+pass "Vue amis vide au depart"
+
+request_with_curl GET "${BACKEND_BASE_URL}/users/me/friends/messages/${PEER_USER_ID}" "" "$COOKIE_JAR"
+assert_status 403
+assert_body_contains '"success":false'
+assert_body_contains '"code":"FORBIDDEN"'
+pass "Messagerie privee refusee avant amitie"
+
+request_with_curl POST "${BACKEND_BASE_URL}/users/me/friends" "$(printf '{"username":"%s"}' "$PEER_USERNAME")" "$COOKIE_JAR"
+assert_status 201
+assert_body_contains '"success":true'
+assert_body_contains '"friendshipStatus":"pending"'
+pass "Demande d'ami envoyee"
+
+FRIEND_REQUEST_ID="$(get_friend_request_id "$TEST_USER_ID" "$PEER_USER_ID")"
+assert_not_empty "$FRIEND_REQUEST_ID" "friend request id"
+
+request_with_curl GET "${BACKEND_BASE_URL}/users/me/friends" "" "$PEER_COOKIE_JAR"
+assert_status 200
+assert_body_contains "\"id\":${FRIEND_REQUEST_ID}"
+assert_body_contains "\"username\":\"${UPDATED_USERNAME}\""
+pass "Reception demande d'ami visible"
+
+request_with_curl PATCH "${BACKEND_BASE_URL}/users/me/friends/requests/${FRIEND_REQUEST_ID}" '{"action":"accepted"}' "$PEER_COOKIE_JAR"
+assert_status 200
+assert_body_contains '"success":true'
+assert_body_contains '"friendshipStatus":"accepted"'
+pass "Acceptation demande d'ami OK"
+
+request_with_curl GET "${BACKEND_BASE_URL}/users/me/friends" "" "$COOKIE_JAR"
+assert_status 200
+assert_body_contains "\"id\":${PEER_USER_ID}"
+assert_body_contains "\"username\":\"${PEER_USERNAME}\""
+pass "Ami visible dans le reseau du user principal"
+
+request_with_curl GET "${BACKEND_BASE_URL}/users/me/friends/conversations" "" "$COOKIE_JAR"
+assert_status 200
+assert_body_contains '"success":true'
+assert_body_contains "\"friendId\":${PEER_USER_ID}"
+assert_body_contains '"lastMessagePreview":null'
+assert_body_contains '"unreadCount":0'
+pass "Conversation sans message visible avant premier envoi"
+
+request_with_curl POST "${BACKEND_BASE_URL}/users/me/friends/messages/${PEER_USER_ID}" '{"content":"Salut smoke peer"}' "$COOKIE_JAR"
+assert_status 201
+assert_body_contains '"success":true'
+assert_body_contains '"content":"Salut smoke peer"'
+pass "Envoi message prive OK"
+
+request_with_curl GET "${BACKEND_BASE_URL}/users/me/friends/conversations" "" "$PEER_COOKIE_JAR"
+assert_status 200
+assert_body_contains "\"friendId\":${TEST_USER_ID}"
+assert_body_contains '"unreadCount":1'
+pass "Resume conversations indique un message non lu"
+
+request_with_curl GET "${BACKEND_BASE_URL}/users/me/friends/messages/${TEST_USER_ID}" "" "$PEER_COOKIE_JAR"
+assert_status 200
+assert_body_contains '"success":true'
+assert_body_contains '"content":"Salut smoke peer"'
+assert_body_contains "\"senderId\":${TEST_USER_ID}"
+pass "Lecture conversation privee OK"
+
+request_with_curl GET "${BACKEND_BASE_URL}/users/me/friends/conversations" "" "$PEER_COOKIE_JAR"
+assert_status 200
+assert_body_contains "\"friendId\":${TEST_USER_ID}"
+assert_body_contains '"unreadCount":0'
+pass "Lecture conversation remet le compteur a zero"
+
+request_with_curl DELETE "${BACKEND_BASE_URL}/users/me/friends/${PEER_USER_ID}" "" "$COOKIE_JAR"
+assert_status 200
+assert_body_contains '"success":true'
+assert_body_contains 'retir'
+pass "Suppression ami OK"
+
+request_with_curl GET "${BACKEND_BASE_URL}/users/me/friends/conversations" "" "$COOKIE_JAR"
+assert_status 200
+assert_body_contains '"data":[]'
+pass "Conversations vides apres suppression ami"
+
+section "test quizzes"
+
+request_with_curl GET "${BACKEND_BASE_URL}/quizzes"
+assert_status 200
+assert_body_contains '"success":true'
+pass "Liste quizzes accessible"
+
+request_with_curl GET "${BACKEND_BASE_URL}/quizzes/me" "" "$COOKIE_JAR"
+assert_status 200
+assert_body_contains '"success":true'
+pass "Liste de mes quizzes accessible"
+
+request_with_curl POST "${BACKEND_BASE_URL}/quizzes" "$QUIZ_CREATE_PAYLOAD" "$COOKIE_JAR"
+assert_status 201
+assert_body_contains '"success":true'
+assert_body_contains "\"title\":\"${QUIZ_TITLE}\""
+assert_body_contains '"questionDurationSec":10'
+pass "Creation quiz OK"
+
+QUIZ_ID="$(get_quiz_field_by_title "$QUIZ_TITLE" id)"
+assert_not_empty "$QUIZ_ID" "quiz id"
+
+request_with_curl GET "${BACKEND_BASE_URL}/quizzes/me" "" "$COOKIE_JAR"
+assert_status 200
+assert_body_contains "\"title\":\"${QUIZ_TITLE}\""
+pass "Le quiz cree apparait dans /quizzes/me"
+
+request_with_curl GET "${BACKEND_BASE_URL}/quizzes/${QUIZ_ID}"
+assert_status 200
+assert_body_contains "\"id\":${QUIZ_ID}"
+assert_body_contains "\"title\":\"${QUIZ_TITLE}\""
+pass "Recuperation quiz par id OK"
+
+request_with_curl PATCH "${BACKEND_BASE_URL}/quizzes/${QUIZ_ID}" "$QUIZ_UPDATE_PAYLOAD" "$COOKIE_JAR"
+assert_status 200
+assert_body_contains "\"title\":\"${UPDATED_QUIZ_TITLE}\""
+assert_body_contains '"questionDurationSec":30'
+pass "Mise a jour quiz OK"
+
+request_with_curl GET "${BACKEND_BASE_URL}/quizzes"
+assert_status 200
+assert_body_contains "\"title\":\"${UPDATED_QUIZ_TITLE}\""
+pass "Le quiz mis a jour apparait dans la liste globale"
+
+request_with_curl POST "${BACKEND_BASE_URL}/quizzes" "$DELETABLE_QUIZ_PAYLOAD" "$COOKIE_JAR"
+assert_status 201
+assert_body_contains "\"title\":\"${DELETABLE_QUIZ_TITLE}\""
+pass "Creation quiz supprimable OK"
+
+DELETABLE_QUIZ_ID="$(get_quiz_field_by_title "$DELETABLE_QUIZ_TITLE" id)"
+assert_not_empty "$DELETABLE_QUIZ_ID" "deletable quiz id"
+
+request_with_curl DELETE "${BACKEND_BASE_URL}/quizzes/${DELETABLE_QUIZ_ID}" "" "$COOKIE_JAR"
+assert_status 200
+assert_body_contains '"success":true'
+pass "Suppression quiz OK sur un quiz non utilise"
+
+request_with_curl GET "${BACKEND_BASE_URL}/quizzes/${DELETABLE_QUIZ_ID}"
+assert_status 404
+assert_body_contains '"success":false'
+assert_body_contains '"code":"NOT_FOUND"'
+pass "Le quiz supprime n'est plus recuperable"
+
+section "test scores"
+
+request_with_curl GET "${BACKEND_BASE_URL}/scores/leaderboard?limit=5"
+assert_status 200
+assert_body_contains '"success":true'
+pass "Leaderboard global accessible"
+
+request_with_curl GET "${BACKEND_BASE_URL}/scores/leaderboard/wins?limit=5"
+assert_status 200
+assert_body_contains '"success":true'
+pass "Leaderboard des wins accessible"
+
+request_with_curl GET "${BACKEND_BASE_URL}/scores/users/${TEST_USER_ID}/wins-rank"
+assert_status 200
+assert_body_contains '"success":true'
+assert_body_contains "\"userId\":${TEST_USER_ID}"
+assert_body_contains '"totalWins":0'
+pass "Rang wins utilisateur accessible"
+
+request_with_curl GET "${BACKEND_BASE_URL}/scores/users/${TEST_USER_ID}"
+assert_status 404
+assert_body_contains '"success":false'
+assert_body_contains '"code":"NOT_FOUND"'
+pass "Score global absent renvoie bien 404"
+
+request_with_curl GET "${BACKEND_BASE_URL}/scores/quizzes/${QUIZ_ID}/leaderboard?limit=5"
+assert_status 200
+assert_body_contains '"success":true'
+pass "Leaderboard par quiz accessible"
+
+section "test rooms"
+
+request_with_curl GET "${BACKEND_BASE_URL}/rooms" "" "$COOKIE_JAR"
+assert_status 200
+assert_body_contains '"success":true'
+pass "Liste rooms accessible"
+
+ROOM_CREATE_PAYLOAD=$(printf "$ROOM_CREATE_PAYLOAD_TEMPLATE" "$ROOM_NAME" "$QUIZ_ID")
+request_with_curl POST "${BACKEND_BASE_URL}/rooms" "$ROOM_CREATE_PAYLOAD" "$COOKIE_JAR"
+assert_status 201
+assert_body_contains '"success":true'
+assert_body_contains "\"name\":\"${ROOM_NAME}\""
+assert_body_contains "\"quizId\":${QUIZ_ID}"
+assert_body_contains '"status":"WAITING"'
+pass "Creation room OK"
+
+ROOM_ID="$(get_room_field_by_name "$ROOM_NAME" id)"
+assert_not_empty "$ROOM_ID" "room id"
+
+request_with_curl GET "${BACKEND_BASE_URL}/rooms" "" "$COOKIE_JAR"
+assert_status 200
+assert_body_contains "\"id\":\"${ROOM_ID}\""
+assert_body_contains "\"name\":\"${ROOM_NAME}\""
+pass "La room creee apparait dans la liste"
+
+request_with_curl DELETE "${BACKEND_BASE_URL}/quizzes/${QUIZ_ID}" "" "$COOKIE_JAR"
+assert_status_any 200 400
+if [ "$LAST_STATUS" = "200" ]; then
+	assert_body_contains '"success":true'
+else
+	assert_body_contains '"success":false'
+	assert_body_contains '"code":"BAD_REQUEST"'
+fi
+pass "Suppression du quiz reference par une room repond sans erreur serveur"
+
+section "test cleanup via api"
+
+request_with_curl POST "${BACKEND_BASE_URL}/auth/login" "$PEER_LOGIN_PAYLOAD" "$PEER_COOKIE_JAR"
+assert_status_any 200 201
+pass "Relogin pair OK"
+
+request_with_curl POST "${BACKEND_BASE_URL}/auth/logout" '{}' "$PEER_COOKIE_JAR"
+assert_status_any 200 201
+assert_body_contains '"loggedOut":true'
+pass "Logout pair OK"
 
 request_with_curl POST "${BACKEND_BASE_URL}/auth/logout" '{}' "$COOKIE_JAR"
 assert_status_any 200 201
@@ -545,5 +904,11 @@ assert_body_contains '"success":true'
 assert_body_contains '"data":null'
 assert_body_contains '"error":null'
 pass "Session invite anonyme apres logout"
+
+request_with_curl DELETE "${BACKEND_BASE_URL}/quizzes/${QUIZ_ID}" "" "$COOKIE_JAR"
+assert_status 401
+assert_body_contains '"success":false'
+assert_body_contains '"code":"UNAUTHORIZED"'
+pass "Le quiz reste protege par AuthGuard apres logout"
 
 pass "Smoke test termine avec succes"

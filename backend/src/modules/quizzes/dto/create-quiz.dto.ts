@@ -1,5 +1,13 @@
 // Ce fichier definit les DTOs utilises pour creer un quiz
 // et chacune de ses questions.
+import {
+  IsSafeText,
+  QUIZ_ANSWER_MAX_LENGTH,
+  QUIZ_QUESTION_MAX_LENGTH,
+  QUIZ_TITLE_MAX_LENGTH,
+  Trim,
+  TrimArrayStrings,
+} from "@/common/validation/input-safety";
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { Type } from "class-transformer";
 import {
@@ -24,9 +32,11 @@ export class CreateQuizQuestionDto {
     minLength: 1,
     maxLength: 500,
   })
+  @Trim()
   @IsString()
   @MinLength(1)
-  @MaxLength(500)
+  @MaxLength(QUIZ_QUESTION_MAX_LENGTH)
+  @IsSafeText()
   questionText: string;
 
   // Liste des propositions de reponse pour la question.
@@ -36,12 +46,13 @@ export class CreateQuizQuestionDto {
     minItems: 2,
     maxItems: 4,
   })
+  @TrimArrayStrings()
   @IsArray()
   @ArrayMinSize(2)
   @ArrayMaxSize(4)
   @IsString({ each: true })
   @MinLength(1, { each: true })
-  @MaxLength(200, { each: true })
+  @MaxLength(QUIZ_ANSWER_MAX_LENGTH, { each: true })
   answers: string[];
 
   // Position de la bonne reponse dans le tableau `answers`.
@@ -63,9 +74,11 @@ export class CreateQuizQuestionDto {
 export class CreateQuizDto {
   // Titre global du quiz visible dans les listes et les pages de quiz.
   @ApiProperty({ example: "Culture generale", minLength: 2, maxLength: 120 })
+  @Trim()
   @IsString()
   @MinLength(2)
-  @MaxLength(120)
+  @MaxLength(QUIZ_TITLE_MAX_LENGTH)
+  @IsSafeText()
   title: string;
 
   // Duree standard d'une question pour ce quiz, ou `null` pour un mode libre.

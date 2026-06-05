@@ -1,4 +1,4 @@
-import { Logger } from "@nestjs/common";
+import { Logger, UsePipes, ValidationPipe } from "@nestjs/common";
 import {
   OnGatewayConnection,
   OnGatewayDisconnect,
@@ -15,8 +15,22 @@ import { RoomsService } from "./rooms.service";
 import { JwtService } from "@nestjs/jwt";
 import { QuizGameService } from "./quiz-game.service";
 import { PrivateMessageRateLimitService } from "../users/private-message-rate-limit.service";
+import {
+  KickPlayerDto,
+  RoomIdDto,
+  RoomMessageDto,
+  SubmitAnswerDto,
+  UpdateRoomConfigDto,
+} from "./dto/room-events.dto";
 
 @WebSocketGateway({ cors: true, namespace: "/rooms" })
+@UsePipes(
+  new ValidationPipe({
+    whitelist: true,
+    forbidNonWhitelisted: true,
+    transform: true,
+  }),
+)
 export class RoomsGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
@@ -106,7 +120,7 @@ export class RoomsGateway
   @SubscribeMessage("join_room")
   async handleJoinRoom(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: { roomId: string }
+    @MessageBody() data: RoomIdDto,
   ) {
     try {
       const userId = client.data.user.id;
@@ -130,7 +144,7 @@ export class RoomsGateway
   @SubscribeMessage("leave_room")
   async handleLeaveRoom(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: { roomId: string }
+    @MessageBody() data: RoomIdDto,
   ) {
     try {
       const userId = client.data.user.id;
@@ -153,7 +167,7 @@ export class RoomsGateway
   @SubscribeMessage("close_room")
   async handleCloseRoom(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: { roomId: string }
+    @MessageBody() data: RoomIdDto,
   ) {
     try {
       const userId = client.data.user.id;
@@ -174,7 +188,7 @@ export class RoomsGateway
   @SubscribeMessage("toggle_ready")
   async handleToggleReady(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: { roomId: string }
+    @MessageBody() data: RoomIdDto,
   ) {
     try {
       const userId = client.data.user.id;
@@ -190,7 +204,7 @@ export class RoomsGateway
   @SubscribeMessage("start_game")
   async handleStartGame(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: { roomId: string }
+    @MessageBody() data: RoomIdDto,
   ) {
     try {
       const userId = client.data.user.id;
@@ -214,7 +228,7 @@ export class RoomsGateway
   @SubscribeMessage("submit_answer")
   async handleSubmitAnswer(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: { roomId: string; answer: string }
+    @MessageBody() data: SubmitAnswerDto,
   ) {
     try {
       const userId = client.data.user.id;
@@ -227,7 +241,7 @@ export class RoomsGateway
   @SubscribeMessage("update_config")
   async handleUpdateConfig(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: { roomId: string; config: { quizId?: number; maxPlayers?: number } }
+    @MessageBody() data: UpdateRoomConfigDto,
   ) {
     try {
       const userId = client.data.user.id;
@@ -242,27 +256,12 @@ export class RoomsGateway
   @SubscribeMessage("room_message")
   async handleRoomMessage(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: { roomId: string; content: string }
+    @MessageBody() data: RoomMessageDto,
   ) {
     try {
       const user = client.data.user;
-      const roomId = data?.roomId;
-      const content = (data?.content || "").trim();
-
-      if (!roomId) {
-        client.emit("error", { message: "Room invalide" });
-        return;
-      }
-
-      if (!content) {
-        client.emit("error", { message: "Le message ne peut pas etre vide" });
-        return;
-      }
-
-      if (content.length > 500) {
-        client.emit("error", { message: "Le message est trop long" });
-        return;
-      }
+      const roomId = data.roomId;
+      const content = data.content;
 
       await this.roomsService.ensurePlayerInRoom(roomId, user.id);
 
@@ -297,7 +296,7 @@ export class RoomsGateway
   @SubscribeMessage("kick_player")
   async handleKickPlayer(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: { roomId: string; targetUserId: number }
+    @MessageBody() data: KickPlayerDto,
   ) {
     try {
       const userId = client.data.user.id;

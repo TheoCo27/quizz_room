@@ -56,7 +56,7 @@ export default function HomePage() {
             <div className="max-w-3xl">
               <p className="cyber-eyebrow">NIGHT_CITY_NET</p>
               <h1 className="mt-3 cyber-title text-3xl text-text">
-                Terminaux réseau actifs
+                Accueil Quiz Room
               </h1>
               <p className="mt-4 text-sm leading-7 text-text-muted">
                 Terminaux opérationnels. Les modules de communication cryptée (Chooms)
@@ -65,15 +65,15 @@ export default function HomePage() {
               </p>
               <div className="mt-6 flex flex-wrap gap-3">
                 <Link to="/admin">
-                  <PrimaryButton>Encoder un éclat (Shard)</PrimaryButton>
+                  <PrimaryButton>Créer un quiz</PrimaryButton>
                 </Link>
                 <Link to={user ? "/profile" : "/login"}>
                   <SecondaryButton>
                     {isSessionLoading
                       ? "Chargement..."
                       : user
-                        ? "Dossier Mercenaire"
-                        : "Connexion Cyberdeck"}
+                        ? "Profil"
+                        : "Se connecter"}
                   </SecondaryButton>
                 </Link>
               </div>
@@ -97,7 +97,7 @@ export default function HomePage() {
           <CyberCard className="rounded-4xl p-6" accent="magenta">
             <p className="cyber-eyebrow">CONTRATS</p>
             <h2 className="mt-2 cyber-title text-lg text-text">
-              L'Afterlife (Lobby)
+              Liste des rooms
             </h2>
             <p className="mt-3 text-sm text-text-muted">
               Le protocole multijoueur revient bientôt. Enregistre des éclats de données
@@ -115,10 +115,10 @@ export default function HomePage() {
             </div>
             <div className="mt-6 flex flex-wrap gap-3">
               <Link to="/lobby">
-                <PrimaryButton>Lancer un Contrat</PrimaryButton>
+                <PrimaryButton>Voir les rooms</PrimaryButton>
               </Link>
               <Link to="/lobby">
-                <SecondaryButton>Rejoindre un Contrat</SecondaryButton>
+                <SecondaryButton>Créer une room</SecondaryButton>
               </Link>
             </div>
           </CyberCard>
@@ -126,7 +126,7 @@ export default function HomePage() {
           <CyberCard className="rounded-4xl p-6" accent="lime">
             <p className="cyber-eyebrow">RÉSEAU</p>
             <h2 className="mt-2 cyber-title text-lg text-text">
-              Réseau de Chooms (Amis)
+              Amis
             </h2>
             <p className="mt-3 text-sm text-text-muted">
               Ajoute des mercenaires à ta liste de contacts, surveille leur statut réseau
@@ -138,10 +138,10 @@ export default function HomePage() {
             </div>
             <div className="mt-6 flex flex-wrap gap-3">
               <Link to="/friends">
-                <PrimaryButton>Réseau de Chooms</PrimaryButton>
+                <PrimaryButton>Voir mes amis</PrimaryButton>
               </Link>
               <Link to="/profile">
-                <SecondaryButton>Dossier Mercenaire</SecondaryButton>
+                <SecondaryButton>Profil</SecondaryButton>
               </Link>
             </div>
           </CyberCard>
@@ -149,7 +149,7 @@ export default function HomePage() {
           <CyberCard className="rounded-4xl p-6" accent="magenta">
             <p className="cyber-eyebrow">SHARDS</p>
             <h2 className="mt-2 cyber-title text-lg text-text">
-              Éditeur d'Éclats (Quiz)
+              Mes quiz
             </h2>
             <p className="mt-3 text-sm text-text-muted">
               Configure des questionnaires, paramètres de hack et points d'XP.
@@ -161,7 +161,7 @@ export default function HomePage() {
             </div>
             <div className="mt-6 flex flex-wrap gap-3">
               <Link to="/admin">
-                <PrimaryButton>Accéder aux Éclats</PrimaryButton>
+                <PrimaryButton>Gérer les quiz</PrimaryButton>
               </Link>
               <SecondaryButton disabled>Importer un set</SecondaryButton>
             </div>
@@ -170,7 +170,7 @@ export default function HomePage() {
           <CyberCard className="rounded-4xl p-6" accent="cyan">
             <p className="cyber-eyebrow">LÉGENDES</p>
             <h2 className="mt-2 cyber-title text-lg text-text">
-              Street Cred (Classement)
+              Classement
             </h2>
             <p className="mt-3 text-sm text-text-muted">
               Consulte le tableau de chasse des mercenaires les plus respectés
@@ -183,7 +183,7 @@ export default function HomePage() {
             </div>
             <div className="mt-6 flex flex-wrap gap-3">
               <Link to="/leaderboard">
-                <PrimaryButton>Légendes de Night City</PrimaryButton>
+                <PrimaryButton>Voir le classement</PrimaryButton>
               </Link>
             </div>
           </CyberCard>
