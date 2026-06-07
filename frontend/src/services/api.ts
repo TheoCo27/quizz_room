@@ -176,6 +176,7 @@ async function performApiRequest<T>(
 
   if (response.status === 401 && !path.startsWith("/auth/")) {
     window.dispatchEvent(new Event("auth-changed"));
+    localStorage.setItem("auth-changed", Date.now().toString());
     if (window.location.pathname !== "/login") {
       window.location.href = "/login";
     }

@@ -34,6 +34,7 @@ export type GuestLoginPayload = {
 
 function emitAuthChanged() {
   window.dispatchEvent(new Event("auth-changed"));
+  localStorage.setItem("auth-changed", Date.now().toString());
 }
 
 export async function login(payload: LoginPayload): Promise<SafeUser> {
