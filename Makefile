@@ -46,6 +46,10 @@ help:
 	@echo "  make shell-back          -> Open shell in backend container"
 	@echo "  make shell-front         -> Open shell in frontend container"
 	@echo "  make shell-db            -> Open a psql session in the db container"
+	@echo "  make monitoring          -> Start Prometheus, Grafana and Node Exporter"
+	@echo "  make logs-prometheus     -> Follow Prometheus logs"
+	@echo "  make logs-grafana        -> Follow Grafana logs"
+	@echo "  make logs-node-exporter  -> Follow Node Exporter logs"
 	@echo "Usage: Git"
 	@echo "  make branch              -> Show current git branch"
 	@echo "  make branch-create name=issue_1/feature/ma-branche"
@@ -143,6 +147,20 @@ logs-db: compose-check
 
 logs-studio: compose-check
 	$(COMPOSE) logs -f prisma-studio
+
+logs-prometheus: compose-check
+	$(COMPOSE) logs -f prometheus
+
+logs-grafana: compose-check
+	$(COMPOSE) logs -f grafana
+
+logs-node-exporter: compose-check
+	$(COMPOSE) logs -f node-exporter
+
+monitoring: env-check compose-check
+	$(COMPOSE) up --build -d prometheus grafana node-exporter
+	@echo "Prometheus : http://localhost:$${PROMETHEUS_PORT:-9090}"
+	@echo "Grafana    : http://localhost:$${GRAFANA_PORT:-3001}"
 
 studio:
 	bash scripts/open-url.sh "http://127.0.0.1:$${PRISMA_STUDIO_PORT:-5555}"
@@ -433,5 +451,6 @@ push-file-dev:
 	all \
 	compose-check \
 	up down clean fclean prune-build-cache fclean_all re restart logs logs-back logs-front logs-db page ps test-stack smoke-test \
+	monitoring logs-prometheus logs-grafana logs-node-exporter \
 	shell-back shell-front shell-db \
 	push push-dev branch branch-create branch-create-push duplicate_branch status pull-dev pull-branch merge-dev rebase-dev push-file-dev

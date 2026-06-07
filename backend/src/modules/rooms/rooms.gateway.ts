@@ -15,6 +15,7 @@ import { RoomsService } from "./rooms.service";
 import { JwtService } from "@nestjs/jwt";
 import { QuizGameService } from "./quiz-game.service";
 import { PrivateMessageRateLimitService } from "../users/private-message-rate-limit.service";
+import { MetricsService } from "../metrics/metrics.service";
 
 @WebSocketGateway({ cors: true, namespace: "/rooms" })
 export class RoomsGateway
@@ -31,6 +32,7 @@ export class RoomsGateway
     private readonly jwtService: JwtService,
     private readonly quizGameService: QuizGameService,
     private readonly rateLimitService: PrivateMessageRateLimitService,
+    private readonly metricsService: MetricsService,
   ) {}
 
   afterInit(server: Server) {
@@ -62,6 +64,10 @@ export class RoomsGateway
       const user = await this.authService.getSessionUser(payload.sub);
 
       client.data.user = user;
+
+      client.data.metricsConnected = true;
+      this.metricsService.incrementWebsocketConnections();
+
       this.logger.log("Client connected: " + client.id);
     } catch (error: any) {
       this.logger.error("Connection error for client " + client.id + ": " + error.message);
@@ -70,6 +76,10 @@ export class RoomsGateway
   }
 
   async handleDisconnect(client: Socket) {
+    if (client.data.metricsConnected) {
+      this.metricsService.decrementWebsocketConnections();
+    }
+
     this.logger.log("Client disconnected: " + client.id);
     
     if (client.data.user?.id) {

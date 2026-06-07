@@ -3,6 +3,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { Server } from 'socket.io';
 import { RoomStatus } from '../../../generated/prisma/client';
 import { RoomsService } from './rooms.service';
+import { MetricsService } from '../metrics/metrics.service';
 
 interface GameState {
   roomId: string;
@@ -25,6 +26,7 @@ export class QuizGameService {
   constructor(
     private prisma: PrismaService,
     private roomsService: RoomsService,
+    private metricsService: MetricsService,
   ) {}
 
   async startGameLoop(roomId: string, server: Server) {
@@ -89,6 +91,9 @@ export class QuizGameService {
 
     // Only one answer per question per user allowed? Or last answer counts? Let's say last answer counts.
     game.answers.set(userId, answer);
+
+    // Only accepted answers (not too late etc)
+    this.metricsService.incrementQuizAnswersSubmitted();
 
     if (game.questionDurationSec === null) {
       if (game.isEvaluating || !this.server) return;
@@ -161,6 +166,9 @@ export class QuizGameService {
 
     for (const [userId, answer] of game.answers.entries()) {
       if (answer === correctAnswer) {
+
+        this.metricsService.incrementCorrectAnswers();
+        
         const currentScore = game.scores.get(userId) || 0;
         game.scores.set(userId, currentScore + points);
         results.push({ userId, correct: true, points });
@@ -174,6 +182,9 @@ export class QuizGameService {
           },
         });
       } else {
+
+        this.metricsService.incrementIncorrectAnswers();
+
         results.push({ userId, correct: false, points: 0 });
       }
     }

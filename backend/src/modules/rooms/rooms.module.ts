@@ -6,9 +6,10 @@ import { AuthModule } from '../auth/auth.module';
 import { RoomsController } from './rooms.controller';
 import { QuizGameService } from './quiz-game.service';
 import { UsersModule } from '../users/users.module';
+import { MetricsModule } from '../metrics/metrics.module';
 
 @Module({
-  imports: [PrismaModule, AuthModule, UsersModule],
+  imports: [PrismaModule, AuthModule, UsersModule, MetricsModule],
   controllers: [RoomsController],
   providers: [RoomsService, RoomsGateway, QuizGameService],
   exports: [RoomsService],

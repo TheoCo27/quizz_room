@@ -2,6 +2,7 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { GameType, RoomStatus } from '../../../generated/prisma/client';
+import { MetricsService } from '../metrics/metrics.service';
 
 const EMPTY_ROOM_CLEANUP_DELAY_MS = 15000;
 
@@ -9,10 +10,13 @@ const EMPTY_ROOM_CLEANUP_DELAY_MS = 15000;
 export class RoomsService {
   private readonly cleanupTimers = new Map<string, NodeJS.Timeout>();
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+     private readonly prisma: PrismaService,
+     private readonly metricsService: MetricsService,
+  ) {}
 
   async createRoom(hostId: number, gameType: GameType, maxPlayers: number = 5, name?: string, quizId?: number) {
-    return this.prisma.client.room.create({
+    const room = await this.prisma.client.room.create({
       data: {
         name,
         hostId,
@@ -31,6 +35,11 @@ export class RoomsService {
         players: { include: { user: { select: { id: true, username: true, avatar_url: true } } } },
       },
     });
+
+    this.metricsService.incrementRoomsCreated();
+    await this.updateActiveRoomsMetric();
+
+    return room;
   }
 
   async getWaitingRooms() {
@@ -143,6 +152,8 @@ export class RoomsService {
         await this.prisma.client.room.delete({
           where: { id: roomId },
         });
+
+        await this.updateActiveRoomsMetric();
       } catch (e) {
         // Ignorer si la room a déjà été supprimée
       }
@@ -171,6 +182,8 @@ export class RoomsService {
     await this.prisma.client.room.delete({
       where: { id: roomId },
     });
+
+    await this.updateActiveRoomsMetric();
 
     return room;
   }
@@ -216,6 +229,9 @@ export class RoomsService {
       where: { id: roomId },
       data: { status: RoomStatus.PLAYING },
     });
+
+    this.metricsService.incrementQuizGamesStarted();
+    this.metricsService.incrementActiveGames();
 
     return this.getRoomById(roomId);
   }
@@ -316,6 +332,11 @@ export class RoomsService {
       data: { status: RoomStatus.FINISHED },
     });
 
+    this.metricsService.incrementQuizGamesFinished();
+    this.metricsService.decrementActiveGames();
+
+    await this.updateActiveRoomsMetric();
+
     return this.getRoomById(roomId);
   }
 
@@ -391,8 +412,22 @@ export class RoomsService {
       await this.prisma.client.room.delete({
         where: { id: roomId },
       });
+
+      await this.updateActiveRoomsMetric();
     } catch {
       // Ignore cleanup errors or race conditions.
     }
+  }
+
+  private async updateActiveRoomsMetric(): Promise<void> {
+  const activeRooms = await this.prisma.client.room.count({
+    where: {
+      status: {
+        in: [RoomStatus.WAITING, RoomStatus.PLAYING],
+      },
+    },
+  });
+
+  this.metricsService.setActiveRooms(activeRooms);
   }
 }
