@@ -35,10 +35,10 @@ Browser
 |  WebSocket Gateway          |
 |  /metrics    ------------------------------+
 +-----------------------------+				 |
-   |										 |
+   |										     |
    | Prisma ORM								 |
    | SQL :5432								 |  +---------------+
-   v								         |  | Node Exporter |
+   v								             |  | Node Exporter |
 +-----------------------------+              |  |   :9100       |
 |        PostgreSQL DB        |				 |  +---------------+
 |        quiz_db              |			     |        |
