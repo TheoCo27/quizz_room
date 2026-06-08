@@ -34,21 +34,21 @@ Browser
 |  Quizzes / Rooms / Scores   |
 |  WebSocket Gateway          |
 |  /metrics    ------------------------------+
-+-----------------------------+				 |
-   |										     |
-   | Prisma ORM								 |
-   | SQL :5432								 |  +---------------+
-   v								             |  | Node Exporter |
++-----------------------------+              |
+   |                                         |
+   | Prisma ORM                              |
+   | SQL :5432                               |  +---------------+
+   v                                         |  | Node Exporter |
 +-----------------------------+              |  |   :9100       |
-|        PostgreSQL DB        |				 |  +---------------+
-|        quiz_db              |			     |        |
-|        port 5432            |			     |        |
-|        Persistent Volume    |		         |        |
-|        postgres_volume      |		   		 | Scrape |
-+-----------------------------+			   	 |  HTTP  |
-                          				  	 |        |
-                          			 	     |        |
-                          				     |        |
+|        PostgreSQL DB        |              |  +---------------+
+|        quiz_db              |              |        |
+|        port 5432            |              |        |
+|        Persistent Volume    |              |        |
+|        postgres_volume      |              | Scrape |
++-----------------------------+              |  HTTP  |
+                          		               |        |
+                          		               |        |
+                          		               |        |
                                              |        |
                                              V        V
                                       +---------------------+
