@@ -46,9 +46,9 @@ Browser
 |        Persistent Volume    |              |        |
 |        postgres_volume      |              | Scrape |
 +-----------------------------+              |  HTTP  |
-                          		               |        |
-                          		               |        |
-                          		               |        |
+                                             |        |
+                                             |        |
+                                             |        |
                                              |        |
                                              V        V
                                       +---------------------+
