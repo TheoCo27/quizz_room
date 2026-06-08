@@ -29,6 +29,15 @@ export class QuizGameService {
     private metricsService: MetricsService,
   ) {}
 
+  private shuffleArray<T>(array: T[]): T[] {
+    const arr = [...array];
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
   async startGameLoop(roomId: string, server: Server) {
     if (this.activeGames.has(roomId)) return;
 
@@ -60,9 +69,21 @@ export class QuizGameService {
           ? room.quiz.questionDurationSec
           : 10;
 
+    const shuffledQuestions = this.shuffleArray(room.quiz.questions).map((question, index) => {
+      let answers = question.answers;
+      if (Array.isArray(answers)) {
+        answers = this.shuffleArray(answers);
+      }
+      return {
+        ...question,
+        answers,
+        position: index + 1,
+      };
+    });
+
     const gameState: GameState = {
       roomId,
-      questions: room.quiz.questions,
+      questions: shuffledQuestions,
       currentQuestionIndex: 0,
       scores: new Map<number, number>(),
       answers: new Map<number, string>(),

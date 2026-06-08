@@ -230,6 +230,145 @@ export const DEFAULT_QUIZZES: DefaultQuiz[] = [
       },
     ],
   },
+  {
+    id: 1005,
+    title: "Valorant (Hardcore)",
+    questionDurationSec: 10,
+    questions: [
+      {
+        questionText: "Combien de points de vie (HP) possède l'agent KAY/O lorsqu'il est à terre (downed) sous son ultime CMD/annulation (NULL/cmd) ?",
+        answers: ["500 HP", "600 HP", "800 HP", "1000 HP"],
+        correctAnswer: "800 HP",
+        points: 100,
+      },
+      {
+        questionText: "Quel est le rayon de diffusion maximum exact (en mètres) de l'ultime de Viper (Nid de vipères) ?",
+        answers: ["15,5 mètres", "18,0 mètres", "20,5 mètres", "22,5 mètres"],
+        correctAnswer: "22,5 mètres",
+        points: 100,
+      },
+      {
+        questionText: "Quel est le nom complet exact de l'agent Neon dans le lore du jeu ?",
+        answers: [
+          "Tala Nicole Dimaapi Valdez",
+          "Maria Hyun Valdez",
+          "Tala Nicole Valdez Dimaapi",
+          "Tala Nicole Valeria"
+        ],
+        correctAnswer: "Tala Nicole Dimaapi Valdez",
+        points: 100,
+      },
+      {
+        questionText: "Quelle équipe a remporté la finale du tout premier VALORANT Champions en 2021 ?",
+        answers: ["Sentinels", "Acend", "Gambit Esports", "Team Heretics"],
+        correctAnswer: "Acend",
+        points: 100,
+      },
+      {
+        questionText: "À quelle vitesse maximale (en mètres par seconde) un joueur se déplace-t-il en courant avec son couteau équipé ?",
+        answers: ["5,4 m/s", "6,0 m/s", "6,75 m/s", "7,2 m/s"],
+        correctAnswer: "6,75 m/s",
+        points: 100,
+      },
+      {
+        questionText: "Combien de charges Jett possédait-elle au maximum pour sa compétence 'Nuage de fumée' (Cloudburst) lors de la bêta fermée ?",
+        answers: ["1", "2", "3", "4"],
+        correctAnswer: "3",
+        points: 100,
+      },
+      {
+        questionText: "Quelle est la durée exacte (en secondes) de la Cage Cybernétique de Cypher une fois qu'elle est activée ?",
+        answers: ["6 secondes", "7 secondes", "8 secondes", "9 secondes"],
+        correctAnswer: "7 secondes",
+        points: 100,
+      },
+      {
+        questionText: "Quelle équipe a remporté le tournoi international 'First Strike: Europe' en décembre 2020 ?",
+        answers: ["G2 Esports", "Team Heretics", "Team Liquid", "FunPlus Phoenix"],
+        correctAnswer: "Team Heretics",
+        points: 100,
+      },
+      {
+        questionText: "Quel est le coût en crédits de la compétence 'Orbe barrière' (mur) de l'agent Sage ?",
+        answers: ["200 crédits", "300 crédits", "400 crédits", "500 crédits"],
+        correctAnswer: "400 crédits",
+        points: 100,
+      },
+      {
+        questionText: "Quel est le nom de la toute première carte de Valorant à comporter trois sites de pose de Spike (A, B et C) ?",
+        answers: ["Haven", "Lotus", "Bind", "Split"],
+        correctAnswer: "Haven",
+        points: 100,
+      },
+    ],
+  },
+  {
+    id: 1006,
+    title: "École 42 (Hardcore)",
+    questionDurationSec: 10,
+    questions: [
+      {
+        questionText: "Quel est le nom de l'équipe de l'administration système et technique (le staff technique) de l'école 42 ?",
+        answers: ["Le Bocal", "La Piscine", "La Moulinette", "Le Clavier"],
+        correctAnswer: "Le Bocal",
+        points: 100,
+      },
+      {
+        questionText: "Combien de lignes comporte exactement le header standard de 42 inséré en haut des fichiers source C ?",
+        answers: ["9 lignes", "10 lignes", "11 lignes", "12 lignes"],
+        correctAnswer: "11 lignes",
+        points: 100,
+      },
+      {
+        questionText: "Selon les règles de la Norme, quel est le nombre maximum de variables locales que l'on peut déclarer dans une seule fonction C ?",
+        answers: ["3", "4", "5", "6"],
+        correctAnswer: "5",
+        points: 100,
+      },
+      {
+        questionText: "Quelle est la commande pour insérer automatiquement le header de 42 dans un fichier ouvert avec l'éditeur de texte Vim ?",
+        answers: [":Stdheader", ":42header", ":Header", ":InsertHeader"],
+        correctAnswer: ":Stdheader",
+        points: 100,
+      },
+      {
+        questionText: "Dans le système de nommage des hôtes (hostnames) de 42, à quoi correspond la lettre 'e' dans un identifiant de poste tel que 'e1r2p3' ?",
+        answers: ["Emplacement", "Étage", "Écran", "Équipement"],
+        correctAnswer: "Étage",
+        points: 100,
+      },
+      {
+        questionText: "Selon la Norme de 42, quel est le nombre maximum d'arguments (paramètres nommés) qu'une fonction C peut accepter ?",
+        answers: ["3", "4", "5", "6"],
+        correctAnswer: "4",
+        points: 100,
+      },
+      {
+        questionText: "Selon la Norme de 42, quelle est la limite de lignes maximale autorisée pour le corps d'une fonction C (hors accolades) ?",
+        answers: ["20 lignes", "25 lignes", "30 lignes", "35 lignes"],
+        correctAnswer: "25 lignes",
+        points: 100,
+      },
+      {
+        questionText: "Quel est le nom officiel du système d'évaluation automatique en arrière-plan qui attribue la note finale à vos projets du Common Core à l'école 42 ?",
+        answers: ["Deepthought", "Norminette", "Bocal-Bot", "Moulinette-V2"],
+        correctAnswer: "Deepthought",
+        points: 100,
+      },
+      {
+        questionText: "Quel est le niveau (level) maximum théorique qu'un étudiant peut atteindre dans le cursus de l'école 42 ?",
+        answers: ["Niveau 15", "Niveau 18", "Niveau 21", "Niveau 42"],
+        correctAnswer: "Niveau 21",
+        points: 100,
+      },
+      {
+        questionText: "Quel projet de la Piscine C de 42 demande de trouver le plus grand carré possible dans un plateau rempli d'obstacles ?",
+        answers: ["BSQ", "Sastantua", "Rush 01", "Rush 02"],
+        correctAnswer: "BSQ",
+        points: 100,
+      },
+    ],
+  },
 ];
 
 export async function upsertDefaultQuizzes(prisma: PrismaClient): Promise<void> {
