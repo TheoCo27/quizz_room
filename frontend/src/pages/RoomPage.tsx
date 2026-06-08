@@ -40,6 +40,19 @@ export default function RoomPage() {
     tokens: 10,
     lastRefill: Date.now(),
   });
+  const [roomNameInput, setRoomNameInput] = useState("");
+
+  useEffect(() => {
+    if (room) {
+      setRoomNameInput(room.name || "");
+    }
+  }, [room?.name]);
+
+  const handleRoomNameSubmit = () => {
+    if (!roomId || !roomNameInput.trim()) return;
+    const socket = getSocket();
+    socket.emit("update_config", { roomId, config: { name: roomNameInput.trim() } });
+  };
 
   useEffect(() => {
     getQuizzes().then(setQuizzes).catch(console.error);
@@ -276,9 +289,31 @@ export default function RoomPage() {
           )}
 
           <div className="flex justify-between items-center mb-8">
-            <h1 className="cyber-title text-3xl text-text">
-              {room?.name ? room.name : `Terminal de ${room?.host?.username || "..."}`}
-            </h1>
+            {isHost ? (
+              <div className="flex items-center gap-2 max-w-sm flex-1">
+                <Input
+                  type="text"
+                  value={roomNameInput}
+                  onChange={(e) => setRoomNameInput(e.target.value)}
+                  onBlur={handleRoomNameSubmit}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      handleRoomNameSubmit();
+                    }
+                  }}
+                  placeholder={room?.name ? room.name : `Terminal de ${room?.host?.username || "..."}`}
+                  className="cyber-input-cyan text-xl font-bold py-1 w-full h-10"
+                  maxLength={30}
+                />
+                <CyberButton onClick={handleRoomNameSubmit} size="sm" className="px-3 py-1 font-bold h-10">
+                  OK
+                </CyberButton>
+              </div>
+            ) : (
+              <h1 className="cyber-title text-3xl text-text">
+                {room?.name ? room.name : `Terminal de ${room?.host?.username || "..."}`}
+              </h1>
+            )}
             <div className="flex items-center gap-3">
               {isHost && (
                 <CyberButton

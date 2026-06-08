@@ -48,6 +48,14 @@ export class UpdateRoomConfigPayloadDto {
   @Min(2)
   @Max(10)
   maxPlayers?: number;
+
+  @IsOptional()
+  @Trim()
+  @IsString()
+  @MinLength(1)
+  @MaxLength(30)
+  @IsSafeText()
+  name?: string;
 }
 
 export class UpdateRoomConfigDto extends RoomIdDto {

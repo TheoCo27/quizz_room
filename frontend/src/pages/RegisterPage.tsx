@@ -74,30 +74,8 @@ export default function RegisterPage() {
   };
 
   return (
-    <main className="flex flex-1 px-6 py-10">
-      <div className="mx-auto grid w-full max-w-6xl gap-6 lg:grid-cols-[1.05fr_0.95fr]">
-        <CyberPanel className="rounded-4xl p-8">
-          <p className="cyber-eyebrow">ft_transcendence // sub-net</p>
-          <h1 className="mt-3 cyber-title text-3xl text-text">
-            Générer profil neuronal
-          </h1>
-          <p className="mt-4 text-sm leading-7 text-text-muted">
-            Enregistre ton empreinte pour pirater en direct, synchroniser tes Chooms et surveiller tes diagnostics neuro.
-          </p>
-          <div className="mt-6 flex flex-wrap gap-2">
-            <CyberBadge variant="info">Profil public</CyberBadge>
-            <CyberBadge variant="success">Canal Chooms</CyberBadge>
-            <CyberBadge variant="warning">Diagnostics avancees</CyberBadge>
-          </div>
-          <div className="mt-6 grid gap-4 sm:grid-cols-2">
-            <CyberStat label="Niveau" value="01" hint="Evolution" />
-            <CyberStat label="Region" value="EU-West" hint="Auto" />
-            <CyberStat label="Securite" value="Base" hint="2FA dispo" />
-            <CyberStat label="Matchs" value="0" hint="Demarrage" />
-          </div>
-          <CyberProgress className="mt-6" label="Initialisation" value={12} />
-        </CyberPanel>
-
+    <main className="flex flex-1 px-6 py-10 items-center justify-center">
+      <div className="mx-auto flex w-full max-w-md flex-col gap-6">
         <CyberCard className="rounded-4xl p-8" accent="magenta">
           <p className="cyber-eyebrow">Inscription Réseau</p>
           <h2 className="mt-3 cyber-title text-2xl text-text">

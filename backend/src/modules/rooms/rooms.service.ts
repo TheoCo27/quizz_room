@@ -236,7 +236,7 @@ export class RoomsService {
     return this.getRoomById(roomId);
   }
 
-  async updateRoomConfig(roomId: string, userId: number, config: { quizId?: number; maxPlayers?: number }) {
+  async updateRoomConfig(roomId: string, userId: number, config: { quizId?: number; maxPlayers?: number; name?: string }) {
     const room = await this.getRoomById(roomId);
 
     if (room.hostId !== userId) {
@@ -261,6 +261,7 @@ export class RoomsService {
       data: {
         ...(config.quizId !== undefined && { quizId: config.quizId }),
         ...(config.maxPlayers !== undefined && { maxPlayers: config.maxPlayers }),
+        ...(config.name !== undefined && { name: config.name }),
       },
     });
 
