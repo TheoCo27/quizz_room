@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuthSession } from "../hooks/useAuthSession";
 import { logout } from "../services/auth";
 import PrimaryButton from "./ui/PrimaryButton";
+import logoUrl from "../assets/cyber_giraffe_logo.png";
 
 export default function Navbar() {
   const navigate = useNavigate();
@@ -52,9 +53,16 @@ export default function Navbar() {
     <nav className="sticky top-0 z-20 border-b border-white/10 bg-surface text-text backdrop-blur">
       <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-6 py-4 md:px-10">
         <Link className="flex items-center gap-3" to="/">
-          <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-bg text-sm font-extrabold tracking-[0.2em] text-text-muted">
-            QZ
-          </span>
+          <div className="flex items-center gap-3 group">
+            <img
+              src={logoUrl}
+              alt="Cyber Giraffe Logo"
+              className="h-10 w-10 object-contain rounded-xl border border-primary/30 bg-bg/80 p-0.5 shadow-[0_0_15px_rgba(252,238,10,0.15)] group-hover:border-primary group-hover:shadow-[0_0_20px_rgba(252,238,10,0.35)] transition-all duration-300"
+            />
+            <span className="cyber-title text-xl font-extrabold tracking-[0.15em] text-primary group-hover:text-secondary transition-colors duration-300">
+              QUIZZ
+            </span>
+          </div>
         </Link>
         <div className="hidden items-center gap-6 text-sm font-medium md:flex">
           <Link to="/admin">Créer un quiz</Link>

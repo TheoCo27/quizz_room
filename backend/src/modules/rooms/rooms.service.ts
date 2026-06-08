@@ -414,6 +414,12 @@ export class RoomsService {
         });
 
         const room = await this.getRoomById(rp.roomId);
+        const hasConnectedPlayer = room.players.some((player) => player.isConnected);
+
+        if (!hasConnectedPlayer) {
+          this.scheduleEmptyRoomCleanup(rp.roomId);
+        }
+
         affectedRooms.push({ roomId: rp.roomId, room, action: 'disconnect' });
       }
     }
