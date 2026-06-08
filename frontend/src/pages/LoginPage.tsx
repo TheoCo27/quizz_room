@@ -121,30 +121,8 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="flex flex-1 px-6 py-10">
-      <div className="mx-auto grid w-full max-w-6xl gap-6 lg:grid-cols-[1.05fr_0.95fr]">
-        <CyberPanel className="rounded-4xl p-8">
-          <p className="cyber-eyebrow">ft_transcendence // sub-net</p>
-          <h1 className="mt-3 cyber-title text-3xl text-text">
-            Portail de liaison réseau
-          </h1>
-          <p className="mt-4 text-sm leading-7 text-text-muted">
-            Connecte ton cyberdeck pour accéder aux synchronisations réseau, aux Holocalls cryptés et aux outils d'encodage d'éclats.
-          </p>
-          <div className="mt-6 flex flex-wrap gap-2">
-            <CyberBadge variant="info">Temps reel</CyberBadge>
-            <CyberBadge variant="success">Sessions securisees</CyberBadge>
-            <CyberBadge variant="warning">Chat actif</CyberBadge>
-          </div>
-          <div className="mt-6 grid gap-4 sm:grid-cols-2">
-            <CyberStat label="Latence cible" value="50ms" hint="Optimisee" />
-            <CyberStat label="Stabilite" value="99.8%" hint="Surveillance" />
-            <CyberStat label="Region" value="EU-West" hint="Auto" />
-            <CyberStat label="Signal" value="Vert" hint="Flux ok" />
-          </div>
-          <CyberProgress className="mt-6" label="Integrite du flux" value={88} />
-        </CyberPanel>
-
+    <main className="flex flex-1 px-6 py-10 items-center justify-center">
+      <div className="mx-auto flex w-full max-w-md flex-col gap-6">
         <CyberCard className="rounded-4xl p-8" accent="magenta">
           <p className="cyber-eyebrow">Accès Cyberdeck</p>
           <h2 className="mt-3 cyber-title text-2xl text-text">

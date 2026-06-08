@@ -172,9 +172,13 @@ export default function GamePage() {
                       Séquence {question.position} / {question.totalQuestions}
                     </span>
                     <span className={`text-2xl font-bold px-4 py-2 rounded-full border ${
-                      timeLeft !== null && timeLeft <= 5 ? 'text-red-400 border-red-500/50 bg-red-900/20 animate-pulse' : 'text-secondary border-secondary/30 bg-secondary/10'
+                      result 
+                        ? 'text-secondary border-secondary/30 bg-secondary/10' 
+                        : (timeLeft !== null && timeLeft <= 5 
+                            ? 'text-red-400 border-red-500/50 bg-red-900/20 animate-pulse' 
+                            : 'text-secondary border-secondary/30 bg-secondary/10')
                     }`}>
-                      {timeLeft === null ? "Infini" : `${timeLeft}s`}
+                      {timeLeft === null ? "Infini" : `${result ? 0 : timeLeft}s`}
                     </span>
                   </div>
 

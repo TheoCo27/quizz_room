@@ -114,7 +114,7 @@ clean: compose-check
 	$(COMPOSE_DEV) down --remove-orphans --rmi all
 
 fclean: compose-check
-	$(COMPOSE_DEV) down --remove-orphans -v --rmi all
+	$(COMPOSE_DEV) down --remove-orphans --rmi all
 
 prune-build-cache: compose-check
 	$(ENGINE) builder prune -af
