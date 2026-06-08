@@ -361,34 +361,31 @@ export class RoomsService {
       await this.leaveRoom(roomId, dp.userId);
     }
 
-    // Check if room still exists (it might have been deleted if all players left)
+    this.metricsService.incrementQuizGamesFinished();
+    this.metricsService.decrementActiveGames();
+
+    await this.updateActiveRoomsMetric();
+    
+  // Check if room still exists (it might have been deleted if all players left)
     const roomExists = await this.prisma.client.room.findUnique({
       where: { id: roomId },
       include: { players: true },
     });
 
-    this.metricsService.incrementQuizGamesFinished();
-    this.metricsService.decrementActiveGames();
-
-    await this.updateActiveRoomsMetric();
-
-    return this.getRoomById(roomId);
     if (!roomExists) {
       this.onRoomListChanged?.();
       return null;
     }
-    else
-    {
-      // Reset scores and ready status of remaining players
-      for (const player of roomExists?.players) {
-        await this.prisma.client.roomPlayer.update({
-          where: { id: player.id },
-          data: {
-            score: 0,
-            isReady: player.userId === roomExists?.hostId,
-          },
-        });
-      }
+
+    // Reset scores and ready status of remaining players
+    for (const player of roomExists.players) {
+      await this.prisma.client.roomPlayer.update({
+        where: { id: player.id },
+        data: {
+          score: 0,
+          isReady: player.userId === roomExists.hostId,
+        },
+      });
     }
     
     // Update room status back to WAITING so players can lobby again and kick works
