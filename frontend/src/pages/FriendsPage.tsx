@@ -74,9 +74,13 @@ export default function FriendsPage() {
   >(null);
   const [selectedFriendId, setSelectedFriendId] = useState<number | null>(null);
   const [messages, setMessages] = useState<PrivateMessage[]>([]);
-  const [conversationError, setConversationError] = useState<string | null>(
+  const [conversationLoadError, setConversationLoadError] = useState<string | null>(
     null,
   );
+  const [conversationSendError, setConversationSendError] = useState<string | null>(
+    null,
+  );
+  const conversationError = conversationLoadError || conversationSendError;
   const [isConversationLoading, setIsConversationLoading] = useState(false);
   const [messageInput, setMessageInput] = useState("");
   const [isSendingMessage, setIsSendingMessage] = useState(false);
@@ -121,7 +125,7 @@ export default function FriendsPage() {
   const refreshConversation = async (friendId: number) => {
     const conversation = await getPrivateConversation(friendId);
     setMessages(conversation);
-    setConversationError(null);
+    setConversationLoadError(null);
   };
 
   useEffect(() => {
@@ -207,7 +211,8 @@ export default function FriendsPage() {
   useEffect(() => {
     if (!user || user.isGuest || selectedFriendId === null) {
       setMessages([]);
-      setConversationError(null);
+      setConversationLoadError(null);
+      setConversationSendError(null);
       return;
     }
 
@@ -230,7 +235,7 @@ export default function FriendsPage() {
               ? currentMessages
               : conversation,
           );
-          setConversationError(null);
+          setConversationLoadError(null);
 
           if (syncFriendData) {
             void refreshFriendData().catch(() => {
@@ -240,7 +245,7 @@ export default function FriendsPage() {
         }
       } catch (error) {
         if (!cancelled) {
-          setConversationError(
+          setConversationLoadError(
             getUserFacingErrorMessage(
               error,
               "Impossible de charger cette conversation",
@@ -415,7 +420,10 @@ export default function FriendsPage() {
     });
 
     if (messageError) {
-      setConversationError(messageError);
+      setConversationSendError(messageError);
+      setTimeout(() => {
+        setConversationSendError((prev) => (prev === messageError ? null : prev));
+      }, 4000);
       return;
     }
 
@@ -426,9 +434,9 @@ export default function FriendsPage() {
     const rateLimitMessage = checkChatLimit(chatRateLimitRef.current);
 
     if (rateLimitMessage) {
-      setConversationError(rateLimitMessage);
+      setConversationSendError(rateLimitMessage);
       setTimeout(() => {
-        setConversationError((prev) => (prev === rateLimitMessage ? null : prev));
+        setConversationSendError((prev) => (prev === rateLimitMessage ? null : prev));
       }, 4000);
       return;
     }
@@ -439,15 +447,17 @@ export default function FriendsPage() {
     try {
       await sendPrivateMessage(selectedFriendId, normalizedMessage);
       setMessageInput("");
-      setConversationError(null);
+      setConversationSendError(null);
       await Promise.all([
         refreshConversation(selectedFriendId),
         refreshFriendData(),
       ]);
     } catch (error) {
-      setConversationError(
-        getUserFacingErrorMessage(error, "Impossible d'envoyer le message"),
-      );
+      const errMsg = getUserFacingErrorMessage(error, "Impossible d'envoyer le message");
+      setConversationSendError(errMsg);
+      setTimeout(() => {
+        setConversationSendError((prev) => (prev === errMsg ? null : prev));
+      }, 4000);
     } finally {
       isSendingMessageRef.current = false;
       setIsSendingMessage(false);
