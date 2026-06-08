@@ -1,5 +1,6 @@
 const fs = require("fs");
 const path = require("path");
+const webpack = require("webpack");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 
 const backendTarget = process.env.BACKEND_TARGET || "https://backend:4000";
@@ -25,6 +26,12 @@ const proxyPaths = [
 
 module.exports = {
   entry: "./src/main.tsx",
+  devtool: false,
+  ignoreWarnings: [
+    {
+      module: /node_modules/,
+    },
+  ],
   output: {
     path: path.resolve(__dirname, "dist"),
     filename: "assets/app.[contenthash].js",
@@ -55,6 +62,10 @@ module.exports = {
     ],
   },
   plugins: [
+    new webpack.SourceMapDevToolPlugin({
+      filename: "[file].map",
+      exclude: /node_modules/,
+    }),
     new HtmlWebpackPlugin({
       template: "./index.html",
     }),

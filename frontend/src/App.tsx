@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { Route, Routes } from "react-router-dom";
 import Footer from "./components/Footer";
 import Navbar from "./components/Navbar";
+import { useAuthSession } from "./hooks/useAuthSession";
+import { connectSocket, disconnectSocket } from "./services/socket";
 import {
   FriendsPage,
   GamePage,
@@ -21,6 +23,17 @@ import {
 
 export default function App() {
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const { user: currentUser, isLoading } = useAuthSession();
+
+  useEffect(() => {
+    if (!isLoading) {
+      if (currentUser) {
+        connectSocket();
+      } else {
+        disconnectSocket();
+      }
+    }
+  }, [currentUser, isLoading]);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {

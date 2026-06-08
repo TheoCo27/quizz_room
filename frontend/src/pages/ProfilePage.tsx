@@ -15,7 +15,7 @@ import Input from "../components/ui/input";
 import PrimaryButton from "../components/ui/PrimaryButton";
 import SecondaryButton from "../components/ui/SecondaryButton";
 import { useAuthSession } from "../hooks/useAuthSession";
-import { getUserFacingErrorMessage } from "../services/api";
+import { getUserFacingErrorMessage, ApiRequestError } from "../services/api";
 import {
   AUTH_USERNAME_MAX_LENGTH,
   AUTH_USERNAME_MIN_LENGTH,
@@ -306,16 +306,19 @@ export default function ProfilePage() {
         message: "Photo de profil mise a jour.",
       });
     } catch (error) {
-      const message = getUserFacingErrorMessage(
-        error,
-        "Impossible de mettre a jour la photo de profil.",
-      );
-      if (message) {
-        setAvatarNotice({
-          kind: "error",
-          message,
-        });
+      let message = "";
+      if (error instanceof ApiRequestError && error.status === 400) {
+        message = "Format de fichier invalide ou fichier trop volumineux";
+      } else {
+        message = getUserFacingErrorMessage(
+          error,
+          "Impossible de mettre a jour la photo de profil.",
+        ) ?? "Impossible de mettre a jour la photo de profil.";
       }
+      setAvatarNotice({
+        kind: "error",
+        message,
+      });
     } finally {
       setIsAvatarSubmitting(false);
       event.target.value = "";
@@ -380,16 +383,19 @@ export default function ProfilePage() {
         message: "Profil mis a jour.",
       });
     } catch (error) {
-      const message = getUserFacingErrorMessage(
-        error,
-        "Impossible de mettre a jour le profil.",
-      );
-      if (message) {
-        setProfileNotice({
-          kind: "error",
-          message,
-        });
+      let message = "";
+      if (error instanceof ApiRequestError && error.status === 409) {
+        message = "Ce nom d'utilisateur est déjà pris";
+      } else {
+        message = getUserFacingErrorMessage(
+          error,
+          "Impossible de mettre a jour le profil.",
+        ) ?? "Impossible de mettre a jour le profil.";
       }
+      setProfileNotice({
+        kind: "error",
+        message,
+      });
     } finally {
       setIsProfileSubmitting(false);
     }

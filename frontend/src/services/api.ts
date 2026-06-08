@@ -3,6 +3,18 @@ export type ApiError = {
   message: string;
 };
 
+export class ApiRequestError extends Error {
+  status: number;
+  code?: string;
+
+  constructor(message: string, status: number, code?: string) {
+    super(message);
+    this.name = "ApiRequestError";
+    this.status = status;
+    this.code = code;
+  }
+}
+
 type ApiResponse<T> = {
   success: boolean;
   data: T | null;
@@ -131,7 +143,11 @@ export async function apiRequest<T>(
   const { response, json } = await performApiRequest<T>(path, init);
 
   if (!response.ok) {
-    throw new Error(json?.error?.message ?? `Request failed (${response.status})`);
+    throw new ApiRequestError(
+      json?.error?.message ?? `Request failed (${response.status})`,
+      response.status,
+      json?.error?.code,
+    );
   }
 
   if (!json || !json.success || json.data === null) {
@@ -148,7 +164,11 @@ export async function apiRequestNullable<T>(
   const { response, json } = await performApiRequest<T>(path, init);
 
   if (!response.ok) {
-    throw new Error(json?.error?.message ?? `Request failed (${response.status})`);
+    throw new ApiRequestError(
+      json?.error?.message ?? `Request failed (${response.status})`,
+      response.status,
+      json?.error?.code,
+    );
   }
 
   if (!json || !json.success) {
@@ -173,6 +193,14 @@ async function performApiRequest<T>(
       ...(init?.headers ?? {}),
     },
   });
+
+  if (response.status === 401 && !path.startsWith("/auth/")) {
+    window.dispatchEvent(new Event("auth-changed"));
+    localStorage.setItem("auth-changed", Date.now().toString());
+    if (window.location.pathname !== "/login") {
+      window.location.href = "/login";
+    }
+  }
 
   let json: ApiResponse<T> | null = null;
   try {

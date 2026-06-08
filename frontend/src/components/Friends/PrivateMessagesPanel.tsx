@@ -75,7 +75,7 @@ export default function PrivateMessagesPanel({
         <>
           <div
             ref={chatListRef}
-            className="mt-5 flex-1 space-y-4 overflow-y-auto rounded-[1.75rem] border border-white/10 bg-white/5 p-4"
+            className="mt-5 flex-1 space-y-4 overflow-y-auto rounded-[1.75rem] border border-white/10 bg-black/40 p-4 flex flex-col"
           >
             {isConversationLoading ? (
               <div className="rounded-[1.25rem] border border-white/10 bg-white/8 px-4 py-4 text-sm text-text-muted">
@@ -97,31 +97,44 @@ export default function PrivateMessagesPanel({
               const senderAvatar = isOwnMessage ? currentUser.avatar_url : selectedFriend.avatar_url;
 
               return (
-                <div key={message.id} className="flex items-start gap-3">
+                <div
+                  key={message.id}
+                  className={`flex items-start gap-3 max-w-[85%] ${
+                    isOwnMessage ? "self-end flex-row-reverse" : "self-start"
+                  }`}
+                >
                   {senderAvatar ? (
                     <img
                       src={senderAvatar}
                       alt={senderUsername}
-                      className="w-8 h-8 rounded-full object-cover border border-secondary/20"
+                      className="w-8 h-8 rounded-full object-cover border border-secondary/20 shrink-0"
                       loading="lazy"
                       referrerPolicy="no-referrer"
                     />
                   ) : (
-                    <div className="w-8 h-8 rounded-full bg-secondary/20 flex items-center justify-center text-secondary font-bold text-xs">
+                    <div className="w-8 h-8 rounded-full bg-secondary/20 flex items-center justify-center text-secondary font-bold text-xs shrink-0">
                       {senderUsername.charAt(0).toUpperCase()}
                     </div>
                   )}
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 text-xs text-text-muted">
+                  <div className={`flex flex-col ${isOwnMessage ? "items-end" : "items-start"}`}>
+                    <div className="flex items-center gap-2 text-[10px] text-text-muted mb-1">
                       <span className="font-bold text-text">{senderUsername}</span>
                       <span>{formatTimestamp(message.createdAt)}</span>
                       {isOwnMessage && (
-                        <span className="text-[10px] opacity-70">
+                        <span className="opacity-70">
                           ({message.readAt ? "Décrypté" : "Transmis"})
                         </span>
                       )}
                     </div>
-                    <p className="text-sm text-text break-words mt-0.5">{message.content}</p>
+                    <div
+                      className={`text-sm break-words px-4 py-2.5 rounded-2xl border ${
+                        isOwnMessage
+                          ? "bg-secondary/12 border-secondary/35 text-text rounded-tr-none"
+                          : "bg-white/6 border-white/10 text-text rounded-tl-none"
+                      }`}
+                    >
+                      <p className="whitespace-pre-wrap">{message.content}</p>
+                    </div>
                   </div>
                 </div>
               );

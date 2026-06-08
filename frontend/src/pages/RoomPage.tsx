@@ -5,6 +5,8 @@ import { getSocket, connectSocket, disconnectSocket } from "../services/socket";
 import { useAuthSession } from "../hooks/useAuthSession";
 import { Room } from "../services/rooms";
 import { getQuizzes, Quiz } from "../services/quizzes";
+import CyberButton from "../components/cyber/CyberButton";
+import Input from "../components/ui/input";
 import {
   ROOM_MESSAGE_MAX_LENGTH,
   normalizeInput,
@@ -279,19 +281,23 @@ export default function RoomPage() {
             </h1>
             <div className="flex items-center gap-3">
               {isHost && (
-                <button
+                <CyberButton
                   onClick={handleDeleteRoom}
-                  className="px-4 py-2 border border-red-500/50 text-red-300 hover:text-red-200 hover:bg-red-900/30 rounded"
+                  variant="danger"
+                  className="px-4 py-2"
+                  glow={false}
                 >
                   Fermer la room
-                </button>
+                </CyberButton>
               )}
-              <button
+              <CyberButton
                 onClick={handleLeaveRoom}
-                className="px-4 py-2 border border-border/50 text-text-muted hover:text-text hover:bg-background rounded"
+                variant="ghost"
+                className="px-4 py-2"
+                glow={false}
               >
                 Quitter la room
-              </button>
+              </CyberButton>
             </div>
           </div>
 
@@ -307,7 +313,11 @@ export default function RoomPage() {
                 <h2 className="text-xl font-bold text-text mb-4">Joueurs ({room?.players?.length || 0}/{room?.maxPlayers || 0})</h2>
                 <div className="space-y-4 max-h-[30rem] overflow-y-auto pr-2">
                   {[...(room?.players || [])].sort((a, b) => b.score - a.score).map((player, index) => (
-                    <div key={player.id} className="flex items-center justify-between p-4 bg-background/50 rounded-xl border border-border/30">
+                    <div key={player.id} className={`flex items-center justify-between p-4 rounded-xl border transition-colors ${
+                      player.isReady
+                        ? 'bg-green-950/15 border-green-500/30'
+                        : 'bg-yellow-950/10 border-yellow-500/20'
+                    }`}>
                       <div className="flex items-center gap-4">
                         {player.user?.avatar_url ? (
                           <img
@@ -337,13 +347,15 @@ export default function RoomPage() {
                           {player.isReady ? "Prêt" : "En attente"}
                         </span>
                         {isHost && player.userId !== user.id && (
-                          <button
+                          <CyberButton
                             onClick={() => handleKickPlayer(player.userId)}
-                            className="px-2 py-1 bg-red-900/50 text-red-400 border border-red-500/50 rounded hover:bg-red-800/50"
+                            variant="danger"
+                            size="sm"
+                            className="px-2 py-1 font-bold"
                             title="Expulser"
                           >
                             X
-                          </button>
+                          </CyberButton>
                         )}
                       </div>
                     </div>
@@ -351,7 +363,7 @@ export default function RoomPage() {
                 </div>
               </div>
 
-              <div className="p-6 bg-background/50 rounded-xl border border-border/30 flex flex-col h-[30rem]">
+              <div className="p-6 rounded-3xl flex flex-col h-[30rem] cyber-chat-panel">
                 <h3 className="font-bold text-lg text-text">Chat de la room</h3>
                 <div
                   ref={chatListRef}
@@ -393,21 +405,21 @@ export default function RoomPage() {
                   )}
                 </div>
                 <form onSubmit={handleSendMessage} className="mt-4 flex items-center gap-2">
-                  <input
+                  <Input
                     type="text"
                     value={chatInput}
                     onChange={(e) => setChatInput(e.target.value)}
                     placeholder="Saisir message..."
                     maxLength={ROOM_MESSAGE_MAX_LENGTH}
-                    className="flex-1 bg-background border border-border/50 text-text px-3 py-2 rounded"
+                    className="flex-1 cyber-input-cyan"
                   />
-                  <button
+                  <CyberButton
                     type="submit"
                     disabled={!normalizeInput(chatInput)}
-                    className="px-4 py-2 font-bold bg-primary hover:bg-primary/90 text-background disabled:opacity-50 disabled:cursor-not-allowed rounded"
+                    className="px-4 py-2 font-bold"
                   >
                     Envoyer
-                  </button>
+                  </CyberButton>
                 </form>
               </div>
             </div>
@@ -438,22 +450,24 @@ export default function RoomPage() {
                     )}
                   </div>
 
-                  <button
+                  <CyberButton
                     onClick={handleToggleReady}
-                    className={`cyber-button px-4 py-3 font-bold w-full mt-2 ${myPlayer?.isReady ? 'opacity-80' : ''}`}
+                    variant="solid"
+                    className="w-full mt-2"
                   >
                     {myPlayer?.isReady ? "Annuler prêt" : "Se mettre prêt"}
-                  </button>
+                  </CyberButton>
 
                   {isHost && (
                     <>
-                      <button
+                      <CyberButton
                         onClick={handleStartGame}
                         disabled={!canStart}
-                        className="px-4 py-3 font-bold w-full bg-primary hover:bg-primary/90 text-background disabled:opacity-50 disabled:cursor-not-allowed rounded"
+                        variant="solid"
+                        className="w-full mt-2"
                       >
                         Démarrer la partie
-                      </button>
+                      </CyberButton>
                       {!canStart && (
                         <div className="text-xs text-yellow-400 text-center space-y-1">
                           {!hasMinPlayers && <p>Il faut au moins 1 joueur.</p>}

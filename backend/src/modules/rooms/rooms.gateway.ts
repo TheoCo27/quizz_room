@@ -15,6 +15,7 @@ import { RoomsService } from "./rooms.service";
 import { JwtService } from "@nestjs/jwt";
 import { QuizGameService } from "./quiz-game.service";
 import { PrivateMessageRateLimitService } from "../users/private-message-rate-limit.service";
+import { UsersService } from "../users/users.service";
 import {
   KickPlayerDto,
   RoomIdDto,
@@ -45,10 +46,14 @@ export class RoomsGateway
     private readonly jwtService: JwtService,
     private readonly quizGameService: QuizGameService,
     private readonly rateLimitService: PrivateMessageRateLimitService,
+    private readonly usersService: UsersService,
   ) {}
 
   afterInit(server: Server) {
     this.logger.log("Gateway initialized");
+    this.roomsService.onRoomListChanged = () => {
+      this.server.emit("room_list_changed");
+    };
   }
 
   async handleConnection(client: Socket) {
@@ -76,6 +81,7 @@ export class RoomsGateway
       const user = await this.authService.getSessionUser(payload.sub);
 
       client.data.user = user;
+      await this.usersService.setUserStatusIfChanged(user.id, "online");
       this.logger.log("Client connected: " + client.id);
     } catch (error: any) {
       this.logger.error("Connection error for client " + client.id + ": " + error.message);
@@ -105,6 +111,15 @@ export class RoomsGateway
             this.server.to(roomId).emit("game_ended", room);
             this.server.to(roomId).emit("room_state_updated", room);
           }
+        }
+
+        const sockets = await this.server.fetchSockets();
+        const stillConnected = sockets.some(
+          (s) => s.data.user?.id === userId && s.id !== client.id
+        );
+
+        if (!stillConnected) {
+          await this.usersService.setUserStatusIfChanged(userId, "offline");
         }
       } catch (error: any) {
         this.logger.error(`Error handling disconnect for client ${client.id}: ${error.message}`);
