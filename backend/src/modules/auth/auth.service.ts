@@ -1,5 +1,6 @@
 // Ce fichier contient toute la logique metier d'authentification:
 // login classique, guest login, session JWT et OAuth Google.
+import { AUTH_USERNAME_MAX_LENGTH } from "@/common/validation/input-safety";
 import { LoginDto } from "@/modules/users/dto/login.dto";
 import { RegisterDto } from "@/modules/users/dto/register.dto";
 import { GuestLoginDto } from "@/modules/users/dto/guest-login.dto";
@@ -26,6 +27,8 @@ const GOOGLE_OPENID_CONFIGURATION_URL =
   "https://accounts.google.com/.well-known/openid-configuration";
 const GOOGLE_STATE_COOKIE_NAME = "google_oauth_state";
 const GOOGLE_STATE_COOKIE_TTL_MS = 10 * 60 * 1000;
+const ARCHIVED_GUEST_USERNAME_PREFIX = "garch-";
+const LEGACY_ARCHIVED_GUEST_USERNAME_PREFIX = "guest-archived-";
 
 type GoogleConfig = {
   clientId: string;
@@ -278,7 +281,7 @@ export class AuthService {
 
   // Cree un compte classique puis ouvre sa session.
   async register(dto: RegisterDto, res: Response): Promise<SafeUser> {
-    const email = dto.email.trim();
+    const email = dto.email.trim().toLowerCase();
     const username = dto.username.trim();
     const existingEmail = await this.usersService.findUserByEmail(email);
 
@@ -480,7 +483,7 @@ export class AuthService {
       const auth = await this.jwtService.verifyAsync<AuthPayload>(token);
       const user = await this.usersService.findUser({ id: auth.sub });
 
-      if (!user || user.username.startsWith("guest-archived-")) {
+      if (!user || this.isArchivedGuestUsername(user.username)) {
         res.clearCookie("access_token", this.getAuthCookieOptions());
         return null;
       }
@@ -707,6 +710,7 @@ export class AuthService {
   private async findOrCreateGoogleUser(
     googleUser: VerifiedGoogleIdTokenPayload,
   ): Promise<User> {
+    const normalizedGoogleEmail = googleUser.email.trim().toLowerCase();
     const normalizedAvatarUrl = await this.normalizeGoogleAvatarUrl(
       googleUser.picture,
     );
@@ -717,9 +721,9 @@ export class AuthService {
 
     if (existingGoogleUser) {
       const nextEmail =
-        existingGoogleUser.email === googleUser.email
+        existingGoogleUser.email === normalizedGoogleEmail
           ? existingGoogleUser.email
-          : googleUser.email;
+          : normalizedGoogleEmail;
       const emailOwner =
         nextEmail === existingGoogleUser.email
           ? null
@@ -739,7 +743,9 @@ export class AuthService {
       });
     }
 
-    const existingEmailUser = await this.usersService.findUserByEmail(googleUser.email);
+    const existingEmailUser = await this.usersService.findUserByEmail(
+      normalizedGoogleEmail,
+    );
 
     if (existingEmailUser) {
       return this.usersService.updateUser({
@@ -755,28 +761,43 @@ export class AuthService {
     const hashedPassword = await bcrypt.hash(generatedPassword, 10);
     const username = await this.generateAvailableUsername(
       googleUser.name,
-      googleUser.email,
+      normalizedGoogleEmail,
     );
 
     return this.usersService.createUser({
       avatar_url: normalizedAvatarUrl,
       createdAt: new Date(),
-      email: googleUser.email,
+      email: normalizedGoogleEmail,
       googleId: googleUser.sub,
       password: hashedPassword,
       username,
     });
   }
 
+  private isArchivedGuestUsername(username: string): boolean {
+    return (
+      username.startsWith(ARCHIVED_GUEST_USERNAME_PREFIX) ||
+      username.startsWith(LEGACY_ARCHIVED_GUEST_USERNAME_PREFIX)
+    );
+  }
+
+  private buildArchivedGuestUsername(): string {
+    const suffixLength =
+      AUTH_USERNAME_MAX_LENGTH - ARCHIVED_GUEST_USERNAME_PREFIX.length;
+    const archivedSuffix = randomBytes(Math.ceil(suffixLength / 2))
+      .toString("hex")
+      .slice(0, suffixLength);
+
+    return `${ARCHIVED_GUEST_USERNAME_PREFIX}${archivedSuffix}`;
+  }
+
   // Archive l'identite d'un compte invite deconnecte.
   private async archiveGuestIdentity(userId: number): Promise<void> {
-    const archivedSuffix = randomBytes(6).toString("hex");
-
     await this.usersService.updateUser({
       where: { id: userId },
       data: {
         status: "offline",
-        username: `guest-archived-${userId}-${archivedSuffix}`,
+        username: this.buildArchivedGuestUsername(),
       },
     });
   }

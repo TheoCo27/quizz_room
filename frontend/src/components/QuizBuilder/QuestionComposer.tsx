@@ -4,6 +4,10 @@ import SectionLabel from "../section-label";
 import Input from "../ui/input";
 import PrimaryButton from "../ui/PrimaryButton";
 import SecondaryButton from "../ui/SecondaryButton";
+import {
+  QUIZ_ANSWER_MAX_LENGTH,
+  QUIZ_QUESTION_MAX_LENGTH,
+} from "../../utils/input-validation";
 
 type QuestionComposerProps = {
   questionText: string;
@@ -46,6 +50,9 @@ export default function QuestionComposer({
           placeholder="Quel studio a cree Journey ?"
           value={questionText}
           onChange={(event) => onQuestionTextChange(event.target.value)}
+          minLength={6}
+          maxLength={QUIZ_QUESTION_MAX_LENGTH}
+          required
         />
       </label>
 
@@ -93,6 +100,8 @@ export default function QuestionComposer({
                 placeholder={`Reponse ${index + 1}`}
                 value={option}
                 onChange={(event) => onOptionChange(index, event.target.value)}
+                maxLength={QUIZ_ANSWER_MAX_LENGTH}
+                required
               />
             </div>
           );

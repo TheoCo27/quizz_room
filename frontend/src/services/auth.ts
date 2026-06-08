@@ -1,7 +1,10 @@
 import { apiRequest, apiRequestNullable } from "./api";
-
-export const AUTH_PASSWORD_MIN_LENGTH = 12;
-export const AUTH_USERNAME_MIN_LENGTH = 2;
+export {
+  AUTH_PASSWORD_MAX_LENGTH,
+  AUTH_PASSWORD_MIN_LENGTH,
+  AUTH_USERNAME_MAX_LENGTH,
+  AUTH_USERNAME_MIN_LENGTH,
+} from "../utils/input-validation";
 
 export type SafeUser = {
   id: number;

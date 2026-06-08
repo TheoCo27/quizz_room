@@ -1,4 +1,5 @@
 // Ce fichier gere la messagerie privee entre amis via PostgreSQL/Prisma.
+import { assertSafeTextInput } from "@/common/validation/input-safety";
 import { PrismaService } from "@/prisma/prisma.service";
 import { UsersService, type FriendUserSummary } from "@/modules/users/users.service";
 import {
@@ -196,6 +197,8 @@ export class PrivateMessagesService {
     rawContent: string,
   ): Promise<PrivateMessage> {
     await this.assertMessagingAllowed(senderId, friendId);
+    const normalizedContent = rawContent.trim();
+    assertSafeTextInput(normalizedContent, "Le message");
     const limitResult = this.rateLimit.consume(
       `private-message:${senderId}`,
       10,
@@ -213,7 +216,7 @@ export class PrivateMessagesService {
       data: {
         senderId,
         receiverId: friendId,
-        content: rawContent.trim(),
+        content: normalizedContent,
       },
     });
 

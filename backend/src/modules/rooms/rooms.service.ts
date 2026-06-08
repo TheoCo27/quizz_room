@@ -1,4 +1,8 @@
 // backend/src/modules/rooms/rooms.service.ts
+import {
+  assertSafeTextInput,
+  ROOM_NAME_MAX_LENGTH,
+} from "@/common/validation/input-safety";
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { GameType, RoomStatus } from '../../../generated/prisma/client';
@@ -16,12 +20,15 @@ export class RoomsService {
   ) {}
 
   async createRoom(hostId: number, gameType: GameType, maxPlayers: number = 5, name?: string, quizId?: number) {
+    const normalizedName = this.normalizeRoomName(name);
+
     const room = await this.prisma.client.room.create({
       data: {
-        name,
+        name: normalizedName,
         hostId,
         gameType,
         status: RoomStatus.WAITING,
+        maxPlayers,
         quizId,
         players: {
           create: {
@@ -247,6 +254,15 @@ export class RoomsService {
       throw new BadRequestException("Impossible de modifier une partie en cours");
     }
 
+    if (
+      config.maxPlayers !== undefined &&
+      config.maxPlayers < room.players.length
+    ) {
+      throw new BadRequestException(
+        "Le nombre maximal de joueurs ne peut pas etre inferieur au nombre de joueurs presents",
+      );
+    }
+
     await this.prisma.client.room.update({
       where: { id: roomId },
       data: {
@@ -429,5 +445,25 @@ export class RoomsService {
   });
 
   this.metricsService.setActiveRooms(activeRooms);
+  }
+
+  private normalizeRoomName(rawName?: string): string | undefined {
+    if (typeof rawName !== "string") {
+      return undefined;
+    }
+
+    const normalizedName = rawName.trim();
+
+    if (normalizedName.length === 0) {
+      return undefined;
+    }
+
+    if (normalizedName.length < 2 || normalizedName.length > ROOM_NAME_MAX_LENGTH) {
+      throw new BadRequestException("Le nom de la salle a un format invalide");
+    }
+
+    assertSafeTextInput(normalizedName, "Le nom de la salle");
+
+    return normalizedName;
   }
 }

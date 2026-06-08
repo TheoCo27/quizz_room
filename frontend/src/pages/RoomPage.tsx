@@ -5,6 +5,11 @@ import { getSocket, connectSocket, disconnectSocket } from "../services/socket";
 import { useAuthSession } from "../hooks/useAuthSession";
 import { Room } from "../services/rooms";
 import { getQuizzes, Quiz } from "../services/quizzes";
+import {
+  ROOM_MESSAGE_MAX_LENGTH,
+  normalizeInput,
+  validateSafeText,
+} from "../utils/input-validation";
 
 type RoomChatMessage = {
   id: string;
@@ -180,8 +185,13 @@ export default function RoomPage() {
   };
 
   const handleQuizChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const quizId = parseInt(e.target.value, 10);
+    if (Number.isNaN(quizId)) {
+      return;
+    }
+
     const socket = getSocket();
-    socket.emit("update_config", { roomId, config: { quizId: parseInt(e.target.value, 10) } });
+    socket.emit("update_config", { roomId, config: { quizId } });
   };
 
   const handleKickPlayer = (targetUserId: number) => {
@@ -201,8 +211,20 @@ export default function RoomPage() {
   const handleSendMessage = (event: React.FormEvent) => {
     event.preventDefault();
     if (!roomId) return;
-    const content = chatInput.trim();
-    if (!content) return;
+    const content = normalizeInput(chatInput);
+    const contentError = validateSafeText(content, {
+      label: "Le message",
+      minLength: 1,
+      maxLength: ROOM_MESSAGE_MAX_LENGTH,
+    });
+
+    if (contentError) {
+      setError(contentError);
+      setTimeout(() => {
+        setError((prev) => (prev === contentError ? null : prev));
+      }, 4000);
+      return;
+    }
 
     const now = Date.now();
     const capacity = 10;
@@ -246,7 +268,7 @@ export default function RoomPage() {
         <CyberPanel className="rounded-4xl p-8 md:p-10 relative overflow-hidden">
           {countdown !== null && (
             <div className="absolute inset-0 bg-background/90 z-10 flex flex-col items-center justify-center">
-              <h2 className="text-4xl text-primary font-bold mb-4">Le contrat va débuter</h2>
+              <h2 className="text-4xl text-primary font-bold mb-4">La partie va commencer</h2>
               <span className="text-8xl text-secondary animate-pulse">{countdown}</span>
             </div>
           )}
@@ -261,14 +283,14 @@ export default function RoomPage() {
                   onClick={handleDeleteRoom}
                   className="px-4 py-2 border border-red-500/50 text-red-300 hover:text-red-200 hover:bg-red-900/30 rounded"
                 >
-                  Fermer le terminal
+                  Fermer la room
                 </button>
               )}
               <button
                 onClick={handleLeaveRoom}
                 className="px-4 py-2 border border-border/50 text-text-muted hover:text-text hover:bg-background rounded"
               >
-                Déconnecter du terminal
+                Quitter la room
               </button>
             </div>
           </div>
@@ -282,7 +304,7 @@ export default function RoomPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
               <div className="flex flex-col">
-                <h2 className="text-xl font-bold text-text mb-4">Mercenaires ({room?.players?.length || 0}/{room?.maxPlayers || 0})</h2>
+                <h2 className="text-xl font-bold text-text mb-4">Joueurs ({room?.players?.length || 0}/{room?.maxPlayers || 0})</h2>
                 <div className="space-y-4 max-h-[30rem] overflow-y-auto pr-2">
                   {[...(room?.players || [])].sort((a, b) => b.score - a.score).map((player, index) => (
                     <div key={player.id} className="flex items-center justify-between p-4 bg-background/50 rounded-xl border border-border/30">
@@ -312,7 +334,7 @@ export default function RoomPage() {
                       </div>
                       <div className="flex items-center gap-4">
                         <span className={`px-3 py-1 rounded text-sm ${player.isReady ? 'bg-green-500/20 text-green-400 border border-green-500/50' : 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/50'}`}>
-                          {player.isReady ? "Synchro" : "Déconnecté"}
+                          {player.isReady ? "Prêt" : "En attente"}
                         </span>
                         {isHost && player.userId !== user.id && (
                           <button
@@ -330,7 +352,7 @@ export default function RoomPage() {
               </div>
 
               <div className="p-6 bg-background/50 rounded-xl border border-border/30 flex flex-col h-[30rem]">
-                <h3 className="font-bold text-lg text-text">Chat du terminal</h3>
+                <h3 className="font-bold text-lg text-text">Chat de la room</h3>
                 <div
                   ref={chatListRef}
                   className="mt-4 flex-1 overflow-y-auto space-y-4 pr-2"
@@ -376,15 +398,15 @@ export default function RoomPage() {
                     value={chatInput}
                     onChange={(e) => setChatInput(e.target.value)}
                     placeholder="Saisir message..."
-                    maxLength={500}
+                    maxLength={ROOM_MESSAGE_MAX_LENGTH}
                     className="flex-1 bg-background border border-border/50 text-text px-3 py-2 rounded"
                   />
                   <button
                     type="submit"
-                    disabled={!chatInput.trim()}
+                    disabled={!normalizeInput(chatInput)}
                     className="px-4 py-2 font-bold bg-primary hover:bg-primary/90 text-background disabled:opacity-50 disabled:cursor-not-allowed rounded"
                   >
-                    Transmettre
+                    Envoyer
                   </button>
                 </form>
               </div>
@@ -392,17 +414,17 @@ export default function RoomPage() {
 
             <div className="flex flex-col gap-6">
               <div className="p-6 bg-background/50 rounded-xl border border-border/30">
-                <h3 className="font-bold text-lg text-text mb-4">Paramètres Cyberdeck</h3>
+                <h3 className="font-bold text-lg text-text mb-4">Paramètres de la room</h3>
                 <div className="flex flex-col gap-4">
                   <div>
-                    <label className="block text-sm text-text-muted mb-1">Éclat chargé</label>
+                    <label className="block text-sm text-text-muted mb-1">Quiz sélectionné</label>
                     {isHost ? (
                       <select
                         value={room?.quizId || ""}
                         onChange={handleQuizChange}
                         className="room-quiz-select w-full bg-background/90 border border-secondary/60 text-text p-2 rounded focus:outline-none focus:ring-2 focus:ring-secondary/40 focus:border-secondary shadow-[0_0_18px_rgba(56,189,248,0.15)]"
                       >
-                        <option value="" disabled className="text-text-muted bg-background">-- Charger un éclat --</option>
+                        <option value="" disabled className="text-text-muted bg-background">-- Choisir un quiz --</option>
                         {quizzes.map(q => (
                           <option key={q.id} value={q.id} className="bg-background text-text">
                             {q.title}
@@ -411,7 +433,7 @@ export default function RoomPage() {
                       </select>
                     ) : (
                       <div className="p-2 border border-border/30 bg-background/30 rounded text-text">
-                        {selectedQuiz ? selectedQuiz.title : "Aucun éclat chargé"}
+                        {selectedQuiz ? selectedQuiz.title : "Aucun quiz sélectionné"}
                       </div>
                     )}
                   </div>
@@ -420,7 +442,7 @@ export default function RoomPage() {
                     onClick={handleToggleReady}
                     className={`cyber-button px-4 py-3 font-bold w-full mt-2 ${myPlayer?.isReady ? 'opacity-80' : ''}`}
                   >
-                    {myPlayer?.isReady ? "Désynchroniser" : "Synchroniser !"}
+                    {myPlayer?.isReady ? "Annuler prêt" : "Se mettre prêt"}
                   </button>
 
                   {isHost && (
@@ -430,13 +452,13 @@ export default function RoomPage() {
                         disabled={!canStart}
                         className="px-4 py-3 font-bold w-full bg-primary hover:bg-primary/90 text-background disabled:opacity-50 disabled:cursor-not-allowed rounded"
                       >
-                        Lancer le contrat
+                        Démarrer la partie
                       </button>
                       {!canStart && (
                         <div className="text-xs text-yellow-400 text-center space-y-1">
-                          {!hasMinPlayers && <p>Il faut au moins 1 mercenaire.</p>}
-                          {!allReady && (room?.players?.length || 0) >= 2 && <p>Tous les mercenaires doivent être synchronisés.</p>}
-                          {!room?.quizId && <p>Veuillez charger un éclat.</p>}
+                          {!hasMinPlayers && <p>Il faut au moins 1 joueur.</p>}
+                          {!allReady && (room?.players?.length || 0) >= 2 && <p>Tous les joueurs doivent être prêts.</p>}
+                          {!room?.quizId && <p>Veuillez choisir un quiz.</p>}
                         </div>
                       )}
                     </>

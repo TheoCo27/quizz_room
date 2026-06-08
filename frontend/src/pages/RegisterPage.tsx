@@ -12,10 +12,18 @@ import PrimaryButton from "../components/ui/PrimaryButton";
 import { getUserFacingErrorMessage } from "../services/api";
 import { useAuthSession } from "../hooks/useAuthSession";
 import {
+  AUTH_PASSWORD_MAX_LENGTH,
   AUTH_PASSWORD_MIN_LENGTH,
+  AUTH_USERNAME_MAX_LENGTH,
   AUTH_USERNAME_MIN_LENGTH,
   register,
 } from "../services/auth";
+import {
+  normalizeInput,
+  validateEmail,
+  validatePassword,
+  validateUsername,
+} from "../utils/input-validation";
 
 export default function RegisterPage() {
   const navigate = useNavigate();
@@ -39,8 +47,16 @@ export default function RegisterPage() {
     setIsSubmitting(true);
 
     try {
-      const trimmedEmail = email.trim();
-      const trimmedUsername = username.trim();
+      const trimmedEmail = normalizeInput(email).toLowerCase();
+      const trimmedUsername = normalizeInput(username);
+      const emailError = validateEmail(trimmedEmail);
+      const usernameError = validateUsername(trimmedUsername);
+      const passwordError = validatePassword(password);
+
+      if (emailError || usernameError || passwordError) {
+        setError(emailError || usernameError || passwordError);
+        return;
+      }
 
       await register({
         email: trimmedEmail,
@@ -85,7 +101,7 @@ export default function RegisterPage() {
         <CyberCard className="rounded-4xl p-8" accent="magenta">
           <p className="cyber-eyebrow">Inscription Réseau</p>
           <h2 className="mt-3 cyber-title text-2xl text-text">
-            Créer une empreinte synaptique
+            Créer un compte
           </h2>
           <p className="mt-3 text-sm text-text-muted">
             Ton alias réseau doit contenir au moins {AUTH_USERNAME_MIN_LENGTH} caractères.
@@ -113,6 +129,7 @@ export default function RegisterPage() {
               onChange={(event) => setEmail(event.target.value)}
               disabled={isSubmitting}
               autoComplete="email"
+              maxLength={255}
               required
             />
 
@@ -132,7 +149,7 @@ export default function RegisterPage() {
               onChange={(event) => setUsername(event.target.value)}
               disabled={isSubmitting}
               minLength={AUTH_USERNAME_MIN_LENGTH}
-              maxLength={20}
+              maxLength={AUTH_USERNAME_MAX_LENGTH}
               autoComplete="username"
               required
             />
@@ -154,6 +171,7 @@ export default function RegisterPage() {
               aria-invalid={error ? "true" : "false"}
               disabled={isSubmitting}
               minLength={AUTH_PASSWORD_MIN_LENGTH}
+              maxLength={AUTH_PASSWORD_MAX_LENGTH}
               autoComplete="new-password"
               required
             />
@@ -173,14 +191,14 @@ export default function RegisterPage() {
               disabled={isSubmitting}
               type="submit"
             >
-              {isSubmitting ? "Création..." : "Enregistrer profil"}
+              {isSubmitting ? "Création..." : "Créer le compte"}
             </PrimaryButton>
           </form>
 
           <p className="mt-5 text-center text-sm text-text-muted">
             Déjà enregistré ?{" "}
             <Link className="font-semibold underline" to="/login">
-              Synchroniser Cyberdeck
+              Se connecter
             </Link>
           </p>
 
