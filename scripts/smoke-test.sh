@@ -326,7 +326,7 @@ cleanup() {
 
 trap cleanup EXIT
 
-printf '== Smoke test ft_transcendence ==\n'
+printf '== Smoke test quizz_room ==\n'
 printf 'Frontend : %s\n' "$FRONTEND_BASE_URL"
 printf 'Backend  : %s\n' "$BACKEND_BASE_URL"
 printf 'Database : localhost:%s\n' "$POSTGRES_PORT"
@@ -360,7 +360,7 @@ check_database_query "Table User presente" "SELECT COUNT(*) FROM information_sch
 request_with_curl GET "${BACKEND_BASE_URL}/api"
 assert_status_any 200 404
 if [ "$LAST_STATUS" = "200" ]; then
-	assert_body_contains '"name":"ft_transcendence"'
+	assert_body_contains '"name":"quizz_room"'
 fi
 pass "/api repond comme attendu selon l'environnement"
 
@@ -372,10 +372,10 @@ fi
 pass "/docs repond comme attendu selon l'environnement"
 
 section "test front end"
-if check_http_with_curl "${FRONTEND_BASE_URL}" '<title>ft_transcendence</title>'; then
+if check_http_with_curl "${FRONTEND_BASE_URL}" '<title>quizz_room</title>'; then
 	:
 else
-	check_http_inside_container quiz_frontend "${FRONTEND_BASE_URL}" '<title>ft_transcendence</title>'
+	check_http_inside_container quiz_frontend "${FRONTEND_BASE_URL}" '<title>quizz_room</title>'
 fi
 
 if check_http_with_curl "${FRONTEND_BASE_URL}/health" '"database":{"configured":true,"ok":true}'; then

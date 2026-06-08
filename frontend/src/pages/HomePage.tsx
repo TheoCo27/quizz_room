@@ -163,7 +163,6 @@ export default function HomePage() {
               <Link to="/admin">
                 <PrimaryButton>Gérer les quiz</PrimaryButton>
               </Link>
-              <SecondaryButton disabled>Importer un set</SecondaryButton>
             </div>
           </CyberCard>
 

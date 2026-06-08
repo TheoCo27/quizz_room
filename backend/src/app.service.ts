@@ -52,7 +52,7 @@ export class AppService {
   // Expose un resume statique des capacites de l'API.
   getApi() {
     return {
-      name: "ft_transcendence",
+      name: "quizz_room",
       framework: "nestjs",
       language: "typescript",
       orm: "prisma",
