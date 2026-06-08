@@ -377,18 +377,20 @@ export class RoomsService {
       this.onRoomListChanged?.();
       return null;
     }
-
-    // Reset scores and ready status of remaining players
-    for (const player of roomExists.players) {
-      await this.prisma.client.roomPlayer.update({
-        where: { id: player.id },
-        data: {
-          score: 0,
-          isReady: player.userId === roomExists.hostId,
-        },
-      });
+    else
+    {
+      // Reset scores and ready status of remaining players
+      for (const player of roomExists.players) {
+        await this.prisma.client.roomPlayer.update({
+          where: { id: player.id },
+          data: {
+            score: 0,
+            isReady: player.userId === roomExists.hostId,
+          },
+        });
+      }
     }
-
+    
     // Update room status back to WAITING so players can lobby again and kick works
     const finalRoom = await this.prisma.client.room.update({
       where: { id: roomId },
