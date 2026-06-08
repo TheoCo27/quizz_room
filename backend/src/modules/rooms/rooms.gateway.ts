@@ -15,6 +15,7 @@ import { RoomsService } from "./rooms.service";
 import { JwtService } from "@nestjs/jwt";
 import { QuizGameService } from "./quiz-game.service";
 import { PrivateMessageRateLimitService } from "../users/private-message-rate-limit.service";
+import { MetricsService } from "../metrics/metrics.service";
 import { UsersService } from "../users/users.service";
 import {
   KickPlayerDto,
@@ -46,6 +47,7 @@ export class RoomsGateway
     private readonly jwtService: JwtService,
     private readonly quizGameService: QuizGameService,
     private readonly rateLimitService: PrivateMessageRateLimitService,
+    private readonly metricsService: MetricsService,
     private readonly usersService: UsersService,
   ) {}
 
@@ -81,6 +83,10 @@ export class RoomsGateway
       const user = await this.authService.getSessionUser(payload.sub);
 
       client.data.user = user;
+
+      client.data.metricsConnected = true;
+      this.metricsService.incrementWebsocketConnections();
+
       await this.usersService.setUserStatusIfChanged(user.id, "online");
       this.logger.log("Client connected: " + client.id);
     } catch (error: any) {
@@ -90,6 +96,11 @@ export class RoomsGateway
   }
 
   async handleDisconnect(client: Socket) {
+    if (client.data.metricsConnected) {
+      this.metricsService.decrementWebsocketConnections();
+      this.metricsService.incrementDeadGirafe();
+    }
+
     this.logger.log("Client disconnected: " + client.id);
     
     if (client.data.user?.id) {

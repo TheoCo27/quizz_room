@@ -6,6 +6,7 @@ import {
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { GameType, RoomStatus } from '../../../generated/prisma/client';
+import { MetricsService } from '../metrics/metrics.service';
 
 const EMPTY_ROOM_CLEANUP_DELAY_MS = 15000;
 
@@ -14,7 +15,10 @@ export class RoomsService {
   private readonly cleanupTimers = new Map<string, NodeJS.Timeout>();
   public onRoomListChanged?: () => void;
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+     private readonly prisma: PrismaService,
+     private readonly metricsService: MetricsService,
+  ) {}
 
   async createRoom(hostId: number, gameType: GameType, maxPlayers: number = 5, name?: string, quizId?: number) {
     const normalizedName = this.normalizeRoomName(name);
@@ -39,6 +43,9 @@ export class RoomsService {
         players: { include: { user: { select: { id: true, username: true, avatar_url: true } } } },
       },
     });
+
+    this.metricsService.incrementRoomsCreated();
+    await this.updateActiveRoomsMetric();
 
     this.onRoomListChanged?.();
     return room;
@@ -155,6 +162,8 @@ export class RoomsService {
         await this.prisma.client.room.delete({
           where: { id: roomId },
         });
+
+        await this.updateActiveRoomsMetric();
       } catch (e) {
         // Ignorer si la room a déjà été supprimée
       }
@@ -186,6 +195,8 @@ export class RoomsService {
       where: { id: roomId },
     });
     this.onRoomListChanged?.();
+
+    await this.updateActiveRoomsMetric();
 
     return room;
   }
@@ -232,6 +243,9 @@ export class RoomsService {
       data: { status: RoomStatus.PLAYING },
     });
     this.onRoomListChanged?.();
+
+    this.metricsService.incrementQuizGamesStarted();
+    this.metricsService.incrementActiveGames();
 
     return this.getRoomById(roomId);
   }
@@ -347,7 +361,12 @@ export class RoomsService {
       await this.leaveRoom(roomId, dp.userId);
     }
 
-    // Check if room still exists (it might have been deleted if all players left)
+    this.metricsService.incrementQuizGamesFinished();
+    this.metricsService.decrementActiveGames();
+
+    await this.updateActiveRoomsMetric();
+    
+  // Check if room still exists (it might have been deleted if all players left)
     const roomExists = await this.prisma.client.room.findUnique({
       where: { id: roomId },
       include: { players: true },
@@ -368,7 +387,7 @@ export class RoomsService {
         },
       });
     }
-
+    
     // Update room status back to WAITING so players can lobby again and kick works
     const finalRoom = await this.prisma.client.room.update({
       where: { id: roomId },
@@ -462,10 +481,24 @@ export class RoomsService {
       await this.prisma.client.room.delete({
         where: { id: roomId },
       });
+
+      await this.updateActiveRoomsMetric();
       this.onRoomListChanged?.();
     } catch {
       // Ignore cleanup errors or race conditions.
     }
+  }
+
+  private async updateActiveRoomsMetric(): Promise<void> {
+  const activeRooms = await this.prisma.client.room.count({
+    where: {
+      status: {
+        in: [RoomStatus.WAITING, RoomStatus.PLAYING],
+      },
+    },
+  });
+
+  this.metricsService.setActiveRooms(activeRooms);
   }
 
   private normalizeRoomName(rawName?: string): string | undefined {
