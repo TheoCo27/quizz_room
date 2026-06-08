@@ -64,6 +64,13 @@ export class MetricsService {
   help: 'Current number of users marked as online in database',
   });
 
+  private deadGirafeCount = 0;
+
+  private readonly deadGirafe = new Gauge({
+  name: 'dead_girafe',
+  help: 'Current number of dead girafe (easter egg: users offline)',
+  });
+
   incrementRoomsCreated(): void {
     this.roomsCreatedTotal.inc();
   }
@@ -143,4 +150,10 @@ export class MetricsService {
 
     this.setOnlineUsers(count);
   }
+
+  incrementDeadGirafe(): void {
+    this.deadGirafeCount++;
+    this.deadGirafe.set(this.deadGirafeCount);
+  }
+
 }

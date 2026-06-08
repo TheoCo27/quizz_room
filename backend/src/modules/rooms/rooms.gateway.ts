@@ -92,6 +92,7 @@ export class RoomsGateway
   async handleDisconnect(client: Socket) {
     if (client.data.metricsConnected) {
       this.metricsService.decrementWebsocketConnections();
+      this.metricsService.incrementDeadGirafe();
     }
 
     this.logger.log("Client disconnected: " + client.id);

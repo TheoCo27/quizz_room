@@ -3,8 +3,8 @@
   "kind": "Dashboard",
   "metadata": {
     "name": "ad2hvq2",
-    "generation": 6,
-    "creationTimestamp": "2026-06-07T21:09:01Z",
+    "generation": 2,
+    "creationTimestamp": "2026-06-08T15:16:49Z",
     "labels": {},
     "annotations": {}
   },
@@ -133,7 +133,7 @@
                       "spec": {
                         "editorMode": "builder",
                         "expr": "rooms_created_total",
-                        "legendFormat": "__auto",
+                        "legendFormat": "Total Rooms Created",
                         "range": true
                       }
                     },
@@ -446,9 +446,6 @@
                         "expr": "100 - (avg(rate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)",
                         "legendFormat": "__auto",
                         "range": true
-                      },
-                      "labels": {
-                        "grafana.app/export-label": "prometheus-1"
                       }
                     },
                     "refId": "A",
@@ -581,9 +578,6 @@
                         "expr": "100 * (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes))",
                         "legendFormat": "__auto",
                         "range": true
-                      },
-                      "labels": {
-                        "grafana.app/export-label": "prometheus-1"
                       }
                     },
                     "refId": "A",
@@ -679,11 +673,8 @@
                       "spec": {
                         "editorMode": "code",
                         "expr": "up{job=\"node-exporter\"}",
-                        "legendFormat": "__auto",
+                        "legendFormat": "Node Exporter Status",
                         "range": true
-                      },
-                      "labels": {
-                        "grafana.app/export-label": "prometheus-1"
                       }
                     },
                     "refId": "A",
@@ -781,11 +772,8 @@
                       "spec": {
                         "editorMode": "code",
                         "expr": "up{job=\"backend\"}",
-                        "legendFormat": "__auto",
+                        "legendFormat": "Backend Status",
                         "range": true
-                      },
-                      "labels": {
-                        "grafana.app/export-label": "prometheus-1"
                       }
                     },
                     "refId": "A",
@@ -882,11 +870,8 @@
                       "spec": {
                         "editorMode": "code",
                         "expr": "up{job=\"prometheus\"}",
-                        "legendFormat": "__auto",
+                        "legendFormat": "Prometheus Status",
                         "range": true
-                      },
-                      "labels": {
-                        "grafana.app/export-label": "prometheus-1"
                       }
                     },
                     "refId": "A",
@@ -985,9 +970,6 @@
                         "expr": "sum(rate(node_network_receive_bytes_total[5m]))",
                         "legendFormat": "Incoming",
                         "range": true
-                      },
-                      "labels": {
-                        "grafana.app/export-label": "prometheus-1"
                       }
                     },
                     "refId": "A",
@@ -1007,9 +989,6 @@
                         "instant": false,
                         "legendFormat": "Outgoing",
                         "range": true
-                      },
-                      "labels": {
-                        "grafana.app/export-label": "prometheus-1"
                       }
                     },
                     "refId": "B",
@@ -1103,6 +1082,142 @@
           }
         }
       },
+      "panel-19": {
+        "kind": "Panel",
+        "spec": {
+          "id": 19,
+          "title": "Dead Girafe",
+          "description": "Number of dead Girafe",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "dead_girafe",
+                        "legendFormat": "Dead Girafe",
+                        "range": true
+                      },
+                      "labels": {
+                        "grafana.app/export-label": "prometheus-1"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "gauge",
+            "version": "13.0.2",
+            "spec": {
+              "options": {
+                "barShape": "flat",
+                "barWidthFactor": 0.5,
+                "effects": {
+                  "barGlow": false,
+                  "centerGlow": false,
+                  "gradient": true
+                },
+                "endpointMarker": "point",
+                "minVizHeight": 75,
+                "minVizWidth": 75,
+                "orientation": "auto",
+                "reduceOptions": {
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": "",
+                  "values": false
+                },
+                "segmentCount": 1,
+                "segmentSpacing": 0.3,
+                "shape": "gauge",
+                "showThresholdLabels": false,
+                "showThresholdMarkers": true,
+                "sizing": "auto",
+                "sparkline": true,
+                "textMode": "auto"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "min": 0,
+                  "max": 20,
+                  "mappings": [
+                    {
+                      "type": "range",
+                      "options": {
+                        "from": 0,
+                        "to": 6,
+                        "result": {
+                          "color": "green",
+                          "index": 0
+                        }
+                      }
+                    },
+                    {
+                      "type": "range",
+                      "options": {
+                        "from": 7,
+                        "to": 9,
+                        "result": {
+                          "color": "orange",
+                          "index": 1
+                        }
+                      }
+                    },
+                    {
+                      "type": "range",
+                      "options": {
+                        "from": 10,
+                        "to": 15,
+                        "result": {
+                          "color": "red",
+                          "index": 2
+                        }
+                      }
+                    }
+                  ],
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      },
+                      {
+                        "value": 7,
+                        "color": "#EAB839"
+                      },
+                      {
+                        "value": 10,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "thresholds"
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
       "panel-2": {
         "kind": "Panel",
         "spec": {
@@ -1124,7 +1239,7 @@
                       "spec": {
                         "editorMode": "builder",
                         "expr": "active_rooms",
-                        "legendFormat": "__auto",
+                        "legendFormat": "Active Rooms",
                         "range": true
                       }
                     },
@@ -1205,7 +1320,7 @@
                       "spec": {
                         "editorMode": "builder",
                         "expr": "quiz_games_started_total",
-                        "legendFormat": "__auto",
+                        "legendFormat": "Game Started",
                         "range": true
                       }
                     },
@@ -1286,7 +1401,7 @@
                       "spec": {
                         "editorMode": "builder",
                         "expr": "quiz_games_finished_total",
-                        "legendFormat": "__auto",
+                        "legendFormat": "Game Finished",
                         "range": true
                       }
                     },
@@ -1367,7 +1482,7 @@
                       "spec": {
                         "editorMode": "builder",
                         "expr": "quiz_games_active",
-                        "legendFormat": "__auto",
+                        "legendFormat": "Quiz Games Active",
                         "range": true
                       }
                     },
@@ -2089,6 +2204,33 @@
                         "element": {
                           "kind": "ElementReference",
                           "name": "panel-15"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "kind": "RowsLayoutRow",
+            "spec": {
+              "title": "Easter Egg",
+              "collapse": false,
+              "layout": {
+                "kind": "GridLayout",
+                "spec": {
+                  "items": [
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 0,
+                        "y": 0,
+                        "width": 4,
+                        "height": 6,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-19"
                         }
                       }
                     }
