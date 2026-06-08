@@ -213,8 +213,12 @@ export class QuizGameService {
     this.logger.log(`Game ended for room ${roomId}`);
     const updatedRoom = await this.roomsService.endGame(roomId);
     
-    server.to(roomId).emit("room_state_updated", updatedRoom);
-    server.to(roomId).emit("game_ended", updatedRoom);
+    if (updatedRoom) {
+      server.to(roomId).emit("room_state_updated", updatedRoom);
+      server.to(roomId).emit("game_ended", updatedRoom);
+    } else {
+      server.to(roomId).emit("room_closed");
+    }
   }
 
   getActiveGameQuestion(roomId: string, userId: number) {

@@ -488,7 +488,9 @@ export class AuthService {
         return null;
       }
 
-      return this.sanitizeUser(user);
+      const updatedUser = await this.ensureUserIsOnline(user);
+
+      return this.sanitizeUser(updatedUser);
     } catch {
       res.clearCookie("access_token", this.getAuthCookieOptions());
       return null;

@@ -12,13 +12,14 @@ const EMPTY_ROOM_CLEANUP_DELAY_MS = 15000;
 @Injectable()
 export class RoomsService {
   private readonly cleanupTimers = new Map<string, NodeJS.Timeout>();
+  public onRoomListChanged?: () => void;
 
   constructor(private readonly prisma: PrismaService) {}
 
   async createRoom(hostId: number, gameType: GameType, maxPlayers: number = 5, name?: string, quizId?: number) {
     const normalizedName = this.normalizeRoomName(name);
 
-    return this.prisma.client.room.create({
+    const room = await this.prisma.client.room.create({
       data: {
         name: normalizedName,
         hostId,
@@ -38,6 +39,9 @@ export class RoomsService {
         players: { include: { user: { select: { id: true, username: true, avatar_url: true } } } },
       },
     });
+
+    this.onRoomListChanged?.();
+    return room;
   }
 
   async getWaitingRooms() {
@@ -124,6 +128,7 @@ export class RoomsService {
       });
     }
 
+    this.onRoomListChanged?.();
     return this.getRoomById(roomId);
   }
 
@@ -153,6 +158,7 @@ export class RoomsService {
       } catch (e) {
         // Ignorer si la room a déjà été supprimée
       }
+      this.onRoomListChanged?.();
       return null;
     }
 
@@ -164,6 +170,7 @@ export class RoomsService {
       });
     }
 
+    this.onRoomListChanged?.();
     return this.getRoomById(roomId);
   }
 
@@ -178,6 +185,7 @@ export class RoomsService {
     await this.prisma.client.room.delete({
       where: { id: roomId },
     });
+    this.onRoomListChanged?.();
 
     return room;
   }
@@ -223,6 +231,7 @@ export class RoomsService {
       where: { id: roomId },
       data: { status: RoomStatus.PLAYING },
     });
+    this.onRoomListChanged?.();
 
     return this.getRoomById(roomId);
   }
@@ -326,13 +335,53 @@ export class RoomsService {
       });
     }
 
-    // Update room status
-    await this.prisma.client.room.update({
-      where: { id: roomId },
-      data: { status: RoomStatus.FINISHED },
+    // Find all disconnected players in the room
+    const disconnectedPlayers = await this.prisma.client.roomPlayer.findMany({
+      where: {
+        roomId,
+        isConnected: false,
+      },
     });
 
-    return this.getRoomById(roomId);
+    for (const dp of disconnectedPlayers) {
+      await this.leaveRoom(roomId, dp.userId);
+    }
+
+    // Check if room still exists (it might have been deleted if all players left)
+    const roomExists = await this.prisma.client.room.findUnique({
+      where: { id: roomId },
+      include: { players: true },
+    });
+
+    if (!roomExists) {
+      this.onRoomListChanged?.();
+      return null;
+    }
+
+    // Reset scores and ready status of remaining players
+    for (const player of roomExists.players) {
+      await this.prisma.client.roomPlayer.update({
+        where: { id: player.id },
+        data: {
+          score: 0,
+          isReady: player.userId === roomExists.hostId,
+        },
+      });
+    }
+
+    // Update room status back to WAITING so players can lobby again and kick works
+    const finalRoom = await this.prisma.client.room.update({
+      where: { id: roomId },
+      data: { status: RoomStatus.WAITING },
+      include: {
+        host: { select: { id: true, username: true, avatar_url: true } },
+        players: { include: { user: { select: { id: true, username: true, avatar_url: true } } } },
+      },
+    });
+
+    this.onRoomListChanged?.();
+
+    return finalRoom;
   }
 
   async handleDisconnect(userId: number) {
@@ -407,6 +456,7 @@ export class RoomsService {
       await this.prisma.client.room.delete({
         where: { id: roomId },
       });
+      this.onRoomListChanged?.();
     } catch {
       // Ignore cleanup errors or race conditions.
     }

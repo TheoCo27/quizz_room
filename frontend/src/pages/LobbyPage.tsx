@@ -3,6 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { CyberPanel } from "../components/cyber";
 import { getRooms, createRoom, type Room } from "../services/rooms";
 import { useAuthSession } from "../hooks/useAuthSession";
+import { getSocket } from "../services/socket";
+import CyberButton from "../components/cyber/CyberButton";
+import Input from "../components/ui/input";
 import {
   ROOM_NAME_MAX_LENGTH,
   normalizeInput,
@@ -29,8 +32,19 @@ export default function LobbyPage() {
   useEffect(() => {
     if (!isLoading && user) {
       fetchRooms();
-      const interval = setInterval(fetchRooms, 5000); // refresh every 5s
-      return () => clearInterval(interval);
+      const interval = setInterval(fetchRooms, 5000); // fallback refresh every 5s
+
+      const socket = getSocket();
+      const handleRoomListChanged = () => {
+        void fetchRooms();
+      };
+
+      socket.on("room_list_changed", handleRoomListChanged);
+
+      return () => {
+        clearInterval(interval);
+        socket.off("room_list_changed", handleRoomListChanged);
+      };
     }
   }, [isLoading, user]);
 
@@ -77,12 +91,13 @@ export default function LobbyPage() {
             <p className="mt-4 text-sm leading-7 text-text-muted">
               Liaison neuronale requise. Veuillez synchroniser votre Cyberdeck.
             </p>
-            <button
+            <CyberButton
               onClick={() => navigate("/login")}
-              className="mt-6 cyber-button px-6 py-2"
+              className="mt-6 px-6 py-2"
+              variant="solid"
             >
               Se connecter
-            </button>
+            </CyberButton>
           </CyberPanel>
         </div>
       </main>
@@ -101,21 +116,21 @@ export default function LobbyPage() {
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <input
+              <Input
                 type="text"
                 placeholder="Nom de la room (optionnel)"
                 value={roomName}
                 onChange={(e) => setRoomName(e.target.value)}
                 maxLength={ROOM_NAME_MAX_LENGTH}
-                className="bg-background border border-border/50 text-text px-4 py-3 rounded"
+                className="w-72 cyber-input-yellow"
               />
-              <button
+              <CyberButton
                 onClick={handleCreateRoom}
                 disabled={isCreating}
-                className="cyber-button px-6 py-3 font-bold"
+                className="px-6 py-3 font-bold"
               >
                 {isCreating ? "Création..." : "Créer une room"}
-              </button>
+              </CyberButton>
             </div>
           </div>
 
@@ -132,7 +147,7 @@ export default function LobbyPage() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {rooms.map((room) => (
-                  <div key={room.id} className="border border-border/30 rounded-xl p-4 bg-background/50 hover:bg-background/80 transition-colors">
+                  <div key={room.id} className="border border-primary/20 rounded-xl p-4 bg-primary/5 hover:bg-primary/8 transition-colors">
                     <div className="flex justify-between items-start mb-2">
                       <h3 className="font-bold text-lg text-primary">
                         {room.name ? room.name : `Terminal de ${room.host?.username || "Mercenaire"}`}
@@ -145,13 +160,15 @@ export default function LobbyPage() {
                       <span className="text-sm text-text-muted">
                         Mercenaires: {room._count?.players || 0} / {room.maxPlayers}
                       </span>
-                      <button
+                      <CyberButton
                         onClick={() => handleJoinRoom(room.id)}
                         disabled={room._count?.players ? room._count.players >= room.maxPlayers : false}
-                        className="cyber-button px-4 py-1 text-sm disabled:opacity-50"
+                        variant="ghost"
+                        size="sm"
+                        className="px-4 py-1 text-sm"
                       >
                         Rejoindre
-                      </button>
+                      </CyberButton>
                     </div>
                   </div>
                 ))}
