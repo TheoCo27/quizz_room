@@ -161,7 +161,7 @@ export default function HomePage() {
             </div>
             <div className="mt-6 flex flex-wrap gap-3">
               <Link to="/admin">
-                <PrimaryButton>Gérer les quiz</PrimaryButton>
+                <PrimaryButton>Créer un quizz</PrimaryButton>
               </Link>
             </div>
           </CyberCard>
