@@ -31,9 +31,18 @@ export function useAuthSession(): UseAuthSessionResult {
       void refreshSession();
     };
 
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === "auth-changed") {
+        void refreshSession();
+      }
+    };
+
     window.addEventListener("auth-changed", handleAuthChanged);
+    window.addEventListener("storage", handleStorageChange);
+
     return () => {
       window.removeEventListener("auth-changed", handleAuthChanged);
+      window.removeEventListener("storage", handleStorageChange);
     };
   }, []);
 

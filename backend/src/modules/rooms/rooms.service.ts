@@ -13,6 +13,7 @@ const EMPTY_ROOM_CLEANUP_DELAY_MS = 15000;
 @Injectable()
 export class RoomsService {
   private readonly cleanupTimers = new Map<string, NodeJS.Timeout>();
+  public onRoomListChanged?: () => void;
 
   constructor(
      private readonly prisma: PrismaService,
@@ -29,7 +30,7 @@ export class RoomsService {
         gameType,
         status: RoomStatus.WAITING,
         maxPlayers,
-        quizId,
+        quizId: quizId ?? 1004,
         players: {
           create: {
             userId: hostId,
@@ -46,6 +47,7 @@ export class RoomsService {
     this.metricsService.incrementRoomsCreated();
     await this.updateActiveRoomsMetric();
 
+    this.onRoomListChanged?.();
     return room;
   }
 
@@ -133,6 +135,7 @@ export class RoomsService {
       });
     }
 
+    this.onRoomListChanged?.();
     return this.getRoomById(roomId);
   }
 
@@ -164,6 +167,7 @@ export class RoomsService {
       } catch (e) {
         // Ignorer si la room a déjà été supprimée
       }
+      this.onRoomListChanged?.();
       return null;
     }
 
@@ -175,6 +179,7 @@ export class RoomsService {
       });
     }
 
+    this.onRoomListChanged?.();
     return this.getRoomById(roomId);
   }
 
@@ -189,6 +194,7 @@ export class RoomsService {
     await this.prisma.client.room.delete({
       where: { id: roomId },
     });
+    this.onRoomListChanged?.();
 
     await this.updateActiveRoomsMetric();
 
@@ -236,6 +242,7 @@ export class RoomsService {
       where: { id: roomId },
       data: { status: RoomStatus.PLAYING },
     });
+    this.onRoomListChanged?.();
 
     this.metricsService.incrementQuizGamesStarted();
     this.metricsService.incrementActiveGames();
@@ -342,10 +349,22 @@ export class RoomsService {
       });
     }
 
-    // Update room status
-    await this.prisma.client.room.update({
+    // Find all disconnected players in the room
+    const disconnectedPlayers = await this.prisma.client.roomPlayer.findMany({
+      where: {
+        roomId,
+        isConnected: false,
+      },
+    });
+
+    for (const dp of disconnectedPlayers) {
+      await this.leaveRoom(roomId, dp.userId);
+    }
+
+    // Check if room still exists (it might have been deleted if all players left)
+    const roomExists = await this.prisma.client.room.findUnique({
       where: { id: roomId },
-      data: { status: RoomStatus.FINISHED },
+      include: { players: true },
     });
 
     this.metricsService.incrementQuizGamesFinished();
@@ -354,6 +373,35 @@ export class RoomsService {
     await this.updateActiveRoomsMetric();
 
     return this.getRoomById(roomId);
+    if (!roomExists) {
+      this.onRoomListChanged?.();
+      return null;
+    }
+
+    // Reset scores and ready status of remaining players
+    for (const player of roomExists.players) {
+      await this.prisma.client.roomPlayer.update({
+        where: { id: player.id },
+        data: {
+          score: 0,
+          isReady: player.userId === roomExists.hostId,
+        },
+      });
+    }
+
+    // Update room status back to WAITING so players can lobby again and kick works
+    const finalRoom = await this.prisma.client.room.update({
+      where: { id: roomId },
+      data: { status: RoomStatus.WAITING },
+      include: {
+        host: { select: { id: true, username: true, avatar_url: true } },
+        players: { include: { user: { select: { id: true, username: true, avatar_url: true } } } },
+      },
+    });
+
+    this.onRoomListChanged?.();
+
+    return finalRoom;
   }
 
   async handleDisconnect(userId: number) {
@@ -386,6 +434,12 @@ export class RoomsService {
         });
 
         const room = await this.getRoomById(rp.roomId);
+        const hasConnectedPlayer = room.players.some((player) => player.isConnected);
+
+        if (!hasConnectedPlayer) {
+          this.scheduleEmptyRoomCleanup(rp.roomId);
+        }
+
         affectedRooms.push({ roomId: rp.roomId, room, action: 'disconnect' });
       }
     }
@@ -430,6 +484,7 @@ export class RoomsService {
       });
 
       await this.updateActiveRoomsMetric();
+      this.onRoomListChanged?.();
     } catch {
       // Ignore cleanup errors or race conditions.
     }

@@ -123,9 +123,19 @@ export class QuizGameService {
     }
   }
 
-  private sendNextQuestion(roomId: string, server: Server) {
+  private async sendNextQuestion(roomId: string, server: Server) {
     const game = this.activeGames.get(roomId);
     if (!game) return;
+
+    const roomExists = await this.prisma.client.room.findUnique({
+      where: { id: roomId },
+    });
+    if (!roomExists) {
+      this.logger.log(`Room ${roomId} was deleted. Stopping game loop.`);
+      if (game.interval) clearTimeout(game.interval);
+      this.activeGames.delete(roomId);
+      return;
+    }
 
     if (game.currentQuestionIndex >= game.questions.length) {
       this.endGame(roomId, server);
@@ -157,6 +167,16 @@ export class QuizGameService {
   private async evaluateAnswersAndSendResult(roomId: string, server: Server) {
     const game = this.activeGames.get(roomId);
     if (!game) return;
+
+    const roomExists = await this.prisma.client.room.findUnique({
+      where: { id: roomId },
+    });
+    if (!roomExists) {
+      this.logger.log(`Room ${roomId} was deleted. Stopping game loop.`);
+      if (game.interval) clearTimeout(game.interval);
+      this.activeGames.delete(roomId);
+      return;
+    }
 
     const question = game.questions[game.currentQuestionIndex];
     const correctAnswer = question.correctAnswer;
@@ -224,8 +244,12 @@ export class QuizGameService {
     this.logger.log(`Game ended for room ${roomId}`);
     const updatedRoom = await this.roomsService.endGame(roomId);
     
-    server.to(roomId).emit("room_state_updated", updatedRoom);
-    server.to(roomId).emit("game_ended", updatedRoom);
+    if (updatedRoom) {
+      server.to(roomId).emit("room_state_updated", updatedRoom);
+      server.to(roomId).emit("game_ended", updatedRoom);
+    } else {
+      server.to(roomId).emit("room_closed");
+    }
   }
 
   getActiveGameQuestion(roomId: string, userId: number) {

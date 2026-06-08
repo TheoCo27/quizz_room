@@ -147,7 +147,9 @@ export default function FriendNetworkPanel({
                     key={friend.id}
                     className={`w-full rounded-3xl border px-5 py-4 text-left transition ${isSelected
                         ? "border-primary/50 bg-white/12"
-                        : "border-white/10 bg-white/6 hover:bg-white/10"
+                        : friend.status === "online"
+                          ? "border-secondary/25 bg-secondary/5 hover:bg-secondary/8"
+                          : "border-white/10 bg-white/4 hover:bg-white/8"
                       }`}
                   >
                     <button

@@ -34,8 +34,14 @@ export default function GamePage() {
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [result, setResult] = useState<QuestionResultPayload | null>(null);
   const [scores, setScores] = useState<Map<number, number>>(new Map());
+  const skipLeaveRef = React.useRef(false);
 
   useEffect(() => {
+    if ((window as any).leaveRoomTimeout) {
+      clearTimeout((window as any).leaveRoomTimeout);
+      (window as any).leaveRoomTimeout = null;
+    }
+
     if (!roomId) return;
     connectSocket();
     const socket = getSocket();
@@ -43,6 +49,7 @@ export default function GamePage() {
     const onRoomStateUpdated = (updatedRoom: Room) => {
       setRoom(updatedRoom);
       if (updatedRoom.status === "FINISHED") {
+        skipLeaveRef.current = true;
         setTimeout(() => navigate(`/room/${roomId}`), 3000); // Back to room instead of non-existent /results
       }
     };
@@ -65,10 +72,12 @@ export default function GamePage() {
     };
 
     const onGameEnded = () => {
+      skipLeaveRef.current = true;
       setTimeout(() => navigate(`/room/${roomId}`), 3000);
     };
 
     const onRoomClosed = () => {
+      skipLeaveRef.current = true;
       navigate("/lobby");
     };
 
@@ -91,6 +100,12 @@ export default function GamePage() {
       socket.off("question_result", onQuestionResult);
       socket.off("game_ended", onGameEnded);
       socket.off("room_closed", onRoomClosed);
+
+      if (!skipLeaveRef.current) {
+        (window as any).leaveRoomTimeout = setTimeout(() => {
+          socket.emit("leave_room", { roomId });
+        }, 500);
+      }
     };
   }, [roomId, navigate]);
 
