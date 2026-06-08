@@ -380,12 +380,12 @@ export class RoomsService {
     else
     {
       // Reset scores and ready status of remaining players
-      for (const player of roomExists.players) {
+      for (const player of roomExists?.players) {
         await this.prisma.client.roomPlayer.update({
           where: { id: player.id },
           data: {
             score: 0,
-            isReady: player.userId === roomExists.hostId,
+            isReady: player.userId === roomExists?.hostId,
           },
         });
       }
