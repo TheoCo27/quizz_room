@@ -115,25 +115,22 @@ export class RoomsService {
       throw new BadRequestException("La room n'est pas en attente");
     }
 
-    if (room.players.length >= room.maxPlayers) {
+    if (room.players.length >= room.maxPlayers && !existingPlayer) {
       throw new BadRequestException("La limite de joueurs est atteinte");
     }
 
-    if (!existingPlayer) {
-      await this.prisma.client.roomPlayer.create({
-        data: {
-          roomId,
-          userId,
-          isReady: false,
-          isConnected: true,
-        },
-      });
-    } else {
-      await this.prisma.client.roomPlayer.update({
-        where: { id: existingPlayer.id },
-        data: { isConnected: true },
-      });
-    }
+    await this.prisma.client.roomPlayer.upsert({
+      where: { roomId_userId: { roomId, userId } },
+      create: {
+        roomId,
+        userId,
+        isReady: false,
+        isConnected: true,
+      },
+      update: {
+        isConnected: true,
+      },
+    });
 
     this.onRoomListChanged?.();
     return this.getRoomById(roomId);
